@@ -18,12 +18,12 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 #cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
 #cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
 #cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
-#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+#cortina .c-pista { font-size: 2rem; color: #7a1f4b; letter-spacing: .4em; text-shadow: 0 0 6px #f7f4ec, 0 0 12px #f7f4ec; }
 @media (prefers-color-scheme: dark) {
   #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
   #cortina .c-cuerpo { background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2748.00%27 height=%2724%27 viewBox=%270 0 48 24%27%3E%3Cdefs%3E%3Cfilter id=%27h%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeGaussianBlur in=%27SourceGraphic%27 stdDeviation=%270.90%27 result=%27b%27/%3E%3CfeColorMatrix in=%27b%27 type=%27luminanceToAlpha%27 result=%27a%27/%3E%3CfeFlood flood-color=%27%233EE6A8%27 flood-opacity=%271%27 result=%27c%27/%3E%3CfeComposite in=%27c%27 in2=%27a%27 operator=%27in%27 result=%27g%27/%3E%3CfeMerge%3E%3CfeMergeNode in=%27SourceGraphic%27/%3E%3CfeMergeNode in=%27g%27/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%27url%28%23h%29%27%3E%3Cg fill=%27%231E1D1B%27 stroke=%27%23A6F7D2%27 stroke-opacity=%270.6%27 stroke-width=%271.00%27%3E%3Cg id=%27o%27%3E%3Ccircle r=%2723%27/%3E%3Ccircle r=%2717%27/%3E%3Ccircle r=%2711%27/%3E%3Ccircle r=%275%27/%3E%3C/g%3E%3Cuse href=%27%23o%27 x=%2724%27 y=%2712%27/%3E%3Cuse href=%27%23o%27 x=%270%27 y=%2724%27/%3E%3Cuse href=%27%23o%27 x=%2748%27 y=%2724%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
   #cortina .c-caja { border-color: #3b3934; }
-  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.6), 0 0 4px #1e1d1b; }
   #cortina .c-texto { color: #a39d90; }
 }
 </style>
@@ -95,8 +95,8 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     var c = document.createElement('div');
     c.id = 'cortina';
     // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
-    c.innerHTML = '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Próximamente</div>' +
-      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
+    c.innerHTML = '<div class="c-cuerpo"><div class="c-pista" aria-hidden="true"></div></div>';
     tituloReal = document.title;
     document.title = 'Próximamente';
     document.body.appendChild(c);
