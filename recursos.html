@@ -178,9 +178,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-ea9d3df8bd82afd78bc24302a4b14048.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-5978ee7dac2eabe8daea68a22ae1399d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-ea9d3df8bd82afd78bc24302a4b14048.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-89f67973553681806d21640e19ac2ef9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-30de3860391f93cf93f429f45717dc70.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-89f67973553681806d21640e19ac2ef9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -534,6 +534,36 @@ ul.task-list li input[type="checkbox"] {
       t.finished.finally(function () { raiz.classList.remove('transicion-lenta'); });
 
     };
+
+  });
+
+
+
+  // Reloj de arena + tiempo (1', 7'...) siempre juntos: sin esto el navegador puede
+
+  // partir la linea entre la imagen y el texto y el tiempo queda colgando solo
+
+  // (pasaba en el indice "En esta pagina")
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.tiempo').forEach(function (t) {
+
+      var reloj = t.previousElementSibling;
+
+      if (!reloj || !reloj.querySelector('img[src*="emojis"]') || t.parentNode.classList.contains('reloj-tiempo')) { return; }
+
+      var junto = document.createElement('span');
+
+      junto.className = 'reloj-tiempo';
+
+      t.parentNode.insertBefore(junto, reloj);
+
+      junto.appendChild(reloj);
+
+      junto.appendChild(t);
+
+    });
 
   });
 
