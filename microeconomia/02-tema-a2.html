@@ -763,6 +763,18 @@ window.Quarto = {
 
 <script>
 
+  // El modo lectura de Quarto se quito (2026-10-04), pero los navegadores que lo
+
+  // activaron guardan "quarto-reader-mode" y Quarto lo seguiria aplicando (indices
+
+  // escondidos y recuadros flotantes encima de la cabecera). Se borra antes de que
+
+  // Quarto lo lea (su quarto.js es un modulo diferido, va despues de esto).
+
+  try { localStorage.removeItem('quarto-reader-mode'); } catch (e) {}
+
+
+
   (function () {
 
     var cabecera = document.currentScript.previousElementSibling;
