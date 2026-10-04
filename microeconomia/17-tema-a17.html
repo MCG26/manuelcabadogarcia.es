@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Por qué crece el gasto público, la teoría de la burocracia y la constitución fiscal, y el debate sobre el tamaño del Sector Público.">
+
+<title>Tema A17. Sector Público. Crecimiento del gasto público | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./18-tema-a18-pendiente.html" rel="next">
+<link href="./16-tema-a16.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A17. Sector Público. Crecimiento del gasto público | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Por qué crece el gasto público, la teoría de la burocracia y la constitución fiscal, y el debate sobre el tamaño del Sector Público.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A17. Sector Público. Crecimiento del gasto público | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Por qué crece el gasto público, la teoría de la burocracia y la constitución fiscal, y el debate sobre el tamaño del Sector Público.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A17. El gasto público. Razones de su crecimiento. Teoría de la burocracia y constitución fiscal. El debate sobre el tamaño del Sector Público, en lo referente al gasto.",
+ "alternateName": "Sector Público. Crecimiento del gasto público",
+ "description": "Por qué crece el gasto público, la teoría de la burocracia y la constitución fiscal, y el debate sobre el tamaño del Sector Público.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/17-tema-a17.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./17-tema-a17.html"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">17.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#teorías-que-explican-las-causas-del-aumento-del-sector-público" id="toc-teorías-que-explican-las-causas-del-aumento-del-sector-público" class="nav-link" data-scroll-target="#teorías-que-explican-las-causas-del-aumento-del-sector-público"><span class="header-section-number">17.2</span> Teorías que explican las causas del aumento del Sector Público <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="10 minutos">10'</span></a>
+  <ul class="collapse">
+  <li><a href="#teorías-de-la-demanda" id="toc-teorías-de-la-demanda" class="nav-link" data-scroll-target="#teorías-de-la-demanda">Teorías de la Demanda</a></li>
+  <li><a href="#teorías-de-oferta-y-demanda" id="toc-teorías-de-oferta-y-demanda" class="nav-link" data-scroll-target="#teorías-de-oferta-y-demanda">Teorías de Oferta y Demanda</a></li>
+  <li><a href="#teorías-de-oferta" id="toc-teorías-de-oferta" class="nav-link" data-scroll-target="#teorías-de-oferta">Teorías de Oferta</a></li>
+  </ul></li>
+  <li><a href="#debate-sobre-el-tamaño-del-sector-público" id="toc-debate-sobre-el-tamaño-del-sector-público" class="nav-link" data-scroll-target="#debate-sobre-el-tamaño-del-sector-público"><span class="header-section-number">17.3</span> Debate sobre el tamaño del Sector Público<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#fisiócratas" id="toc-fisiócratas" class="nav-link" data-scroll-target="#fisiócratas">Fisiócratas</a></li>
+  <li><a href="#la-teoría-de-la-hacienda-pública-clásica" id="toc-la-teoría-de-la-hacienda-pública-clásica" class="nav-link" data-scroll-target="#la-teoría-de-la-hacienda-pública-clásica">La Teoría de la Hacienda Pública Clásica</a></li>
+  <li><a href="#la-hacienda-pública-alemana" id="toc-la-hacienda-pública-alemana" class="nav-link" data-scroll-target="#la-hacienda-pública-alemana">La Hacienda Pública Alemana</a></li>
+  <li><a href="#la-escuela-marginalista-y-la-neoclásica" id="toc-la-escuela-marginalista-y-la-neoclásica" class="nav-link" data-scroll-target="#la-escuela-marginalista-y-la-neoclásica">La Escuela Marginalista y la Neoclásica</a></li>
+  <li><a href="#la-hacienda-pública-keynesiana" id="toc-la-hacienda-pública-keynesiana" class="nav-link" data-scroll-target="#la-hacienda-pública-keynesiana">La Hacienda Pública Keynesiana</a></li>
+  <li><a href="#la-síntesis-de-musgrave" id="toc-la-síntesis-de-musgrave" class="nav-link" data-scroll-target="#la-síntesis-de-musgrave">La síntesis de Musgrave</a></li>
+  <li><a href="#el-enfoque-del-crecimiento-económico" id="toc-el-enfoque-del-crecimiento-económico" class="nav-link" data-scroll-target="#el-enfoque-del-crecimiento-económico">El enfoque del crecimiento económico</a></li>
+  </ul></li>
+  <li><a href="#la-constitución-fiscal" id="toc-la-constitución-fiscal" class="nav-link" data-scroll-target="#la-constitución-fiscal"><span class="header-section-number">17.4</span> La Constitución Fiscal <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></a>
+  <ul class="collapse">
+  <li><a href="#modalidades-de-constitución-fiscal" id="toc-modalidades-de-constitución-fiscal" class="nav-link" data-scroll-target="#modalidades-de-constitución-fiscal">Modalidades de Constitución Fiscal</a></li>
+  <li><a href="#ejemplos-de-constitución-fiscal" id="toc-ejemplos-de-constitución-fiscal" class="nav-link" data-scroll-target="#ejemplos-de-constitución-fiscal">Ejemplos de Constitución Fiscal</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">17.5</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-reducción-de-gastos-partida-a-partida" id="toc-a.1.-reducción-de-gastos-partida-a-partida" class="nav-link" data-scroll-target="#a.1.-reducción-de-gastos-partida-a-partida">17.A.1.&nbsp;&nbsp;Reducción de gastos partida a partida</a></li>
+  <li><a href="#a.2.-presupuesto-plurianual" id="toc-a.2.-presupuesto-plurianual" class="nav-link" data-scroll-target="#a.2.-presupuesto-plurianual">17.A.2.&nbsp;&nbsp;Presupuesto plurianual</a></li>
+  <li><a href="#a.3.-presupuesto-base-cero" id="toc-a.3.-presupuesto-base-cero" class="nav-link" data-scroll-target="#a.3.-presupuesto-base-cero">17.A.3.&nbsp;&nbsp;Presupuesto Base Cero</a></li>
+  <li><a href="#a.4.-determinación-del-volumen-del-presupuesto" id="toc-a.4.-determinación-del-volumen-del-presupuesto" class="nav-link" data-scroll-target="#a.4.-determinación-del-volumen-del-presupuesto">17.A.4.&nbsp;&nbsp;Determinación del volumen del presupuesto</a></li>
+  <li><a href="#a.5.-clasificación-del-gasto-público" id="toc-a.5.-clasificación-del-gasto-público" class="nav-link" data-scroll-target="#a.5.-clasificación-del-gasto-público">17.A.5.&nbsp;&nbsp;Clasificación del gasto público</a></li>
+  <li><a href="#a.6.-los-spending-reviews-como-instrumento-de-evaluación-del-gasto" id="toc-a.6.-los-spending-reviews-como-instrumento-de-evaluación-del-gasto" class="nav-link" data-scroll-target="#a.6.-los-spending-reviews-como-instrumento-de-evaluación-del-gasto">17.A.6.&nbsp;&nbsp;Los&nbsp;<em>spending reviews</em> como instrumento de evaluación del gasto</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">El gasto público. Razones de su crecimiento. Teoría de la burocracia y constitución fiscal. El debate sobre el tamaño del Sector Público, en lo referente al gasto.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="17.1">
+<h2 data-number="17.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">17.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>La Economía del Sector Público estudia la intervención del Sector Público en una economía de mercado fundamentada en programas de ingresos y gastos con el objetivo de cumplir con sus funciones</p>
+<ol type="1">
+<li><p>Asignativa, dirigida a corregir fallos de mercado.</p></li>
+<li><p>Distributiva, para conseguir equidad.</p></li>
+<li><p>Crecimiento y estabilización, para suavizar las fluctuaciones cíclicas.</p></li>
+</ol>
+<p>Para llevar a cabo estas funciones, el Sector Público tiene que decidir los niveles de gasto e impuestos que deben resultar óptimos desde el punto de vista colectivo.</p>
+<p>Concretamente, durante gran parte del siglo XX, la expansión del Estado del Bienestar fue la norma, impulsada por la creencia de que un mayor gasto público en servicios sociales era esencial para la equidad y la provisión de bienes preferentes.</p>
+<p>Sin embargo, a partir de la crisis de los años 70 y 80, esta expansión comenzó a ser cuestionada. El estancamiento económico y el aumento de la deuda desataron una crítica a la ineficiencia del Estado y a la sostenibilidad de sus finanzas, lo que llevó a la necesidad de controles fiscales más estrictos.</p>
+<p>No obstante, la reciente crisis de la COVID-19 ha reavivado este debate de manera drástica:</p>
+<ul>
+<li><p>Por un lado, la intervención sin precedentes del sector público, a través de medidas como los ERTEs, los fondos Next Generation y el programa REACT-EU, demostró la capacidad del Estado para responder a emergencias.</p></li>
+<li><p>Por otro lado, esta masiva movilización de recursos ha disparado la deuda pública de muchos países, como España, por encima del 100% del PIB.</p></li>
+</ul>
+<p>Por tanto, el objetivo de la presente exposición será el estudio del crecimiento del gasto público, con especial referencia a la teoría de la burocracia y al mecanismo corrector de la Constitución Fiscal a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Teorías explicativas del aumento del gasto público, desde una óptica de demanda y oferta.</p></li>
+<li><p>Debate sobre el tamaño del Sector Público, donde se realizará una revisión histórica sobre el tamaño óptimo.</p></li>
+<li><p>La Constitución fiscal, como límite al crecimiento desmedido del Sector público.</p></li>
+</ol>
+</section>
+<section id="teorías-que-explican-las-causas-del-aumento-del-sector-público" class="level2" data-number="17.2">
+<h2 data-number="17.2" class="anchored" data-anchor-id="teorías-que-explican-las-causas-del-aumento-del-sector-público"><span class="header-section-number">17.2</span> Teorías que explican las causas del aumento del Sector Público <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="10 minutos">10'</span></h2>
+<p>A lo largo del siglo XX se ha observado que la mayoría de los países, a medida que han ido progresando en su desarrollo económico, han aumentado el porcentaje de la renta que dedican a usos públicos. En la literatura hacendística se han sugerido diversas teorías acerca de por qué crece el gasto público. A grandes rasgos, estas teorías se pueden dividir en dos grandes grupos: teorías de demanda y teorías de oferta.</p>
+<section id="teorías-de-la-demanda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="teorías-de-la-demanda">Teorías de la Demanda</h3>
+<p>Se comenzará el análisis con las teorías de la demanda.</p>
+<section id="leyes-de-wagner" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="leyes-de-wagner">Leyes de Wagner</h4>
+<p>Las leyes de Wagner <span class="citation" data-cites="17_Wagner1883">(<a href="01-tema-a1.html#ref-17_Wagner1883" role="doc-biblioref">Wagner 1883,1890</a>)</span><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, revisadas por <span class="citation" data-cites="17_Bird1971">Bird (<a href="01-tema-a1.html#ref-17_Bird1971" role="doc-biblioref">1971</a>)</span>, explican el crecimiento del Gasto Público como consecuencia de 2 leyes:</p>
+<ol type="1">
+<li><p>Reestructuración de la Sociedad: la transformación de una sociedad tradicional en una sociedad industrializada moderna conlleva la sustitución de actuaciones privadas –institución de familias o grupos sociales– por actuaciones públicas. En sociedades avanzadas aparecen nuevas necesidades (demanda de bienes públicos y el mantenimiento de la ley y el orden) y la necesidad de corregir externalidades y monopolios naturales.</p></li>
+<li><p>Aparición de nuevas necesidades (públicas): el aumento de la renta per cápita estimula el consumo de ciertos bienes y servicios provistos por el Sector Público –educación, sanidad, carreteras...– cuya demanda se incrementa más que proporcionalmente, es decir, con una elasticidad-renta superior a la unidad, por lo que aumenta la proporción del PIB que se dedica a ellos. Por consiguiente, estos bienes tendrían el carácter de bienes de lujo —el reverso, en términos de reparto del presupuesto, de la Ley de Engel&nbsp;<span class="citation" data-cites="17_Engel1857">(<a href="01-tema-a1.html#ref-17_Engel1857" role="doc-biblioref">Engel 1857</a>)</span>, que muestra cómo la proporción de la renta dedicada a bienes de primera necesidad, como la alimentación, desciende a medida que la renta aumenta.</p></li>
+</ol>
+<p>Sin embargo, la teoría de Wagner suscitó críticas como la de <span class="citation" data-cites="17_Timm1961">Timm (<a href="01-tema-a1.html#ref-17_Timm1961" role="doc-biblioref">1961</a>)</span>, que señala su carácter valorativo, ya que Wagner parte de que la actuación pública es preferible a la privada y la necesidad de intervención es discutible, por lo que la teoría descansa en juicios de valor. Por otro lado, no se explica a partir de qué momento el gasto público tiende a crecer ni las variables que han intervenido en el proceso.</p>
+</section>
+<section id="transformaciones-de-musgrave" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="transformaciones-de-musgrave">Transformaciones de Musgrave</h4>
+<p>Al igual que Wagner,&nbsp;<span class="citation" data-cites="17_Musgrave1959">Musgrave (<a href="01-tema-a1.html#ref-17_Musgrave1959" role="doc-biblioref">1959</a>)</span> señala que el desarrollo económico de una sociedad genera una serie de transformaciones estructurales que tienden a elevar el gasto público:</p>
+<ul>
+<li><p>Transformaciones demográficas: la reducción de la natalidad y el aumento de la esperanza de vida modifican la pirámide poblacional, presionando al alza partidas como las pensiones o la sanidad.</p></li>
+<li><p>Transformaciones tecnológicas: los avances técnicos pueden requerir la presencia del sector público en ámbitos antes inexistentes —el desarrollo del automóvil exigió, por ejemplo, una red pública de carreteras, del mismo modo que el despliegue de la banda ancha ha exigido la extensión pública de la fibra óptica a las zonas rurales para evitar la brecha digital.</p></li>
+<li><p>Transformaciones urbanísticas: la mayor urbanización exige equipamientos —zonas verdes, saneamiento, redes de recarga para vehículos eléctricos— innecesarios en un entorno rural.</p></li>
+</ul>
+</section>
+<section id="efecto-desplazamiento" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="efecto-desplazamiento">Efecto desplazamiento</h4>
+<p>Por su parte, en un estudio para Reino Unido <span class="citation" data-cites="17_Peacock1961">Peacock y Wiseman (<a href="01-tema-a1.html#ref-17_Peacock1961" role="doc-biblioref">1961</a>)</span> señalan que el gasto público aumenta de forma discontinua como consecuencia de conmociones o perturbaciones sociales –guerras o crisis– o naturales –catástrofes– tras las cuales el gasto no retorna a su magnitud inicial. Un ejemplo reciente a escala global fue la pandemia de la Covid-19.</p>
+<p>En este proceso identifican 3 efectos:</p>
+<ol type="1">
+<li><p>Desplazamiento: ante una crisis o “conmoción social”, los contribuyentes están dispuestos a aceptar niveles impositivos que no habrían aceptado en condiciones normales, lo que permite financiar un mayor gasto público, produciéndose un efecto desplazamiento. Con la vuelta a la normalidad, la tolerancia a impuestos más elevados no regresa a su nivel previo y el gasto público continúa en un nivel superior al inicial, ya que ha posibilitado el acceso a niveles de gasto público deseados pero anteriormente reprimidos por la resistencia a un aumento de la presión fiscal.</p></li>
+<li><p>Inspección: las perturbaciones sociales hacen que los ciudadanos descubran necesidades sociales y ámbitos en los que la actuación del Sector Público era insuficiente, por lo que están dispuestos a soportar una mayor carga fiscal para atenderlos.</p></li>
+<li><p>Concentración: ante dichas perturbaciones se produce un transvase de funciones de las administraciones locales a la Central por considerar que esta actúa de manera más eficaz.</p></li>
+</ol>
+</section>
+<section id="redistribución-de-la-renta" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="redistribución-de-la-renta">Redistribución de la renta</h4>
+<p>Por otro lado, autores como <span class="citation" data-cites="17_Downs1957">Downs (<a href="01-tema-a1.html#ref-17_Downs1957" role="doc-biblioref">1957</a>)</span> o <span class="citation" data-cites="17_Romer1979">Romer y Rosenthal (<a href="01-tema-a1.html#ref-17_Romer1979" role="doc-biblioref">1979</a>)</span> plantean que el gasto público en una sociedad democrática tiende a crecer por la competencia entre los partidos políticos por los votos. En un contexto de distribución desigual de la renta, el votante mediano, con una renta inferior a la renta media, demandará políticas de redistribución, por lo que los partidos políticos tenderán a aproximar sus programas electorales a las preferencias del votante mediano.</p>
+</section>
+<section id="grupos-de-interés" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="grupos-de-interés">Grupos de interés</h4>
+<p>Adicionalmente, <span class="citation" data-cites="17_Buchanan1962">Buchanan y Tullock (<a href="01-tema-a1.html#ref-17_Buchanan1962" role="doc-biblioref">1962</a>)</span> plantean que los grupos de interés –caracterizados por ser pequeños y organizados, con intereses comunes y fuerte preferencia y beneficios de la consecución de sus intereses y objetivos– tratarán de modificar la actuación del Sector Público hacia sus intereses particulares, aumentando el gasto público en programas de naturaleza cuasiprivada, pero que son financiados por toda la población.</p>
+</section>
+<section id="ilusión-fiscal" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="ilusión-fiscal">Ilusión fiscal</h4>
+<p>Finalmente, la teoría de la ilusión fiscal de <span class="citation" data-cites="17_Buchanan1977">Buchanan y Wagner (<a href="01-tema-a1.html#ref-17_Buchanan1977" role="doc-biblioref">1977</a>)</span> explica que el aumento del gasto público se debe a que los ciudadanos están bajo ilusión fiscal, es decir, consideran que el coste del gasto público en términos de impuestos es inferior al coste efectivo, debido a los costes de información y la complejidad del sistema impositivo y fiscal.</p>
+</section>
+</section>
+<section id="teorías-de-oferta-y-demanda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="teorías-de-oferta-y-demanda">Teorías de Oferta y Demanda</h3>
+<p>Por otro lado, antes de pasar a analizar las teorías de oferta, analizaremos como caso híbrido particular la teoría de la enfermedad de <span class="citation" data-cites="17_Baumol1967">Baumol (<a href="01-tema-a1.html#ref-17_Baumol1967" role="doc-biblioref">1967</a>)</span> que explicaría el crecimiento del gasto público debido al efecto de los precios relativos crecientes y la existencia de una demanda con una reducida elasticidad-precio.</p>
+<p>Así, parte de considerar que la mayor parte de los servicios prestados por el sector público son intensivos en trabajo, como podría ser la educación o la justicia:</p>
+<ol type="1">
+<li><p>Como consecuencia, los aumentos de productividad en el sector público son menores que en el sector privado, en el que es más fácil aumentar la productividad sustituyendo trabajo por capital.</p></li>
+<li><p>Así, la productividad crece más despacio en el sector público. Sin embargo, los salarios del sector público crecen a un ritmo similar a los del sector privado.</p></li>
+<li><p>Derivado de los dos puntos anteriores, el precio relativo de los bienes y servicios públicos aumenta progresivamente respecto a los privados. Esto es lo que se conoce como “enfermedad de Baumol”.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p></li>
+</ol>
+<p>No obstante, el aumento del precio relativo no es suficiente, en principio, para explicar el aumento del gasto público, pues podría ocurrir que, al aumentar el precio, la demanda disminuyese y el gasto total incluso se redujese. Sin embargo, Baumol señala que la demanda de los bienes y servicios públicos tiene una reducida elasticidad-precio. Por tanto, al aumentar el precio, la cantidad demandada apenas disminuye, lo que provoca un aumento del gasto.</p>
+<p>Como crítica, esta teoría explica el aumento del gasto público nominal y, si la demanda es suficientemente inelástica, también el de su peso en el PIB nominal, pero no el aumento del gasto público en términos reales, es decir, de la cantidad de servicios públicos efectivamente provista.</p>
+</section>
+<section id="teorías-de-oferta" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="teorías-de-oferta">Teorías de Oferta</h3>
+<p>A continuación se analizarán las teorías del crecimiento del gasto público por el lado de la oferta.</p>
+<section id="presupuesto-incrementalista" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="presupuesto-incrementalista">Presupuesto incrementalista</h4>
+<p>Comenzando por la teoría del presupuesto incrementalista de <span class="citation" data-cites="17_Wildavsky1964">Wildavsky (<a href="01-tema-a1.html#ref-17_Wildavsky1964" role="doc-biblioref">1964</a>)</span> se basa en la idea de que la asignación de fondos para los programas de gasto público se realiza tomando como referencia el presupuesto del año anterior para decidir si se incrementa o se reduce el importe del gasto. Por consiguiente, se trata de una regla de decisión incrementalista que explica el aumento del gasto público en función de las decisiones pasadas.</p>
+<p>Analíticamente, la unidad administrativa al realizar su petición de fondos para el año <span class="math inline">\(t\)</span>, <span class="math inline">\(x_{t}\)</span>, toma como referencia los fondos que recibió en el ejercicio anterior, <span class="math inline">\(y_{t-1}\)</span>: <span id="eq-a-17-1"><span class="math display">\[x_{t}=\beta\cdot y_{t-1}+u_{t},\quad\beta&gt;1 \tag{17.1}\]</span></span> donde <span class="math inline">\(\beta\)</span> es superior a 1 y representa el parámetro con el que la unidad administrativa ajusta su petición de fondos a la dotación del año anterior, reflejando el interés en incrementar el presupuesto. Además, el término <span class="math inline">\(u_{t}\)</span> es una perturbación aleatoria que refleja factores no previstos que hacen que se incremente el presupuesto.</p>
+<p>Por su parte, el Ministerio de Hacienda , cuando recibe los anteproyectos parciales de cada departamento para elaborar el presupuesto agregado, <span class="math inline">\(y_{t}\)</span>, ajusta a la baja dichas solicitudes, concediendo una fracción <span class="math inline">\(\alpha\)</span>, que es inferior a 1, de las mismas: <span id="eq-a-17-2"><span class="math display">\[y_{t}=\alpha\cdot x_{t}+v_{t},\quad\alpha&lt;1 \tag{17.2}\]</span></span> donde <span class="math inline">\(v_{t}\)</span> representa otra perturbación aleatoria.</p>
+<p>El resultado, sustituyendo la regla de petición de fondos en la de dotación de fondos, es que el presupuesto dependerá del valor de <span class="math inline">\(\gamma=\alpha\cdot\beta\)</span>, que será más probable que sea superior a la unidad y por lo tanto incrementalista cuanto mayores sean las solicitudes de fondos respecto al año anterior, <span class="math inline">\(\beta\)</span>, y cuanto mayor sea la permisividad del Ministerio de Hacienda, <span class="math inline">\(\alpha\)</span>: <span id="eq-a-17-3"><span class="math display">\[y_{t}=\gamma\cdot y_{t-1}+z_{t} \tag{17.3}\]</span></span> donde <span class="math inline">\(z_{t}=\alpha\cdot u_{t}+v_{t}\)</span> combina las dos perturbaciones anteriores, la primera ponderada por la fracción concedida por Hacienda.</p>
+<p>No obstante, el enfoque de Wildavsky plantea limitaciones. Concretamente, <span class="citation" data-cites="17_Williamson1967">Williamson (<a href="01-tema-a1.html#ref-17_Williamson1967" role="doc-biblioref">1967</a>)</span> critica que las reglas de fijación de gasto solo dependen de las decisiones pasadas y no tienen en cuenta la existencia de procesos económicos y políticos que afectarán a los valores de los parámetros <span class="math inline">\(\alpha\)</span> y <span class="math inline">\(\beta\)</span> y que no están contemplados en la teoría.</p>
+</section>
+<section id="teorías-de-la-burocracia" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="teorías-de-la-burocracia">Teorías de la burocracia</h4>
+<p>Por otro lado, las teorías de la burocracia se centran en el papel de los burócratas y funcionarios en generar incrementos de gasto público</p>
+<p>Comenzando con la teoría de la burocracia de <span class="citation" data-cites="17_Niskanen1971">Niskanen (<a href="01-tema-a1.html#ref-17_Niskanen1971" role="doc-biblioref">1971</a>)</span>, parte de considerar que, al igual que en el sector privado la empresa trata de maximizar beneficios, en el sector público, los burócratas tendrán como objetivo maximizar su utilidad privada.</p>
+<p>Sin embargo, a diferencia del caso de una empresa, dada la naturaleza de su trabajo y las restricciones a las que se enfrenta el burócrata no podrá beneficiarse del mercado para elevar su renta. Por el contrario, obtendrá utilidad de otros factores que se pueden sintetizar suponiendo que la utilidad del burócrata dependerá del tamaño del presupuesto: a mayor presupuesto mayor utilidad, pues un mayor presupuesto le reportará un mayor prestigio, reputación e influencia. Así, los burócratas utilizarán cierto poder de monopolio para imponer sus preferencias sobre gasto a un legislador poco informado, al existir información asimétrica.</p>
+<p>Gráficamente, la teoría de la burocracia puede analizarse en un plano como el de la <a href="#fig-17-teoria-de-la-burocracia-de-niskanen" class="quarto-xref">Figura&nbsp;<span>17.1</span></a><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, que representa en el eje vertical el beneficio para el político de la provisión de un bien público, <span class="math inline">\(B\)</span>, y su coste de provisión, <span class="math inline">\(C\)</span>, y en el eje horizontal el nivel de producción del bien público, <span class="math inline">\(G\)</span>, que suministra un departamento. La función de costes del bien público, <span class="math inline">\(C\left(G\right)\)</span>, es creciente con el nivel de producción, con un coste marginal positivo y creciente. Dicha función no es conocida por el político y solo el burócrata conoce el proceso de provisión del bien público y, por tanto, su coste.</p>
+<p>Por otro lado, la función de beneficios para el político de la provisión del bien público, <span class="math inline">\(B\left(G\right)\)</span>, es creciente pero con un beneficio marginal positivo pero decreciente. Dicha función de beneficios representaría la utilidad del consumo del bien público que obtienen los votante y que redundaría en mayores posibilidades de reelección del político.</p>
+<p>Con información perfecta, es decir, si el político conociese los costes de provisión, el equilibrio se alcanzaría para un nivel del bien público <span class="math inline">\(G^{*}\)</span> en el que se iguale el coste marginal de provisión, dado por la pendiente de la tangente a la curva de costes para dicho nivel de gasto público, con el beneficio marginal, representado, a su vez, por la pendiente de la tangente a la curva de beneficios.</p>
+<p>Sin embargo, el burócrata, cuyo objetivo es maximizar el presupuesto, no tiene incentivos para revelar la información sobre el coste de provisión, lo que impide que el nivel de provisión sea <span class="math inline">\(G^{*}\)</span>. Ahora bien, se enfrenta a la restricción de que el coste de provisión no supere al beneficio que se obtiene del bien público, ya que el político no quiere un proyecto con beneficio neto negativo, <span class="math inline">\(B\left(G\right)\geq C\left(G\right).\)</span></p>
+<p>Por otro lado, si el burócrata elige un nivel de provisión en el que el coste es inferior al beneficio, <span class="math inline">\(B\left(G\right)&gt;C\left(G\right)\)</span>, estaría renunciando a un aumento del presupuesto. Por ello, dadas estas restricciones, el burócrata elige el nivel de provisión del bien público <span class="math inline">\(G^{B}\)</span>, en el que el beneficio total iguala al coste total, <span class="math inline">\(B\left(G^{B}\right)=C\left(G^{B}\right)\)</span>, y que es superior al que se suministraría si no existiera información asimétrica.</p>
+<div id="fig-17-teoria-de-la-burocracia-de-niskanen" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Teoría de la burocracia de Niskanen">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-17-teoria-de-la-burocracia-de-niskanen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;17.1: Teoría de la burocracia de Niskanen
+</figcaption>
+<div aria-describedby="fig-17-teoria-de-la-burocracia-de-niskanen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-17-17-t-buro-niskanen.svg" class="img-fluid figure-img" alt="Teoría de la burocracia de Niskanen">
+</div>
+</figure>
+</div>
+<p>Por lo tanto, el comportamiento de la burocracia llevaría a un aumento del gasto público y del presupuesto, que se vería incrementado aún más por la sobrestimación de los beneficios y de las estimaciones de costes.</p>
+<p>Este crecimiento excesivo del gasto público generaría una ineficiencia en la asignación de recursos, ya que se destinan recursos, como consecuencia del comportamiento de la burocracia, que no producen resultados lo suficientemente valiosos. Además, se produce la llamada ineficiencia X, debido a la falta de presión competitiva que hace que no se utilicen las técnicas más eficientes para producir, generándose así una ineficiencia productiva.</p>
+<p>Las soluciones a estos problemas de ineficiencia pasarían por:</p>
+<ol type="1">
+<li><p>Reforzar las mayorías necesarias para aprobar los programas de gasto público.</p></li>
+<li><p>Introducir competencia entre el sector público y el sector privado.</p></li>
+<li><p>Remunerar al burócrata y funcionarios de acuerdo a su productividad marginal. Sin embargo, esto resulta difícil ya que la producción del sector público no se vende en el mercado, sino que suele valorarse al coste de los factores.</p></li>
+<li><p>Separar el diseño de la ejecución (por ejemplo, encargar el análisis coste-beneficio a una agencia independiente, de manera que el sector público no pueda ya subestimar los costes y sobrestimar los beneficios de los proyectos públicos).</p></li>
+<li><p>Individualizar las responsabilidades de los burócratas para evitar que se diluyan.</p></li>
+<li><p>Presupuestos de base cero, en lugar de presupuesto incremental.</p></li>
+<li><p>Limitar el tamaño del sector público, mediante la implementación de la constitución fiscal que veremos más adelante.</p></li>
+</ol>
+<p>También cabe señalar que la teoría de la burocracia asume que no existen restricciones al comportamiento de los burócratas. Sin embargo, estas pueden venir dadas por presiones políticas o demandas de los ciudadanos.</p>
+<p>Además, hay que destacar otras dos teorías de la burocracia que analizan a los empleados públicos como votantes:</p>
+<ul>
+<li><p><span class="citation" data-cites="17_Bush1977">Bush y Denzau (<a href="01-tema-a1.html#ref-17_Bush1977" role="doc-biblioref">1977</a>)</span> plantean la importancia del comportamiento como votantes de los empleados públicos, los cuales tenderán a favorecer a los partidos cuyos programas propongan un aumento del gasto público, de los salarios públicos o una mayor estabilidad en el empleo público. La importancia de este efecto para explicar el incremento del gasto público dependerá del porcentaje que representen los empleados públicos sobre el total de votantes. Un ejemplo de esto se encuentra en España, con las crecientes Ofertas de Empleo Público<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p></li>
+<li><p><span class="citation" data-cites="17_Frey1982">Frey y Pommerehne (<a href="01-tema-a1.html#ref-17_Frey1982" role="doc-biblioref">1982</a>)</span> destacan que este efecto se puede ver amplificado ya que los empleados públicos tenderían a tener unas mayores tasas de participación electoral, de forma que tienden a tener un mayor peso entre los votantes que entre la población general.</p></li>
+</ul>
+</section>
+<section id="teorías-del-ciclo-político" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="teorías-del-ciclo-político">Teorías del ciclo político</h4>
+<p>Las teorías del ciclo político destacan la influencia de los procesos electorales y el objetivo de conseguir la reelección sobre la evolución del gasto público.</p>
+<p>El planteamiento inicial de <span class="citation" data-cites="17_Nordhaus1975">Nordhaus (<a href="01-tema-a1.html#ref-17_Nordhaus1975" role="doc-biblioref">1975</a>)</span> considera que si los votantes son miopes, es decir, deciden su voto en función de los resultados económicos obtenidos en el pasado reciente y sus expectativas son estáticas, el gobierno en el poder podría tener un comportamiento oportunista para aplicar políticas expansionistas. Dichas políticas darían lugar a incrementos del gasto público para generar una fase expansiva que corresponda con la duración de la legislatura, con una fase máxima de expansión justo antes de las elecciones.</p>
+<p>No obstante, la capacidad del gobierno de aplicar políticas de demanda expansivas con objetivos electorales dependerá de la frecuencia electoral y de la existencia de poderes compensadores fuertes como un banco central independiente, limitación de mandatos, mayorías cualificadas o parlamentos fragmentados. Por otro lado, esta teoría se critica ya que implica que el gobierno tiene un gran control sobre la amplitud y la sincronización de los ciclos económicos.</p>
+<p>Empíricamente, <span class="citation" data-cites="17_Frey1981">Frey y Schneider (<a href="01-tema-a1.html#ref-17_Frey1981" role="doc-biblioref">1981</a>)</span> encuentran que existe evidencia según la cual unas condiciones económicas positivas mejoran la popularidad del gobierno en el poder, pero <span class="citation" data-cites="17_Alesina1997">Alesina et&nbsp;al. (<a href="01-tema-a1.html#ref-17_Alesina1997" role="doc-biblioref">1997</a>)</span> concluyen que no hay evidencia de que el output y el desempleo sigan un ciclo político, pero la inflación sí tiende a incrementarse antes de las elecciones, lo que se puede explicar por las políticas expansivas para mejorar las perspectivas electorales.</p>
+</section>
+<section id="ideología-del-partido-gobernante" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="ideología-del-partido-gobernante">Ideología del partido gobernante</h4>
+<p>Por otro lado, <span class="citation" data-cites="17_Cameron1978">Cameron (<a href="01-tema-a1.html#ref-17_Cameron1978" role="doc-biblioref">1978</a>)</span> y <span class="citation" data-cites="17_Castles1982">Castles (<a href="01-tema-a1.html#ref-17_Castles1982" role="doc-biblioref">1982</a>)</span> plantean que las diferencias ideológicas entre los partidos progresistas y conservadores reflejan una diferencia en las preferencias colectivas por la provisión pública.</p>
+<p>Concretamente, los modelos de ideología del partido gobernante consideran que los partidos tienen diferentes funciones de pérdida dependiendo de la ideología<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>:</p>
+<ul>
+<li><p>Progresistas: tienden a favorecer un mayor gasto público, especialmente en áreas como el bienestar social, la sanidad y la educación, para lograr una mayor redistribución de la riqueza y reducir la desigualdad.</p></li>
+<li><p>Conservadores: tienden a abogar por un menor gasto público, una reducción de impuestos y la liberalización económica, priorizando la eficiencia del mercado.</p></li>
+</ul>
+<p>Sin embargo, esta teoría no está exenta de críticas. Así, en los países desarrollados existen restricciones institucionales, las preferencias del votante mediano<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> o las coaliciones, donde la ideología del partido mayoritario puede verse diluida por las exigencias de sus socios.</p>
+</section>
+<section id="descentralización-del-poder-político" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="descentralización-del-poder-político">Descentralización del poder político</h4>
+<p>Por su parte, <span class="citation" data-cites="17_Tarschys1975">Tarschys (<a href="01-tema-a1.html#ref-17_Tarschys1975" role="doc-biblioref">1975</a>)</span> propone que la descentralización puede dar lugar a un crecimiento del gasto público, ya que si no existe una división clara entre las competencias de los distintos niveles de gobierno se pueden producir solapamientos y duplicidades.</p>
+<p>Además, la descentralización facilitaría el incremento del gasto público por la dependencia de los gobiernos subcentrales de las transferencias a través del llamado efecto papel matamoscas, que implica que una transferencia incondicional de una unidad monetaria a una jurisdicción da lugar a un aumento del gasto público mayor que el que generaría un aumento de una unidad monetaria en la renta privada de sus residentes.</p>
+<p>Adicionalmente, si existe ilusión fiscal, de modo que el aumento de gasto público del gobierno subcentral no incrementa el precio de su provisión y la población no conozca el coste real del gasto al financiarse mediante transferencias, se reforzará la tendencia al crecimiento del gasto público.</p>
+<p>No obstante, cabe señalar como crítica que la descentralización del poder político podría ayudar a reducir el gasto público al permitir que se alcance una asignación de recursos más eficiente, pues los niveles inferiores de Gobierno conocen mejor las preferencias de los individuos.</p>
+</section>
+</section>
+</section>
+<section id="debate-sobre-el-tamaño-del-sector-público" class="level2" data-number="17.3">
+<h2 data-number="17.3" class="anchored" data-anchor-id="debate-sobre-el-tamaño-del-sector-público"><span class="header-section-number">17.3</span> Debate sobre el tamaño del Sector Público<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></h2>
+<p>El análisis de todas las teorías anteriores no constituye un todo integrado, pero ofrecen distintas explicaciones a la tendencia creciente del gasto. Esto hace que surja un debate sobre si el crecimiento del gasto público es excesivo y sobre cuál es el tamaño óptimo del sector público.</p>
+<p>Dicho debate está presente en toda la historia del pensamiento sin que exista una conclusión única, sino que las distintas escuelas de pensamiento con distinta relevancia histórica plantean diferentes enfoques</p>
+<section id="fisiócratas" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="fisiócratas">Fisiócratas</h3>
+<p>El objetivo de los fisiócratas del siglo XVIII era el desarrollo económico y centran su atención en la agricultura actividad que consideran como generadora de crecimiento y riqueza. Por consiguiente, el papel del sector público sería:</p>
+<ul>
+<li><p>La organización de cultivos mediante la sustitución de terratenientes por burguesía para capitalizar las explotaciones</p></li>
+<li><p>La defensa de las libertades económicas.</p></li>
+<li><p>Los gastos deberían ser solamente los indispensables para fomentar la producción agraria, como la seguridad o las obras públicas, y dicho gasto se financiarían mediante impuestos sobre la agricultura, se trataría de un único impuesto sobre el sector que se considera productivo.</p></li>
+</ul>
+</section>
+<section id="la-teoría-de-la-hacienda-pública-clásica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-teoría-de-la-hacienda-pública-clásica">La Teoría de la Hacienda Pública Clásica</h3>
+<p>La escuela clásica considera que el crecimiento económico a largo plazo solo es posible debido a la acción del libre mercado. Por ello, el Estado solo debería intervenir para permitir y fomentar la actividad del mercado es decir, la competencia y la acumulación de capital que actúan como fuerzas impulsoras del crecimiento.</p>
+<p>Adam Smith en el Libro V de su obra “La Riqueza de las Naciones” <span class="citation" data-cites="17_Smith1776">(<a href="01-tema-a1.html#ref-17_Smith1776" role="doc-biblioref">Smith 1776</a>)</span> establece los principios que considera deberían guiar la intervención del sector público:</p>
+<ul>
+<li><p>Respecto al gasto público, Smith plantea que el sector público debería realizar gastos de defensa y diplomacia así como los necesarios para mantener la seguridad y el orden público y la financiación de la justicia. Además, también debería financiar las obras públicas no rentables para la iniciativa privada.</p></li>
+<li><p>Por lo que se refiere a los impuestos deben ser neutrales, para no afectar al crecimiento económico, y exigirse con certeza, economicidad y comodidad. Smith se muestra contrario a la imposición sobre el ahorro, que afectaría a la financiación de la acumulación de capital, y define la justicia impositiva de acuerdo a:</p>
+<ul>
+<li><p>El principio de beneficio: según el cual el pago de impuestos tiene que estar en función del beneficio disfrutado bajo la protección del Estado.</p></li>
+<li><p>El principio de capacidad de pago: según el cual la contribución debe realizarse en función de la renta, independientemente de los beneficios que se obtengan de la intervención del Estado.</p></li>
+</ul></li>
+</ul>
+<p>Finalmente, Smith propugna el equilibrio presupuestario entre gastos e ingresos públicos lo que limitará el tamaño del Estado. La necesidad del equilibrio presupuestario se justifica por dos tipos de razones:</p>
+<ul>
+<li><p>Razones económicas: evitar que la existencia de déficit pueda condicionar las decisiones de acumulación de capital y de trabajo.</p></li>
+<li><p>Razones políticas ya que el déficit sería un elemento distorsionador en las decisiones políticas.</p></li>
+</ul>
+<p>No obstante, plantea como excepción la regla de oro de la Hacienda Pública clásica que admite la existencia de déficit para financiar las inversiones que sean autoliquidables, es decir, aquellas cuya rentabilidad permite pagar intereses y reembolsar los préstamos.</p>
+<p>Cabe destacar que dentro de la escuela clásica otros autores plantean ciertos matices sobre los postulados de Smith:</p>
+<ul>
+<li><p>Malthus<span class="citation" data-cites="17_Malthus1820">(<a href="01-tema-a1.html#ref-17_Malthus1820" role="doc-biblioref">1820</a>)</span> plantea la posibilidad de que existan insuficiencias de la demanda efectiva, que podría corregirse con el incremento del gasto público.</p></li>
+<li><p>John Stuart Mill<span class="citation" data-cites="17_Mill1848">(<a href="01-tema-a1.html#ref-17_Mill1848" role="doc-biblioref">1848</a>)</span> y Bentham<span class="citation" data-cites="17_Bentham1789">(<a href="01-tema-a1.html#ref-17_Bentham1789" role="doc-biblioref">1789</a>)</span> destacan la importancia de asegurar la igualdad de oportunidades, para lo que sería necesario introducir figuras impositivas como la imposición sobre la herencia.</p></li>
+</ul>
+</section>
+<section id="la-hacienda-pública-alemana" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-hacienda-pública-alemana">La Hacienda Pública Alemana</h3>
+<p>Del mismo modo, la Hacienda Pública Alemana acepta los principios presupuestarios clásicos pero plantea una distribución del gasto diferente, ya que se opone al individualismo liberal y propugna un programa de reformas sociales y políticas fiscales distributivas como medio para incrementar el bienestar social. Así, el gasto se debería dirigir también al impulso al desarrollo y la corrección de las desigualdades sociales.</p>
+</section>
+<section id="la-escuela-marginalista-y-la-neoclásica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-escuela-marginalista-y-la-neoclásica">La Escuela Marginalista y la Neoclásica</h3>
+<p>Por otro lado, la teoría de la economía del bienestar desarrollada por Marshall, Pigou y Edgeworth define la necesidad de la intervención del Estado en aquellas situaciones en las que la competencia no consiga maximizar el bienestar.</p>
+<p>Así, el tamaño del sector público estaría determinado por el hecho de que los ingresos y gastos públicos deberían ser suficientes para contribuir a corregir los fallos de la asignación de recursos y a mejorar la distribución de la renta. Esto exige conocer los efectos de impuestos y gastos públicos para evitar los efectos desincentivos y aplicar un criterio de justicia fiscal basada en la maximización del bienestar social y en el principio igualdad de sacrificio</p>
+</section>
+<section id="la-hacienda-pública-keynesiana" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-hacienda-pública-keynesiana">La Hacienda Pública Keynesiana</h3>
+<p>Keynes en su obra la “Teoría General de la Ocupación, el Interés y el Dinero” <span class="citation" data-cites="17_Keynes1936">(<a href="01-tema-a1.html#ref-17_Keynes1936" role="doc-biblioref">Keynes 1936</a>)</span> plantea el rechazo de la Ley de Say, aceptada por los economistas clásicos, así como de otros postulados clásicos y defiende la necesidad de la intervención del sector público para estabilizar la economía mediante el incremento de la demanda agregada, a través del aumento del gasto público que actuaría como un mecanismo para incrementar la renta y reducir el desempleo.</p>
+<p>Por consiguiente, la estabilización macroeconómica justificaría el aumento del gasto público y del tamaño del sector público. Keynes considera que la acción única de las fuerzas de mercado no conduce por sí sola a un equilibrio de pleno empleo y que la política fiscal sería más efectiva que otras políticas económicas para estabilizar la economía y generar expansiones de la renta, vía efecto multiplicador.</p>
+<p>No obstante, la teoría keynesiana se enfrenta a una serie de críticas como la existencia de efectos crowding-out, por los que la actividad del sector público expulsa la actividad privada, las limitaciones del sector público por el funcionamiento de la burocracia, los problemas de información y de revelación de preferencias y las dudas de la efectividad de la política fiscal en un contexto de expectativas racionales</p>
+<p>A pesar de las críticas, la teoría keynesiana constituyó la corriente dominante de pensamiento económico desde la Segunda Guerra Mundial hasta los años 70, por lo que la política fiscal se convierte en elemento de estabilización de la economía y, en conjunción con la política monetaria, se utilizan para evitar la inestabilidad del mercado que genera inflación y desempleo y estimular la demanda efectiva de modo que aumente la renta y el empleo.</p>
+</section>
+<section id="la-síntesis-de-musgrave" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-síntesis-de-musgrave">La síntesis de Musgrave</h3>
+<p>Por otro lado, <span class="citation" data-cites="17_Musgrave1959">Musgrave (<a href="01-tema-a1.html#ref-17_Musgrave1959" role="doc-biblioref">1959</a>)</span> incorpora el pensamiento económico keynesiano y la economía del bienestar para justificar que sector público debe intervenir en la economía por tres razones:</p>
+<ol type="1">
+<li><p>Función de asignación, es decir, alcanzar la eficiencia corrigiendo fallos de mercado, de acuerdo con la visión neoclásica.</p></li>
+<li><p>Función de distribución, para conseguir la equidad, según la visión de autores como Mill, Wagner o Wicksell.</p></li>
+<li><p>Función de estabilización, para suavizar las fluctuaciones cíclicas, de acuerdo con la visión keynesiana.</p></li>
+</ol>
+<p>Este enfoque de Musgrave es la base del desarrollo del Estado del Bienestar y del incremento del gasto público en las economías occidentales en los años 60 y 70.</p>
+</section>
+<section id="el-enfoque-del-crecimiento-económico" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="el-enfoque-del-crecimiento-económico">El enfoque del crecimiento económico</h3>
+<p>Frente al enfoque normativo de Musgrave sobre las funciones del Sector Público, la literatura del crecimiento económico ofrecería, ya en los años 90, una respuesta positiva y formal a la pregunta del tamaño óptimo.&nbsp;<span class="citation" data-cites="17_Barro1990">Barro (<a href="01-tema-a1.html#ref-17_Barro1990" role="doc-biblioref">1990</a>)</span> amplía un modelo de crecimiento endógeno incorporando los servicios públicos,&nbsp;<span class="math inline">\(g\)</span>, como un input productivo de la función de producción privada, de forma que la tasa de crecimiento del capital,&nbsp;<span class="math inline">\(\gamma_{k_{t}}\)</span>, depende de la ratio de gasto público sobre el PIB,&nbsp;<span class="math inline">\(\tau_{Y}=g/Y\)</span>.</p>
+<p>Un aumento de&nbsp;<span class="math inline">\(\tau_{Y}\)</span> tiene dos efectos de signo contrario sobre el crecimiento: por un lado, eleva la productividad marginal del capital privado al complementarlo con más servicios públicos; por otro, exige una mayor imposición distorsionadora para financiarlo. El primer efecto domina cuando el Sector Público es pequeño y el segundo cuando es grande, por lo que la relación entre&nbsp;<span class="math inline">\(\tau_{Y}\)</span> y&nbsp;<span class="math inline">\(\gamma_{k_{t}}\)</span> tiene forma de U invertida (<a href="#fig-17-modelo-de-barro" class="quarto-xref">Figura&nbsp;<span>17.2</span></a>). Bajo una tecnología Cobb-Douglas,&nbsp;<span class="math inline">\(y=A\cdot k^{\alpha}\cdot g^{1-\alpha}\)</span>, con&nbsp;<span class="math inline">\(\alpha\)</span> la elasticidad-producto del capital privado, el tamaño del Sector Público que maximiza el crecimiento coincide con la elasticidad-producto de los servicios públicos,&nbsp;<span class="math inline">\(\tau^{*}_{Y}=1-\alpha\)</span>: el Estado maximiza el crecimiento fijando su participación en el PIB igual a la que tendrían los servicios públicos si se contratasen de forma competitiva.</p>
+<div id="fig-17-modelo-de-barro" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Tamaño del Sector Público y crecimiento económico: el modelo de Barro (1990)">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-17-modelo-de-barro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;17.2: Tamaño del Sector Público y crecimiento económico: el modelo de Barro (1990)
+</figcaption>
+<div aria-describedby="fig-17-modelo-de-barro-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-17-17-modelo-de-barro-gasto-publico-y-crecimiento.svg" class="img-fluid figure-img" alt="Tamaño del Sector Público y crecimiento económico: el modelo de Barro (1990)">
+</div>
+</figure>
+</div>
+<p>Esta relación en forma de U invertida entre tamaño del Sector Público y crecimiento se popularizaría después de forma más empírica como curva de Armey, o curva BARS —por Barro, Armey, Rahn y Scully—, que estima directamente el punto de máximo crecimiento a partir de datos reales. En esta línea,&nbsp;<span class="citation" data-cites="17_VedderGallaway1998">Vedder y Gallaway (<a href="01-tema-a1.html#ref-17_VedderGallaway1998" role="doc-biblioref">1998</a>)</span> estiman para Estados Unidos un tamaño óptimo del Sector Público en torno al 17,5% del PIB, sensiblemente inferior al gasto público efectivo del país.</p>
+</section>
+</section>
+<section id="la-constitución-fiscal" class="level2" data-number="17.4">
+<h2 data-number="17.4" class="anchored" data-anchor-id="la-constitución-fiscal"><span class="header-section-number">17.4</span> La Constitución Fiscal <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></h2>
+<p>Precisamente, la crisis económica de los años 70 hace que se cuestione el tamaño de sector público, es la denominada por <span class="citation" data-cites="17_Tarschys1983">Tarschys (<a href="01-tema-a1.html#ref-17_Tarschys1983" role="doc-biblioref">1983</a>)</span> como “crisis de las tijeras”<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>:</p>
+<ul>
+<li><p>Por el lado de los impuestos, se reducen los ingresos debido a la evasión, a los costes de control y los efectos desincentivos.</p></li>
+<li><p>Por el lado del gasto, aumenta el gasto público debido a la crisis económica que incrementa los gastos del Estado del Bienestar, lo que junto al reducido crecimiento de la productividad marginal de sector público llevan a problemas de sostenibilidad y a la llamada crisis del Estado de Bienestar.</p></li>
+</ul>
+<p>Por tanto, los problemas del Estado de Bienestar plantean el debate sobre la expansión excesiva del gasto público y del tamaño del sector público.</p>
+<p>Así, <span class="citation" data-cites="17_Brennan1980">Brennan y Buchanan (<a href="01-tema-a1.html#ref-17_Brennan1980" role="doc-biblioref">1980</a>)</span> plantean que el sector público se convertirá en un moderno Leviatán<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> lo que dará lugar a la sobre-expansión de su actividad financiera y fiscal, generando la expulsión de la actividad privada ante la excesiva carga impositiva.</p>
+<p>Como analizamos anteriormente, la sobre-expansión del sector público se derivaría del proceso de elección social, por la toma de decisiones de acuerdo a la regla de mayoría simple, la existencia de ilusión financiera y fiscal, el poder de monopolio de burócratas y la redistribución de la renta a través del presupuesto.</p>
+<p><span class="citation" data-cites="17_Brennan1980">Brennan y Buchanan (<a href="01-tema-a1.html#ref-17_Brennan1980" role="doc-biblioref">1980</a>)</span> abordan la cuestión de la sobre-expansión de la actividad financiera y fiscal del sector público y, ante la incapacidad del votante para tener un control directo y regular sobre la actividad de los burócratas, plantean la necesidad de establecer límites constitucionales al “poder fiscal” del Estado.</p>
+<p>De esta forma, la constitución fiscal es un mandato legal (a veces, constitucional) que establece límites a la discrecionalidad de la política fiscal <span class="citation" data-cites="17_Brennan2005">(<a href="01-tema-a1.html#ref-17_Brennan2005" role="doc-biblioref">Brennan y Eusepi 2005</a>)</span> y protege, además, la equidad intergeneracional, al impedir que las generaciones presentes trasladen cargas excesivas a las futuras. Principios que deben guiar la constitución fiscal:</p>
+<ol type="1">
+<li><p>Realismo.</p></li>
+<li><p>Consenso.</p></li>
+<li><p>Flexibilidad.</p></li>
+<li><p>Claridad y sencillez.</p></li>
+</ol>
+<section id="modalidades-de-constitución-fiscal" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="modalidades-de-constitución-fiscal">Modalidades de Constitución Fiscal</h3>
+<p>Existen diferentes modalidades:</p>
+<ol type="1">
+<li><p>Techo de déficit público: los presupuestos deben contemplar, en su elaboración y ejecución, un nivel de gastos que no sea superior al de ingresos (por ejemplo, el artículo 135 de la Constitución Española). Equilibrio presupuestario defendido por los clásicos y por Buchanan, siendo esta la regla y teoría más antigua<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>.</p></li>
+<li><p>Techo de gasto público. Se puede definir un límite en términos absolutos o al crecimiento relacionado con algún índice (por ejemplo, la directriz agrícola del Paquete Delors de 1988, la regla de gasto de la LOEPSF de 2012 o la regla de gasto del PEC).</p></li>
+<li><p>Techo a la capacidad de gravamen <span class="citation" data-cites="17_Brennan1980">Brennan y Buchanan (<a href="01-tema-a1.html#ref-17_Brennan1980" role="doc-biblioref">1980</a>)</span>. Plantean que el control sobre los burócratas por el lado del gasto es muy difícil, por lo que el control deberá ejercerse mediante límites al diseño de la estructura impositiva, para lo que proponen<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>:</p>
+<ul>
+<li><p>Bases imponibles reducidas y elásticas de impuestos, que deben preferirse sobre bases amplias y menos sensibles.</p></li>
+<li><p>Uniformidad impositiva, mediante una estructura proporcional para limitar los poderes del burócrata que puede alterar la progresividad para extraer excedente a los votantes.</p></li>
+<li><p>Para asegurar la provisión eficiente de bienes públicos las bases impositivas deben ligarse a un servicio público complementario. Por ejemplo, el gasto en carreteras a la imposición sobre los carburantes.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p></li>
+<li><p>Principio de presupuesto equilibrado y límites a la imposición sobre el capital, para limitar la capacidad de los gobiernos actuales de extraer recursos de generaciones futuras.</p></li>
+</ul></li>
+<li><p>Veto del Gobierno a partidas de aumento de gasto. Requisito de mayorías cualificadas.</p></li>
+<li><p>Federalismo fiscal: correspondencia fiscal en los distintos niveles administrativos, de forma que tengan el mismo grado de autonomía por el lado del gasto que por el lado de los ingresos.</p></li>
+<li><p>Competencia fiscal entre las administraciones del mismo nivel administrativo (por ejemplo, entre Comunidades autónomas, entre ayuntamientos, etc.), de manera que el “voto con los pies” de los ciudadanos les incite a limitar el crecimiento del gasto público para poder ofrecer una fiscalidad ventajosa.</p></li>
+<li><p>Autoridades fiscales independientes. Al igual que han surgido autoridades monetarias independientes como los bancos centrales, ajenas al ciclo político, no sometidas a los grupos de presión y con un objetivo determinado, Alan Blinder&nbsp;<span class="citation" data-cites="17_Blinder2004">(<a href="01-tema-a1.html#ref-17_Blinder2004" role="doc-biblioref">Blinder 2004</a>)</span> propone crear autoridades fiscales independientes con perfil técnico (por ejemplo, la AIReF o el Two-Pack).</p></li>
+</ol>
+<p>Formalmente, y por analogía directa con el “banquero central conservador” de&nbsp;<span class="citation" data-cites="17_Rogoff1985">Rogoff (<a href="01-tema-a1.html#ref-17_Rogoff1985" role="doc-biblioref">1985</a>)</span>, cabe modelizar a esta autoridad fiscal conservadora como un agente que minimiza una función de pérdida cuadrática, <span class="math display">\[\min_{d_{t}}L=\left(Y_{t}-Y^{*}\right)^{2}+\delta\cdot\left(d_{t}-d^{*}\right)^{2},\]</span> donde&nbsp;<span class="math inline">\(d_{t}\)</span> es el déficit público del período,&nbsp;<span class="math inline">\(d^{*}\)</span> su objetivo de largo plazo, e&nbsp;<span class="math inline">\(Y_{t}\)</span> el nivel de actividad, con su objetivo&nbsp;<span class="math inline">\(Y^{*}\)</span>. El parámetro&nbsp;<span class="math inline">\(\delta\)</span> recoge la aversión de la autoridad al desvío respecto de su objetivo de déficit, igual que el parámetro análogo en el modelo de Rogoff recoge la aversión del banquero central al desvío de su objetivo de inflación: cuanto mayor sea&nbsp;<span class="math inline">\(\delta\)</span>, más se aproximará el déficit de equilibrio a su objetivo <span class="math inline">\(d^{*}\)</span>, corrigiendo el sesgo deficitario de la política discrecional, a costa de sacrificar parte de la capacidad estabilizadora automática del presupuesto ante perturbaciones coyunturales de la actividad.</p>
+</section>
+<section id="ejemplos-de-constitución-fiscal" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="ejemplos-de-constitución-fiscal">Ejemplos de Constitución Fiscal</h3>
+<p><span class="citation" data-cites="17_Albi2017">Albi Ibáñez et&nbsp;al. (<a href="01-tema-a1.html#ref-17_Albi2017" role="doc-biblioref">2017</a>)</span> señalan los cambios legislativos efectuados en España, que incluyen:</p>
+<ul>
+<li><p>La reforma del artículo 135 de la Constitución Española en 2011, que otorga rango constitucional al principio de estabilidad presupuestaria, que se vincula al cumplimiento de los límites máximos establecidos por ley para el déficit estructural del Estado y de las Comunidades Autónomas en relación con el PIB, y a la garantía de equilibrio presupuestario de las Entidades Locales. Asimismo, el artículo 135 establece que el volumen de deuda pública del conjunto de las Administraciones Públicas en relación con el PIB no podrá superar los límites establecidos por el Tratado de Funcionamiento de la Unión Europea, y concede prioridad absoluta al pago de los intereses y el capital de la deuda pública. Por último, la reforma constitucional introduce una cláusula de salvaguarda, por la cual los límites de déficit estructural y deuda pública pueden superarse con el apoyo de la mayoría absoluta de los miembros del Congreso en caso de circunstancias excepcionales (catástrofes naturales, recesión económica o situaciones de emergencia extraordinaria), que pongan en peligro la sostenibilidad económica o social del Estado.</p></li>
+<li><p>La aprobación de la Ley Orgánica de Estabilidad Presupuestaria y Sostenibilidad Financiera (LOEPSF) en 2012, consagra los principios de estabilidad presupuestaria y sostenibilidad financiera y establece como principio rector el de plurianualidad, que exige que los presupuestos públicos se encuadren en un marco presupuestario a medio plazo (y del que se deriva la ya citada regla de gasto)<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>.</p></li>
+<li><p>La creación de la Autoridad Independiente de Responsabilidad Fiscal (AIReF) en 2013, creada como instrumento dentro del marco de gobernanza reforzada de la UE , una de sus tareas consiste en la evaluación continua del ciclo presupuestario, como forma de velar por el estricto cumplimiento de los principios de estabilidad presupuestaria y sostenibilidad financiera, y somete a escrutinio la actividad fiscal y presupuestaria de las AA.PP.</p></li>
+</ul>
+<p>En el ámbito europeo junto con la reciente reforma de las reglas fiscales en 2024<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>:</p>
+<ul>
+<li><p>Pacto de Estabilidad y Crecimiento (PEC reformado 2024) El nuevo marco del Pacto de Estabilidad y Crecimiento busca un equilibrio entre la disciplina fiscal y la capacidad de los Estados miembros para invertir y realizar reformas. Su funcionamiento se basa en dos brazos, pero con un enfoque renovado.</p></li>
+<li><p>Brazo Preventivo: El objetivo sigue siendo prevenir políticas fiscales insostenibles, pero ahora se centra en planes fiscales individualizados. Los países deben presentar Planes Fiscales y Estructurales de Medio Plazo que detallen una senda de ajuste fiscal.</p>
+<ul>
+<li><p>Senda de gasto neto: La variable principal de seguimiento ya no es el MTO, sino el gasto público neto. Este se establece para cada país en función de su nivel de deuda y se acuerda con la Comisión Europea. El plan tiene una duración de 4 años, ampliable a 7 si se incluyen inversiones y reformas estratégicas.</p></li>
+<li><p>Regla de gasto: La nueva regla de gasto es el pilar del brazo preventivo, ya que el control del gasto neto es la forma en que los países deben garantizar la sostenibilidad de sus finanzas.</p></li>
+</ul></li>
+<li><p>Brazo Correctivo: Este brazo se activa cuando un país ya ha superado los umbrales de déficit o deuda.</p>
+<ul>
+<li><p>Déficit y Deuda: Se mantienen los límites de referencia del 3% del PIB para el déficit y del 60% del PIB para la deuda. Si un país incumple estos límites, se activa un Procedimiento por Déficit Excesivo (PDE).</p></li>
+<li><p>Ajuste estructural: El PDE exige un ajuste estructural mínimo del 0,5% del PIB anual hasta que el déficit se corrija. Sin embargo, la activación del PDE ahora también puede ocurrir si un país se desvía de su senda de gasto neto acordada.</p></li>
+</ul></li>
+<li><p>Fiscal Compact (Tratado de Estabilidad, Coordinación y Gobernanza) El Fiscal Compact, que nació en 2012 para reforzar la disciplina fiscal, también se ha visto afectado por la reforma de 2024.</p>
+<ul>
+<li><p>Objetivos del Fiscal Compact: Las nuevas reglas fiscales integran gran parte de los objetivos del Fiscal Compact en el marco general de la UE, incluyendo la regla de equilibrio presupuestario estructural. Esto significa que las reglas ahora tienen un estatus legal más sólido en el derecho de la UE.</p></li>
+<li><p>Autoridades Fiscales Independientes: El rol de las autoridades fiscales independientes, como la AIReF en España, se ha reforzado. Estas instituciones son cruciales para supervisar el cumplimiento de las sendas de gasto y dar credibilidad a los planes fiscales de los gobiernos.</p></li>
+<li><p>Mecanismo corrector automático: El principio del mecanismo corrector se mantiene, pero ahora se materializa a través de las sendas de gasto netas. Las desviaciones de esta senda activan mecanismos de corrección dentro del brazo preventivo o correctivo del nuevo marco fiscal.</p></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="17.5">
+<h2 data-number="17.5" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">17.5</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, en el debate sobre el tamaño del sector público existen 2 posturas:</p>
+<ol type="1">
+<li><p>Optimista: sostiene que el Estado es un garante esencial de servicios (sanidad, educación), corrige fallos de mercado y fomenta el progreso técnico y el capital humano. Por tanto, es clave para el desarrollo económico y la igualdad.</p></li>
+<li><p>Pesimista: señala el problema del crowding-out (desplazamiento de la inversión privada), ineficiencias burocráticas y el riesgo moral derivado de los diferentes grupos de interés, por lo que el gasto público no siempre responde al interés general.</p></li>
+</ol>
+<p>No obstante, la clave está en la evaluación del gasto y en la constante rendición de cuentas, por lo que el debate debe centrarse en la eficacia de las políticas públicas.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-reducción-de-gastos-partida-a-partida" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-reducción-de-gastos-partida-a-partida">17.A.1.&nbsp;&nbsp;Reducción de gastos partida a partida</h3>
+<p>La reducción de gastos partida a partida consiste en el recorte selectivo de líneas concretas del presupuesto. Es el método más utilizado en la práctica —resulta política y administrativamente más sencillo que rediseñar el presupuesto en su conjunto—, pero también uno de los menos eficaces: la mayor parte del gasto público está comprometido de antemano por obligaciones legales o contractuales —pensiones, salarios públicos, servicio de la deuda—, por lo que los recortes recaen sobre una fracción reducida y discrecional del presupuesto. Las reducciones que resultan practicables son, en consecuencia, de escasa cuantía, y no logran por sí solas constituir un freno real al crecimiento global del gasto.</p>
+</section>
+<section id="a.2.-presupuesto-plurianual" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-presupuesto-plurianual">17.A.2.&nbsp;&nbsp;Presupuesto plurianual</h3>
+<p>La técnica del presupuesto plurianual sustituye la confección anual del presupuesto —uno de los principios de la Hacienda Pública clásica— por una programación a varios años vista. Frente al presupuesto anual, presenta la ventaja de visibilizar los costes futuros de los programas de gasto que se ponen en marcha, corrigiendo el sesgo de visión a corto plazo propio de la presupuestación año a año.</p>
+<p>No obstante, la experiencia británica del Public Expenditure Survey Committee (PESC)&nbsp;<span class="citation" data-cites="17_Clarke1978">(<a href="01-tema-a1.html#ref-17_Clarke1978" role="doc-biblioref">Clarke 1978</a>)</span> muestra que la presupuestación plurianual tampoco está exenta de inconvenientes:</p>
+<ul>
+<li><p>Los compromisos de reducción del gasto adquiridos para los ejercicios futuros del ciclo plurianual rara vez se cumplen, por lo que raramente se traducen en una reducción efectiva del gasto del año en curso.</p></li>
+<li><p>El papel de la inflación cobra especial importancia, sobre todo cuando la presupuestación se realiza en términos de volumen.</p></li>
+<li><p>Resulta más difícil prescindir de un gasto determinado una vez que ya ha sido incluido en el presupuesto.</p></li>
+<li><p>Cuanto más prolongado es el periodo de programación, menor es el control efectivo sobre el gasto.</p></li>
+<li><p>La estabilidad de los organismos públicos exige, en ocasiones, renunciar a imponer límites estrictos en un año dado.</p></li>
+</ul>
+</section>
+<section id="a.3.-presupuesto-base-cero" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-presupuesto-base-cero">17.A.3.&nbsp;&nbsp;Presupuesto Base Cero</h3>
+<p>El Presupuesto Base Cero (PBC) es una técnica presupuestaria propuesta originalmente por&nbsp;<span class="citation" data-cites="17_Pyhrr1970">Pyhrr (<a href="01-tema-a1.html#ref-17_Pyhrr1970" role="doc-biblioref">1970</a>)</span> a partir de su experiencia en Texas Instruments y adoptada después por distintas administraciones públicas, entre ellas la del estado de Georgia durante el mandato de Jimmy Carter como gobernador. Frente al presupuesto incrementalista de Wildavsky, ya analizado, en el que cada partida se dota tomando como referencia la del ejercicio anterior, el PBC exige justificar cada partida desde cero en cada ejercicio presupuestario, ordenando los programas de gasto por prioridad. Esto permite recortar con seguridad los programas de menor prioridad, sin depender de la inercia de decisiones pasadas que caracteriza al presupuesto incrementalista.</p>
+</section>
+<section id="a.4.-determinación-del-volumen-del-presupuesto" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-determinación-del-volumen-del-presupuesto">17.A.4.&nbsp;&nbsp;Determinación del volumen del presupuesto</h3>
+<p>Determinar el presupuesto en términos de volumen de bienes y servicios prestados, en lugar de en términos nominales, evita que la inflación por sí sola incremente el gasto público sin que aumente realmente la provisión de bienes y servicios: si el presupuesto se fija en términos nominales, cualquier repunte de precios eleva automáticamente el gasto contable aunque la cantidad real provista permanezca constante, generando una suerte de ilusión fiscal por el lado del gasto —el gasto parece crecer sin que la sociedad reciba más a cambio—. Fijarlo en términos de volumen corrige este sesgo: solo un incremento efectivo de la cantidad o calidad de los servicios prestados justificaría un mayor presupuesto, con independencia de la evolución de los precios.</p>
+</section>
+<section id="a.5.-clasificación-del-gasto-público" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-clasificación-del-gasto-público">17.A.5.&nbsp;&nbsp;Clasificación del gasto público</h3>
+<p>El gasto público puede definirse como el conjunto de flujos de recursos que las Administraciones Públicas destinan a la producción de bienes y servicios y a la redistribución de la renta, financiados fundamentalmente mediante ingresos coactivos —impuestos y cotizaciones sociales. Sin embargo, antes de clasificar el gasto conviene delimitar con precisión su ámbito, distinguiendo entre las Administraciones Públicas propiamente dichas y el Sector Público en sentido amplio.</p>
+<p>El Sistema Europeo de Cuentas (SEC-2010), aprobado por el Reglamento (UE) n.º 549/2013, define las Administraciones Públicas (AAPP, sector S.13) como el conjunto de unidades institucionales cuya función principal es producir bienes y servicios no destinados a la venta y efectuar operaciones de redistribución de la renta, financiadas fundamentalmente mediante pagos obligatorios (impuestos y cotizaciones sociales). El Sector Público en sentido amplio añade además las empresas públicas cuya producción sí es de mercado —aquellas cuyas ventas cubren al menos el 50% de sus costes de producción, el llamado criterio del 50%—, que quedan fuera del perímetro de las AAPP. Esta distinción no es meramente formal: cuando se habla de déficit o deuda pública, la Contabilidad Nacional se refiere siempre al sector AAPP, nunca al Sector Público en sentido amplio.</p>
+<p>Delimitado así el gasto de las AAPP, puede clasificarse según un triple criterio, cada uno respondiendo a una pregunta distinta:</p>
+<ul>
+<li><p>Clasificación orgánica — responde a “¿quién gasta?”. Identifica la unidad responsable de la gestión y ejecución de cada crédito, agrupando el gasto por secciones y servicios entre los distintos centros gestores: la Administración Central (Estado y organismos autónomos), las Administraciones Territoriales (Comunidades Autónomas y Corporaciones Locales) y los Fondos de la Seguridad Social.</p></li>
+<li><p>Clasificación económica — responde a “¿cómo se gasta?”. Es la adoptada por los Presupuestos Generales del Estado (regulada por la Ley General Presupuestaria, Ley 47/2003) mediante capítulos, con un segundo nivel de artículo y un tercero de concepto: operaciones corrientes no financieras (personal, bienes y servicios, gastos financieros, transferencias corrientes, fondo de contingencia) y operaciones de capital (inversiones reales, transferencias de capital), a las que se añaden las operaciones financieras (activos y pasivos financieros).</p></li>
+<li><p>Clasificación funcional — responde a “¿para qué se gasta?”. Agrupa el gasto en políticas y áreas de gasto (servicios públicos básicos, actuaciones de protección y promoción social, producción de bienes públicos de carácter preferente, actuaciones de carácter económico y actuaciones de carácter general). Su equivalente armonizado a nivel internacional es la clasificación COFOG (<em>Classification of the Functions of Government</em>, Naciones Unidas, 1999), que distingue diez funciones —servicios públicos generales, defensa, orden público y seguridad, asuntos económicos, protección del medio ambiente, vivienda, sanidad, ocio y cultura, educación y protección social— y resulta especialmente útil para las comparaciones internacionales, al no depender de la clasificación presupuestaria propia de cada país. Conviene señalar que la correspondencia entre la clasificación funcional española y la COFOG no es exacta —por ejemplo, la COFOG separa “vivienda y servicios comunitarios” como función propia, mientras que la clasificación española integra el acceso a la vivienda dentro de las “actuaciones de protección y promoción social”—, razón por la que las comparaciones internacionales de composición del gasto se realizan siempre sobre datos COFOG.</p></li>
+</ul>
+</section>
+<section id="a.6.-los-spending-reviews-como-instrumento-de-evaluación-del-gasto" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-los-spending-reviews-como-instrumento-de-evaluación-del-gasto">17.A.6.&nbsp;&nbsp;Los&nbsp;<em>spending reviews</em> como instrumento de evaluación del gasto</h3>
+<p>Junto a los mecanismos de limitación del gasto ya vistos, la disciplina presupuestaria moderna ha incorporado los&nbsp;<em>spending reviews</em> —exámenes sistemáticos de la eficacia y eficiencia de las políticas de gasto, con el objetivo de identificar partidas prescindibles y mejorar la asignación de recursos— como complemento a los controles puramente cuantitativos sobre el déficit y el gasto agregado. La OCDE, a través de su Grupo de Trabajo de Altos Funcionarios Presupuestarios (desde 1980), incluye la realización de&nbsp;<em>spending reviews</em> regulares como uno de los diez principios de su marco de buena institucionalidad presupuestaria, y promueve el análisis de&nbsp;<em>value for money</em>: si las políticas cumplen los objetivos para los que fueron diseñadas y al menor coste posible. Según su informe&nbsp;<em>Government at a Glance</em> (2023), 34 de los 35 países miembros encuestados —el 97%— ya habían implantado esta práctica, lo que confirma su carácter prácticamente universal entre las economías avanzadas.</p>
+<p>El origen del término se sitúa en el Reino Unido, con el&nbsp;<em>Comprehensive Spending Review</em> introducido por el entonces canciller Gordon Brown en 1998. Dinamarca y Países Bajos son pioneros, con prácticas sistemáticas desde los años 80 —si bien en el caso danés los informes se publican solo raramente, a diferencia de la transparencia pública que caracteriza al modelo español—; Irlanda los introdujo en 2009, tras la crisis financiera, a través de una red propia de especialistas (el IGEES); y Francia estableció sus&nbsp;<em>revues de dépenses</em> en 2008, hoy obligatorias con periodicidad anual. En Estados Unidos coexisten dos instituciones con papeles distintos que conviene no confundir: la&nbsp;<em>Congressional Budget Office</em> (CBO), del poder legislativo y no partidista, se limita a estimar el coste presupuestario de las leyes en tramitación y a elaborar proyecciones macro-fiscales —mira hacia adelante, no evalúa el gasto ya ejecutado—, por lo que su función se asemeja más a la de vigilancia presupuestaria de una autoridad fiscal independiente que a la de un&nbsp;<em>spending review</em> propiamente dicho. La evaluación de políticas de gasto ya en marcha recae, en cambio, en la&nbsp;<em>Government Accountability Office</em> (GAO), brazo investigador del Congreso que examina el uso real de los fondos públicos, y en la ya extinta&nbsp;<em>Program Assessment Rating Tool</em> (PART) de la Office of Management and Budget —instaurada en 2002, llegó a evaluar más de mil programas federales, el 98% del presupuesto, pero fue discontinuada por la siguiente Administración—, lo que muestra que este tipo de instrumentos no está exento de fragilidad política.</p>
+<p>A nivel de la Unión Europea, el Semestre Europeo incorpora recomendaciones específicas por país para que los Estados miembro implanten o refuercen sus&nbsp;<em>spending reviews</em>. En España, este impulso se concretó en el Componente 29 del Plan de Recuperación, Transformación y Resiliencia —financiado con fondos Next Generation—, que creó dentro de la AIReF una División de Evaluación del Gasto Público de carácter permanente y ligó el desembolso de fondos europeos al cumplimiento de dos reformas: el propio proceso de revisión del gasto y el alineamiento de los Presupuestos Generales del Estado con sus resultados.</p>
+<p>La AIReF ha desarrollado, con esta nueva capacidad, dos ciclos de&nbsp;<em>spending review</em>: el primero (2018-2021, en tres fases) evaluó, entre otras políticas, las políticas activas de empleo y el gasto farmacéutico y de alta tecnología del Sistema Nacional de Salud; el segundo (2022-2026) ha analizado la incapacidad temporal, la ayuda oficial al desarrollo y el ingreso mínimo vital, y tiene ya en preparación una tercera fase, con evaluaciones previstas sobre la regla de gasto en pensiones y la eficacia de los incentivos a la contratación. El seguimiento de estas evaluaciones revela también los límites del instrumento: en torno al 16% de las recomendaciones formuladas en el primer ciclo seguía “en proceso” de implementación años después de su publicación, lo que confirma que la evaluación por sí sola no garantiza el cambio efectivo de las políticas —de ahí que, como se apunta en la Conclusión, la clave última esté en la voluntad política de traducir esa evaluación en rendición de cuentas real.</p>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-17_Albi2017" class="csl-entry" role="listitem">
+Albi Ibáñez, Emilio, José Manuel Gónzalez-Páramo, Rosa M. Urbanos, y Ignacio Zubiri. 2017. <em><span>Econom<span>í</span>a P<span>ú</span>blica I: Fundamentos. Presupuestos y Gastos</span></em>. Ariel.
+</div>
+<div id="ref-17_Alesina1997" class="csl-entry" role="listitem">
+Alesina, Alberto, Nouriel Roubini, y Gerald D. Cohen. 1997. <em><span>Political Cycles and the Macroeconomy</span></em>. The MIT Press.
+</div>
+<div id="ref-17_Barro1979" class="csl-entry" role="listitem">
+Barro, Robert J. 1979. <span>«<span>On the Determination of the Public Debt</span>»</span>. <em>Journal of Political Economy</em> 87 (5): 940-71.
+</div>
+<div id="ref-17_Barro1990" class="csl-entry" role="listitem">
+Barro, Robert J. 1990. <span>«<span>Government Spending in a Simple Model of Endogenous Growth</span>»</span>. <em>Journal of Political Economy</em> 98 (5): 103-26. <a href="https://ideas.repec.org/a/ucp/jpolec/v98y1990i5ps103-26.html">https://ideas.repec.org/a/ucp/jpolec/v98y1990i5ps103-26.html</a>.
+</div>
+<div id="ref-17_Baumol1967" class="csl-entry" role="listitem">
+Baumol, William J. 1967. <span>«<span>Macroeconomics of Unbalanced Growth: the Anatomy of Urban Crisis</span>»</span>. <em>The American Economic Review</em>, 415-26.
+</div>
+<div id="ref-17_BaumolBowen1966" class="csl-entry" role="listitem">
+Baumol, William J., y William G. Bowen. 1966. <em><span>Performing Arts, The Economic Dilemma: A Study of Problems Common to Theater, Opera, Music and Dance</span></em>. Twentieth Century Fund.
+</div>
+<div id="ref-17_Bentham1789" class="csl-entry" role="listitem">
+Bentham, Jeremy. 1789. <em><span>An Introduction to the Principles of Morals and Legislation</span></em>. T. Payne; Son.
+</div>
+<div id="ref-17_Bird1971" class="csl-entry" role="listitem">
+Bird, Richard. 1971. <span>«<span>Wagner’s Law of Expanding State Activity</span>»</span>. <em>Public Finance</em> 26 (1): 1-26. <a href="https://EconPapers.repec.org/RePEc:pfi:pubfin:v:26:y:1971:i:1:p:1-26">https://EconPapers.repec.org/RePEc:pfi:pubfin:v:26:y:1971:i:1:p:1-26</a>.
+</div>
+<div id="ref-17_Blinder2004" class="csl-entry" role="listitem">
+Blinder, Alan S. 2004. <em><span>The Case Against the Case Against Discretionary Fiscal Policy</span></em>. CEPS Working Paper No. 100. Princeton University, Center for Economic Policy Studies.
+</div>
+<div id="ref-17_Brennan1980" class="csl-entry" role="listitem">
+Brennan, G., y J. M. Buchanan. 1980. <em><span>The Power to Tax: Analytical Foundations of a Fiscal Constitution</span></em>. En <em>: Cambridge University Press</em>. Cambridge University Press.
+</div>
+<div id="ref-17_Brennan2005" class="csl-entry" role="listitem">
+Brennan, Geoffrey, y Giuseppe Eusepi. 2005. <span>«<span>Fiscal Constitutionalism</span>»</span>. En <em><span>Handbook of Public Finance</span></em>, editado por J̆^"rgen G. Backhaus y Richard E. Wagner. Springer. <a href="https://doi.org/10.1007/1-4020-7864-1_3">https://doi.org/10.1007/1-4020-7864-1_3</a>.
+</div>
+<div id="ref-17_Buchanan1962" class="csl-entry" role="listitem">
+Buchanan, J. M., y G. Tullock. 1962. <em><span>The Calculus of Consent: Logical Foundations for Constitutional Democracy</span></em>. The University of Michigan Press.
+</div>
+<div id="ref-17_Buchanan1977" class="csl-entry" role="listitem">
+Buchanan, James M., y Richard E. Wagner. 1977. <em><span>Democracy in deficit: The political legacy of Lord Keynes</span></em>. Vol. 4. Academic Press New York.
+</div>
+<div id="ref-17_Bush1977" class="csl-entry" role="listitem">
+Bush, Winston. C., y Arthur T. Denzau. 1977. <span>«<span>The Voting Behavior of Bureaucrats and Public Sector Growth</span>»</span>. En <em><span>Budgets and Bureaucrats: The Sources of Government Growth</span></em>, editado por Thomas E. Borcherding. Duke University Press.
+</div>
+<div id="ref-17_Cameron1978" class="csl-entry" role="listitem">
+Cameron, David R. 1978. <span>«<span>The Expansion of the Public Economy: A Comparative Analysis</span>»</span>. <em>American Political Science Review</em> 72 (4): 1243-61. <a href="https://doi.org/10.2307/1954537">https://doi.org/10.2307/1954537</a>.
+</div>
+<div id="ref-17_Castles1982" class="csl-entry" role="listitem">
+Castles, Francis G. 1982. <em><span>The Impact of Parties: Politics and Policies in Democratic Capitalist States</span></em>.
+</div>
+<div id="ref-17_Clarke1978" class="csl-entry" role="listitem">
+Clarke, Richard. 1978. <em><span>Public Expenditure, Management and Control: The Development of the Public Expenditure Survey Committee (PESC)</span></em>. Palgrave Macmillan.
+</div>
+<div id="ref-17_Downs1957" class="csl-entry" role="listitem">
+Downs, Anthony. 1957. <span>«<span>An Economic Theory of Political Action in a Democracy</span>»</span>. <em>Journal of Political Economy</em> 65 (2): 135-50. <a href="http://www.jstor.org/stable/1827369">http://www.jstor.org/stable/1827369</a>.
+</div>
+<div id="ref-17_Engel1857" class="csl-entry" role="listitem">
+Engel, Ernst. 1857. <span>«<span>Die Produktions—und Consumtionsverh<span>ä</span>ltnisse des K<span>ö</span>nigreichs Sachsen</span>»</span>. <em>Zeitschriftdes statistischen B<span class="nocase">ü</span>reaus des K<span class="nocase">ö</span>niglich S<span class="nocase">ä</span>chsischen Ministeriums des Innern</em>.
+</div>
+<div id="ref-17_Frey1982" class="csl-entry" role="listitem">
+Frey, Bruno S., y Werner W. Pommerehne. 1982. <span>«How powerful are public bureaucrats as voters?»</span> <em>Public Choice</em> 38 (3): 253-62. <a href="https://doi.org/10.1007/bf00144851">https://doi.org/10.1007/bf00144851</a>.
+</div>
+<div id="ref-17_Frey1981" class="csl-entry" role="listitem">
+Frey, Bruno S., y Friedrich Schneider. 1981. <span>«<span>A Politico-Economic Model of the U.K.: New Estimates and Predictions</span>»</span>. <em>The Economic Journal</em> 91 (363): 737. <a href="https://doi.org/10.2307/2232839">https://doi.org/10.2307/2232839</a>.
+</div>
+<div id="ref-17_JaenGarcia2004" class="csl-entry" role="listitem">
+Jaén García, Manuel. 2004. <em><span>La ley de Wagner: un an<span>á</span>lisis sint<span>é</span>tico</span></em>. IEF papeles de trabajo. Serie Econom<span>í</span>a, 6/04. Instituto de Estudios Fiscales. <a href="http://www.ief.es/docs/destacados/publicaciones/papeles_trabajo/2004_06.pdf">http://www.ief.es/docs/destacados/publicaciones/papeles_trabajo/2004_06.pdf</a>.
+</div>
+<div id="ref-17_Keynes1936" class="csl-entry" role="listitem">
+Keynes, John Maynard. 1936. <em><span>The General Theory of Employment Interest and Money</span></em>. Macmillan.
+</div>
+<div id="ref-17_Malthus1820" class="csl-entry" role="listitem">
+Malthus, Thomas Robert. 1820. <em><span>Principles of Political Economy Considered with a View to Their Practical Application</span></em>. London.
+</div>
+<div id="ref-17_Mill1848" class="csl-entry" role="listitem">
+Mill, John Stuart. 1848. <em>Principles of political economy: with some of their applications to social philosophy</em>. Vol. 1. Longmans, Green, Reader,; Dyer.
+</div>
+<div id="ref-17_Musgrave1959" class="csl-entry" role="listitem">
+Musgrave, R. A. 1959. <em><span>The Theory of Public Finance: A Study in Public Economy</span></em>. McGraw Hill.
+</div>
+<div id="ref-17_Niskanen1971" class="csl-entry" role="listitem">
+Niskanen, William A. 1971. <em>Bureaucracy &amp; representative government</em>. Routledge.
+</div>
+<div id="ref-17_Nordhaus1975" class="csl-entry" role="listitem">
+Nordhaus, William D. 1975. <span>«<span>The Political Business Cycle</span>»</span>. <em>The Review of Economic Studies</em> 42 (2): 169. <a href="https://doi.org/10.2307/2296528">https://doi.org/10.2307/2296528</a>.
+</div>
+<div id="ref-17_Peacock1961" class="csl-entry" role="listitem">
+Peacock, Alan T., y Jack Wiseman. 1961. <em><span>The Growth of Public Expenditure in the United Kingdom</span></em>. National Bureau of Economic Research, Inc. <a href="https://EconPapers.repec.org/RePEc:nbr:nberbk:peac61-1">https://EconPapers.repec.org/RePEc:nbr:nberbk:peac61-1</a>.
+</div>
+<div id="ref-17_Pyhrr1970" class="csl-entry" role="listitem">
+Pyhrr, Peter A. 1970. <span>«<span>Zero-Base Budgeting</span>»</span>. <em>Harvard Business Review</em> 48 (6): 111-21.
+</div>
+<div id="ref-17_Rogoff1985" class="csl-entry" role="listitem">
+Rogoff, Kenneth. 1985. <span>«<span>The Optimal Degree of Commitment to an Intermediate Monetary Target</span>»</span>. <em>The Quarterly Journal of Economics</em> 100 (4): 1169-89.
+</div>
+<div id="ref-17_Romer1979" class="csl-entry" role="listitem">
+Romer, Thomas, y Howard Rosenthal. 1979. <span>«<span>The Elusive Median Voter</span>»</span>. <em>Journal of Public Economics</em> 12 (2): 143-70. <a href="https://doi.org/10.1016/0047-2727(79)90010-0">https://doi.org/10.1016/0047-2727(79)90010-0</a>.
+</div>
+<div id="ref-17_RosenGayer2010" class="csl-entry" role="listitem">
+Rosen, Harvey S., y Ted Gayer. 2010. <em><span>Public Finance</span></em>. 9.ª ed. McGraw-Hill/Irwin.
+</div>
+<div id="ref-17_Say1803" class="csl-entry" role="listitem">
+Say, Jean-Baptiste. 1803. <em>Trait<span>é</span> d’<span>é</span>conomie politique, ou simple exposition de la mani<span>è</span>re dont se forment, se distribuent, et se composent les richesses</em>. Crapelet.
+</div>
+<div id="ref-17_Smith1776" class="csl-entry" role="listitem">
+Smith, Adam. 1776. <em><span>An Inquiry into the Nature and Causes of the Wealth of Nations</span></em>. <a href="https://ideas.repec.org/b/hay/hetboo/smith1776.html">https://ideas.repec.org/b/hay/hetboo/smith1776.html</a>.
+</div>
+<div id="ref-17_Tarschys1975" class="csl-entry" role="listitem">
+Tarschys, Daniel. 1975. <span>«<span>The Growth of Public Expenditures: Nine Modes of Explanation</span>»</span>. <em>Scandinavian Political Studies</em> 10 (A10): 9-31. <a href="https://doi.org/10.1111/j.1467-9477.1975.tb00568.x">https://doi.org/10.1111/j.1467-9477.1975.tb00568.x</a>.
+</div>
+<div id="ref-17_Tarschys1983" class="csl-entry" role="listitem">
+Tarschys, Daniel. 1983. <span>«<span>The Scissors Crisis in Public Finance</span>»</span>. <em>Policy Sciences</em> 15 (3): 205-24. <a href="http://www.jstor.org/stable/4531941">http://www.jstor.org/stable/4531941</a>.
+</div>
+<div id="ref-17_Timm1961" class="csl-entry" role="listitem">
+Timm, Herbert. 1961. <span>«<span>Das Gesetz der wachsenden Staatsausgaben</span>»</span>. <em>FinanzArchiv / Public Finance Analysis</em> 21 (2): 201-47. <a href="http://www.jstor.org/stable/40909524">http://www.jstor.org/stable/40909524</a>.
+</div>
+<div id="ref-17_VedderGallaway1998" class="csl-entry" role="listitem">
+Vedder, Richard K., y Lowell E. Gallaway. 1998. <em><span>Government Size and Economic Growth</span></em>. Joint Economic Committee, United States Congress.
+</div>
+<div id="ref-17_Wagner1883" class="csl-entry" role="listitem">
+Wagner, Adolph. 1883,1890. <span>«Finanzwissenchaft»</span>. En <em>Classics in the <span>Theory</span> of <span>Public</span> <span>Finance</span> (1958)</em>, editado por Richard A. Musgrave y Alan T.1958 Peacock. Palgrave Macmillan UK. <a href="https://doi.org/10.1007/978-1-349-23426-4_6">https://doi.org/10.1007/978-1-349-23426-4_6</a>.
+</div>
+<div id="ref-17_Wildavsky1964" class="csl-entry" role="listitem">
+Wildavsky, Aaron B. 1964. <em>Politics of the budgetary process</em>.
+</div>
+<div id="ref-17_Williamson1967" class="csl-entry" role="listitem">
+Williamson, Oliver E. 1967. <span>«<span>A Rational Theory of the Federal Budgeting Process</span>»</span>. <em>Papers on Non-Market Decision Making</em> 2: 71-89. <a href="http://www.jstor.org/stable/25066101">http://www.jstor.org/stable/25066101</a>.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Para más información sobre Wagner y su obra, consultar <span class="citation" data-cites="17_JaenGarcia2004">Jaén García (<a href="01-tema-a1.html#ref-17_JaenGarcia2004" role="doc-biblioref">2004</a>)</span><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>La intuición es que un cuarteto de cuerda necesita hoy los mismos músicos y el mismo tiempo que hace dos siglos para interpretar una obra, pero sus salarios han subido al ritmo de los del resto de la economía, por lo que su coste relativo no deja de crecer. Es el ejemplo de <span class="citation" data-cites="17_BaumolBowen1966">Baumol y Bowen (<a href="01-tema-a1.html#ref-17_BaumolBowen1966" role="doc-biblioref">1966</a>)</span>.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Elaboración propia a partir del modelo de&nbsp;<span class="citation" data-cites="17_Niskanen1971">Niskanen (<a href="01-tema-a1.html#ref-17_Niskanen1971" role="doc-biblioref">1971</a>)</span>. Para una representación equivalente, véase&nbsp;<span class="citation" data-cites="17_RosenGayer2010">Rosen y Gayer (<a href="01-tema-a1.html#ref-17_RosenGayer2010" role="doc-biblioref">2010</a>)</span>, Figura 6.4, p.&nbsp;122.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>En el contexto español, esto se manifiesta en la justificación de nuevas contrataciones para "mejorar la calidad de los servicios", "aumentar la eficiencia", "cubrir necesidades crecientes", o "el relevo generacional" aunque el número de empleados pueda exceder el nivel óptimo.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Esta teoría está estrechamente relacionada con la idea de que los partidos modifican sus políticas económicas no solo por sus principios ideológicos, sino también en función del ciclo electoral. Por ejemplo, un partido puede aumentar el gasto público antes de unas elecciones para ganar votantes, independientemente de sus promesas de campaña a largo plazo.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Esto puede llevar a que un gobierno de derechas implemente políticas de gasto social que, en teoría, serían más propias de la izquierda, y viceversa.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>No confundir con la crisis de las tijeras de la Unión Soviética (1922-1923), que fue un fenómeno económico caracterizado por un gran diferencial entre los precios de los productos industriales y agrícolas. Este desequilibrio provocó dificultades económicas, llevando al gobierno a tomar medidas como la reducción de plantillas y la racionalización de la producción para superar la crisis. La situación recibió su nombre debido a la forma gráfica que representaba la divergencia de precios, similar a las hojas de una tijera abriéndose.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Las imperfecciones vistas anteriormente pueden dar lugar a lo que Brennan y Buchanan, tomando la imagen de Thomas Hobbes, llaman “Estado leviatán”: Hobbes la empleó para justificar un Estado fuerte capaz de evitar la anarquía, pero aquí designa, metafóricamente, una gran criatura que se comería al sector privado si no se le imponen límites. Es, pues, una idea de sobredimensionamiento del sector público.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Críticas:</p>
+<ul>
+<li><p>Excesiva rigidez.</p></li>
+<li><p>Teoría de la política fiscal anticíclica. Los defensores de la política fiscal anticíclica argumentan que el equilibrio presupuestario no debería garantizarse cada año, sino cada ciclo económico (de modo que permita registrar déficits en períodos de recesión a cambio de lograr superávits en períodos de expansión, logrando un efecto estabilizador de la actividad económica). No obstante, esta teoría es compatible con una constitución fiscal si ésta se formula en términos de déficit estructural.</p></li>
+<li><p>Teoría de la suavización fiscal&nbsp;<span class="citation" data-cites="17_Barro1979">(<a href="01-tema-a1.html#ref-17_Barro1979" role="doc-biblioref">Barro 1979</a>)</span>. La ineficiencia generada por los impuestos se minimiza con un tipo impositivo uniforme, por lo que es preferible mantener el tipo constante, dejando actuar a los estabilizadores automáticos, por lo que se incurrirá en déficit en recesión y en superávit en expansión. O lo que es lo mismo: el déficit público será contracíclico (es decir, ahorro público, procíclico). En este contexto, el papel de la deuda será, pues, el de absorber los shocks para permitir la deseada suavización impositiva que minimice las pérdidas de eficiencia.</p></li>
+</ul>
+<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn10"><p>No obstante, cabe destacar que estas condiciones contrastan con los principios de imposición óptima: eficiencia económica, equidad, sencillez administrativa, flexibilidad y suficiencia.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>La intuición es que, si lo recaudado con los carburantes solo puede gastarse en carreteras, al Gobierno le conviene construir las carreteras que la gente vaya a usar de verdad, porque solo así aumenta el consumo de carburante y, con él, su recaudación.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Esta Ley establece limitaciones en 3 ámbitos: déficit público, gasto público, y deuda pública.</p>
+<ul>
+<li><p>Déficit público (art. 11): ninguna Administración pública podrá incurrir en déficit estructural. Excepciones al mandato de déficit estructural nulo:</p>
+<ul>
+<li><p>Reformas estructurales. Si se llevan a cabo reformas estructurales con efectos presupuestarios a largo plazo, podrá alcanzarse en el conjunto de las Administraciones Públicas un déficit estructural del 0,4% del PIB nominal.</p></li>
+<li><p>Catástrofes naturales, recesión económica grave o situaciones de emergencia. En estos casos, se podrá incurrir en déficit estructural si se aprueba por mayoría absoluta del Congreso de los Diputados.</p></li>
+</ul></li>
+<li><p>Regla de gasto (art. 12): la tasa de crecimiento del gasto público computable del conjunto de las Administraciones Públicas no podrá superar la tasa de crecimiento del PIB de medio plazo. Corresponde al Ministerio de Asuntos Económicos calcular la tasa de referencia de crecimiento del Producto Interior Bruto de medio plazo de la economía española.</p></li>
+<li><p>Deuda pública (art. 13): la deuda pública del conjunto de las Administraciones Públicas no podrá superar el 60% del PIB nominal. Este límite se distribuye de acuerdo a los siguientes porcentajes:</p>
+<ul>
+<li><p>Administración central: 44 puntos porcentuales.</p></li>
+<li><p>Comunidades Autónomas: 13 puntos porcentuales .</p></li>
+<li><p>Corporaciones Locales: 3 puntos porcentuales.</p></li>
+</ul></li>
+</ul>
+<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn13"><p>Recordar que durante la Pandemia se suspendieron las reglas fiscales para poder hacer frente a la crisis.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./16-tema-a16.html" class="pagination-link" aria-label="Teoría de la elección colectiva">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./18-tema-a18-pendiente.html" class="pagination-link" aria-label="Poder de mercado y regulación óptima">
+        <span class="nav-page-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

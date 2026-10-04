@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Los efectos de los impuestos sobre los incentivos, la medición de la progresividad y el compromiso entre eficiencia y equidad en el diseño del sistema tributario.">
+
+<title>Tema A21. Imposición y oferta | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./22-tema-a22.html" rel="next">
+<link href="./20-tema-a20.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A21. Imposición y oferta | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Los efectos de los impuestos sobre los incentivos, la medición de la progresividad y el compromiso entre eficiencia y equidad en el diseño del sistema tributario.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A21. Imposición y oferta | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Los efectos de los impuestos sobre los incentivos, la medición de la progresividad y el compromiso entre eficiencia y equidad en el diseño del sistema tributario.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A21. Imposición y oferta. Efectos incentivos de los impuestos. Medidas de progresividad impositiva. El compromiso entre eficiencia y equidad de la política tributaria.",
+ "alternateName": "Imposición y oferta",
+ "description": "Los efectos de los impuestos sobre los incentivos, la medición de la progresividad y el compromiso entre eficiencia y equidad en el diseño del sistema tributario.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/21-tema-a21.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./21-tema-a21.html"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">21.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#principios-impositivos" id="toc-principios-impositivos" class="nav-link" data-scroll-target="#principios-impositivos"><span class="header-section-number">21.2</span> Principios impositivos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#eficiencia-económica" id="toc-eficiencia-económica" class="nav-link" data-scroll-target="#eficiencia-económica"><span class="header-section-number">21.3</span> Eficiencia económica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="10 minutos 30 segundos">10'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#reglas-de-imposición-eficiente" id="toc-reglas-de-imposición-eficiente" class="nav-link" data-scroll-target="#reglas-de-imposición-eficiente">Reglas de imposición eficiente</a></li>
+  <li><a href="#efectos-desincentivo-de-los-impuestos-sobre-la-oferta" id="toc-efectos-desincentivo-de-los-impuestos-sobre-la-oferta" class="nav-link" data-scroll-target="#efectos-desincentivo-de-los-impuestos-sobre-la-oferta">Efectos desincentivo de los impuestos sobre la oferta</a></li>
+  </ul></li>
+  <li><a href="#equidad" id="toc-equidad" class="nav-link" data-scroll-target="#equidad"><span class="header-section-number">21.4</span> Equidad <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></a></li>
+  <li><a href="#compromiso-entre-eficiencia-y-equidad" id="toc-compromiso-entre-eficiencia-y-equidad" class="nav-link" data-scroll-target="#compromiso-entre-eficiencia-y-equidad"><span class="header-section-number">21.5</span> Compromiso entre eficiencia y equidad <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="3 minutos">3'</span></a></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">21.6</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-problemas-de-la-imposición-óptima" id="toc-a.1.-problemas-de-la-imposición-óptima" class="nav-link" data-scroll-target="#a.1.-problemas-de-la-imposición-óptima">21.A.1.&nbsp;&nbsp;Problemas de la imposición óptima</a></li>
+  <li><a href="#a.2.-impuesto-sobre-el-valor-del-suelo" id="toc-a.2.-impuesto-sobre-el-valor-del-suelo" class="nav-link" data-scroll-target="#a.2.-impuesto-sobre-el-valor-del-suelo">21.A.2.&nbsp;&nbsp;Impuesto sobre el valor del suelo</a></li>
+  <li><a href="#a.3.-la-inflación-y-el-impuesto-de-la-renta" id="toc-a.3.-la-inflación-y-el-impuesto-de-la-renta" class="nav-link" data-scroll-target="#a.3.-la-inflación-y-el-impuesto-de-la-renta">21.A.3.&nbsp;&nbsp;La inflación y el impuesto de la renta</a></li>
+  <li><a href="#a.4.-impuesto-progresivo-al-consumo" id="toc-a.4.-impuesto-progresivo-al-consumo" class="nav-link" data-scroll-target="#a.4.-impuesto-progresivo-al-consumo">21.A.4.&nbsp;&nbsp;Impuesto progresivo al consumo</a></li>
+  <li><a href="#a.5.-curva-de-laffer" id="toc-a.5.-curva-de-laffer" class="nav-link" data-scroll-target="#a.5.-curva-de-laffer">21.A.5.&nbsp;&nbsp;Curva de Laffer</a></li>
+  <li><a href="#a.6.-razones-para-introducir-un-sistema-fiscal-progresivo" id="toc-a.6.-razones-para-introducir-un-sistema-fiscal-progresivo" class="nav-link" data-scroll-target="#a.6.-razones-para-introducir-un-sistema-fiscal-progresivo">21.A.6.&nbsp;&nbsp;Razones para introducir un sistema fiscal progresivo</a></li>
+  <li><a href="#a.7.-suavización-impositiva" id="toc-a.7.-suavización-impositiva" class="nav-link" data-scroll-target="#a.7.-suavización-impositiva">21.A.7.&nbsp;&nbsp;Suavización impositiva</a></li>
+  <li><a href="#a.8.-euromod-medir-la-redistribución-y-la-progresividad-con-microsimulación" id="toc-a.8.-euromod-medir-la-redistribución-y-la-progresividad-con-microsimulación" class="nav-link" data-scroll-target="#a.8.-euromod-medir-la-redistribución-y-la-progresividad-con-microsimulación">21.A.8.&nbsp;&nbsp;EUROMOD: medir la redistribución y la progresividad con microsimulación</a></li>
+  <li><a href="#a.9.-impuestos-e-inversión-empresarial" id="toc-a.9.-impuestos-e-inversión-empresarial" class="nav-link" data-scroll-target="#a.9.-impuestos-e-inversión-empresarial">21.A.9.&nbsp;&nbsp;Impuestos e inversión empresarial</a></li>
+  <li><a href="#a.10.-evasión-y-elusión-fiscal" id="toc-a.10.-evasión-y-elusión-fiscal" class="nav-link" data-scroll-target="#a.10.-evasión-y-elusión-fiscal">21.A.10.&nbsp;&nbsp;Evasión y elusión fiscal</a></li>
+  <li><a href="#a.11.-curva-del-gran-gatsby" id="toc-a.11.-curva-del-gran-gatsby" class="nav-link" data-scroll-target="#a.11.-curva-del-gran-gatsby">21.A.11.&nbsp;&nbsp;Curva del gran Gatsby</a></li>
+  <li><a href="#a.12.-deflactación-de-la-tarifa" id="toc-a.12.-deflactación-de-la-tarifa" class="nav-link" data-scroll-target="#a.12.-deflactación-de-la-tarifa">21.A.12.&nbsp;&nbsp;Deflactación de la tarifa</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta. Efectos incentivos de los impuestos. Medidas de progresividad impositiva. El compromiso entre eficiencia y equidad de la política tributaria.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="21.1">
+<h2 data-number="21.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">21.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>La Economía del Sector Público estudia cómo el Estado interviene en el mercado mediante ingresos y gastos para cumplir funciones de asignación, distribución y estabilidad. Los impuestos, como transferencias obligatorias del sector privado, son su principal herramienta.</p>
+<p>Sin embargo, su impacto va más allá de la recaudación: afectan directamente a la oferta agregada, la inversión y el comportamiento de los agentes económicos. Por ejemplo, el llamado “impuesto al sol” en España desincentivó el autoconsumo energético.</p>
+<p>Asimismo, el diseño progresivo del sistema fiscal influye en la equidad, al determinar cómo se distribuye la carga tributaria entre distintos niveles de renta. Este análisis es esencial para entender el compromiso entre eficiencia y equidad: un sistema impositivo eficiente minimiza distorsiones económicas, mientras que uno equitativo reparte la carga de forma justa. Encontrar el equilibrio entre ambos objetivos es el reto central de toda política fiscal moderna.</p>
+<p>Por consiguiente, el objetivo de la presente exposición es analizar cómo el sistema impositivo cumple con las funciones del sector público y en qué medida es eficiente y equitativo a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Principios impositivos.</p></li>
+<li><p>Eficiencia económica.</p></li>
+<li><p>Equidad y medidas de progresividad.</p></li>
+<li><p>Compromiso entre eficiencia y equidad.</p></li>
+</ol>
+</section>
+<section id="principios-impositivos" class="level2" data-number="21.2">
+<h2 data-number="21.2" class="anchored" data-anchor-id="principios-impositivos"><span class="header-section-number">21.2</span> Principios impositivos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Comenzando con los principios impositivos, bajo la premisa de que un impuesto es un instrumento que se utiliza para la maximización del bienestar de la sociedad, existe un acuerdo sobre las condiciones que debe reunir un buen sistema tributario. Las más importantes son:</p>
+<ol type="1">
+<li><p>Eficiencia económica, esto es, hasta qué punto interfiere o no en el proceso de libre elección de los contribuyentes y les fuerza –o no– a tomar decisiones inadecuadas desde el punto de vista de la asignación de recursos.</p></li>
+<li><p>Justicia fiscal o equidad, los impuestos han de ser, idealmente, equitativos. La distribución de la carga se basa en diferentes principios. De entre ellos, los que han tenido una mayor importancia en la literatura hacendística son el beneficio, la capacidad de pago, la utilidad y el consumo.</p></li>
+<li><p>Sencillez administrativa, implica que el sistema fiscal debe ser lo más sencillo posible, para lo cual se aconseja que haya pocos impuestos con base muy amplia, reglas sencillas de valoración, y pocos casos particulares.</p></li>
+<li><p>Flexibilidad, implica que los impuestos deben adaptarse al contexto económico, facilitando así su tarea de estabilizadores automáticos de la economía.</p></li>
+<li><p>Suficiencia, implica que la recaudación debe ser apropiada para cubrir los gastos planeados del sector público.</p></li>
+</ol>
+<p>No obstante, a menudo estos principios entran en conflicto entre sí, por lo que el diseño de un sistema fiscal es un ejercicio de compromiso entre principios que pueden llegar a ser contradictorios.</p>
+</section>
+<section id="eficiencia-económica" class="level2" data-number="21.3">
+<h2 data-number="21.3" class="anchored" data-anchor-id="eficiencia-económica"><span class="header-section-number">21.3</span> Eficiencia económica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="10 minutos 30 segundos">10'30"</span></h2>
+<p>Centrando el análisis en la eficiencia económica, los impuestos afectan a la conducta económica de los agentes sobre los que recae. Atendiendo a los efectos en términos de eficiencia, se distingue entre:</p>
+<ul>
+<li><p>Impuestos distorsionantes, aquellos cuya cuantía puede reducir el contribuyente cambiando su conducta, de modo que alteran los precios relativos a los que se enfrenta y, con ellos, sus decisiones.</p></li>
+<li><p>Impuestos no distorsionantes, aquellos cuya cuantía no depende de ninguna decisión del contribuyente, de modo que no alteran los precios relativos y solo generan un efecto renta. Este es el caso de los impuestos de suma fija o tanto alzado, esto es, una detracción de renta de cuantía fija a los contribuyentes.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p></li>
+</ul>
+<p>Desde el punto de vista de la economía del bienestar, los impuestos distorsionantes son ineficientes ya que al afectar a los precios relativos afectarán a las decisiones de consumo y producción. El resultado es una alteración de las condiciones de eficiencia y una generación de exceso de gravamen.</p>
+<p>Sin embargo, normalmente se utilizan los impuestos distorsionantes porque los impuestos de suma fija no tienen en cuenta aspectos de equidad, lo que podría ser socialmente inaceptable<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. Por ello, el objetivo será minimizar el impacto en la eficiencia de los impuestos distorsionantes a la hora de cumplir las funciones del sector público.</p>
+<section id="reglas-de-imposición-eficiente" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="reglas-de-imposición-eficiente">Reglas de imposición eficiente</h3>
+<p>Cuando la eficiencia es el único criterio de valoración, se define como sistema impositivo óptimo aquel que logra la recaudación requerida minimizando el exceso de gravamen total, entendiendo este como la pérdida de bienestar que causan los impuestos distorsionantes por encima de lo que recaudan.</p>
+<p>Matemáticamente es un problema de minimización del exceso de gravamen, <span class="math inline">\(EG\)</span>, definido como, <span class="math inline">\(-1/2\)</span><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> por el sumatorio de <span class="math inline">\(n\)</span> bienes de consumo, multiplicado por el cambio en la demanda compensada de <span class="math inline">\(i\)</span> al variar el precio de <span class="math inline">\(j\)</span> o efecto sustitución entre los bienes <span class="math inline">\(i\)</span> y <span class="math inline">\(j\)</span>, <span class="math inline">\(S_{ij}\)</span>, por los precios del bien <span class="math inline">\(i\)</span> y del bien <span class="math inline">\(j\)</span> y por los tipos impositivos de dichos bienes:</p>
+<p><span id="eq-a-21-1"><span class="math display">\[\begin{aligned}
+\min\quad EG &amp; =-\dfrac{1}{2}\cdot\sum\limits_{i=1}^{n}\sum\limits_{j=1}^{n}S_{ij}\cdot p_{i}\cdot p_{j}\cdot t_{i}\cdot t_{j}
+\end{aligned} \tag{21.1}\]</span></span></p>
+<p>sujeto a la recaudación requerida, <span class="math inline">\(\bar{T}\)</span></p>
+<p><span id="eq-a-21-2"><span class="math display">\[\bar{T}=\sum\limits_{i=1}^{n}t_{i}\cdot p_{i}\cdot X_{i} \tag{21.2}\]</span></span></p>
+<p>La resolución de este problema permite establecer una serie de reglas de imposición eficiente:</p>
+<ol type="1">
+<li><p>Regla de elección excluyente, cuando se pueda elegir entre 2 impuestos, el mejor será aquel que grave el bien con la demanda compensada más inelástica. Esto se debe a que el exceso de gravamen producido por la introducción de un impuesto distorsionante será menor cuanto más inelástica sea la demanda.</p></li>
+<li><p>Regla de igualación de distorsiones marginales –equimarginalidad–: si no se puede excluir entre bienes, es deseable gravarlos todos, con tipos que igualen el exceso de gravamen marginal por unidad monetaria recaudada en todos los impuestos.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> La excepción se dará con un bien con una demanda totalmente inelástica y que proporcione una base suficientemente amplia.</p></li>
+<li><p>Regla de la elasticidad inversa –planteada por Pigou y formalizada por Ramsey <span class="citation" data-cites="21_Ramsey1927">(<a href="01-tema-a1.html#ref-21_Ramsey1927" role="doc-biblioref">1927</a>)</span><a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>–: si los efectos renta y los efectos sustitución cruzados son nulos, es decir, si los bienes son independientes, los tipos impositivos que minimizan el exceso de gravamen son inversamente proporcionales a las respectivas elasticidades-precio de las demandas, que en ese caso coinciden con las de las demandas compensadas. Por lo tanto, se deben gravar los bienes cuyas demandas sean más inelásticas<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>.</p></li>
+<li><p>Regla de Corlett-Hague <span class="citation" data-cites="20_Corlett1953">(<a href="01-tema-a1.html#ref-20_Corlett1953" role="doc-biblioref">Corlett y Hague 1953</a>)</span>: como el ocio no puede gravarse, deben gravarse más los bienes complementarios del ocio y menos los sustitutivos del ocio, para reducir la distorsión sobre la oferta de trabajo.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></p></li>
+<li><p>Regla de Ramsey-Diamond-Mirrlees <span class="citation" data-cites="21_Ramsey1927 21_Diamond1971b">(<a href="01-tema-a1.html#ref-21_Ramsey1927" role="doc-biblioref">Ramsey 1927</a>; <a href="01-tema-a1.html#ref-21_Diamond1971b" role="doc-biblioref">Diamond y Mirrlees 1971</a>)</span>, también llamada regla de Ramsey o de la reducción equiproporcional, estos autores generalizan la regla de la elasticidad inversa para que se pueda aplicar a mercados generales en los que existan relaciones de complementariedad y sustituibilidad. Llegan a la conclusión de que un sistema impositivo es óptimo si, tras su aplicación, disminuyen todas las demandas compensadas de forma equiproporcionada<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>. La regla de la elasticidad inversa es el caso particular en el que los bienes son independientes.</p></li>
+</ol>
+</section>
+<section id="efectos-desincentivo-de-los-impuestos-sobre-la-oferta" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="efectos-desincentivo-de-los-impuestos-sobre-la-oferta">Efectos desincentivo de los impuestos sobre la oferta</h3>
+<p>Una vez analizadas las reglas de imposición eficiente, se van a analizar los efectos desincentivo de los impuestos sobre la oferta.</p>
+<section id="oferta-de-trabajo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="oferta-de-trabajo">Oferta de trabajo</h4>
+<p>Comenzando con la oferta de trabajo, esta se va a obtener a través de un problema maximizador de la utilidad, <span class="math inline">\(u\)</span>, que le reporta el nivel de consumo, <span class="math inline">\(C\)</span>, y el nivel de ocio, <span class="math inline">\(O\)</span>: <span id="eq-a-21-3"><span class="math display">\[\max\quad u\left(C,O\right) \tag{21.3}\]</span></span> sujeto a <span id="eq-21-restriccion-l-suma-fija"><span class="math display">\[C=w\cdot L+I-T \tag{21.4}\]</span></span> donde <span class="math inline">\(I\)</span> representa las rentas no salariales, <span class="math inline">\(T\)</span> el impuesto de suma fija y <span class="math inline">\(L=\bar{L}-O\)</span> las horas trabajadas, siendo <span class="math inline">\(\bar{L}\)</span> el tiempo total disponible.</p>
+<p>Gráficamente, en un plano de consumo, <span class="math inline">\(C\)</span>, y ocio, <span class="math inline">\(O\)</span>, como el de la <a href="#fig-20-suma-fija-y-oferta-de-trabajo" class="quarto-xref">Figura&nbsp;<span>21.1 (a)</span></a>, se representa la restricción presupuestaria<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> y la curva de indiferencia tangente, dando lugar un equilibrio como <span class="math inline">\(E_{0}\)</span>.</p>
+<section id="impuesto-de-suma-fija" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-de-suma-fija">Impuesto de suma fija</h5>
+<p>El establecimiento de un impuesto de suma fija va a producir un efecto renta puro, desplazando la restricción presupuestaria paralelamente hacia el interior en la cuantía <span class="math inline">\(T\)</span>, sin variar su pendiente, <span class="math inline">\(-w\)</span>, ni el tiempo total disponible, <span class="math inline">\(\bar{L}\)</span>. Se llega así a un equilibrio como <span class="math inline">\(E_{1}\)</span> en el que, si el ocio es un bien normal, disminuye el nivel de ocio y aumentan las horas trabajadas, por lo que el impuesto incentiva el trabajo.</p>
+</section>
+<section id="impuesto-proporcional" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-proporcional">Impuesto proporcional</h5>
+<p>Por otro lado, si se establece un impuesto proporcional, <span class="math inline">\(\tau_{L}\)</span>, sobre las rentas salariales como el de la <a href="#fig-20-proporcional-y-oferta-de-trabajo" class="quarto-xref">Figura&nbsp;<span>21.1 (b)</span></a>, la restricción (<a href="#eq-21-restriccion-l-suma-fija" class="quarto-xref">&nbsp;<span>21.4</span></a>) cambiaría: <span id="eq-a-21-4"><span class="math display">\[C=\left(1-\tau_{L}\right)\cdot w\cdot L+I \tag{21.5}\]</span></span> Su pendiente pasa de <span class="math inline">\(-w\)</span> a <span class="math inline">\(-\left(1-\tau_{L}\right)\cdot w\)</span>, y la restricción pivota en torno al punto de no trabajar, <span class="math inline">\(\left(\bar{L},I\right)\)</span>, generando dos efectos:</p>
+<ol type="1">
+<li><p>Efecto renta, ya que el impuesto reduce la renta disponible y, si el ocio es un bien normal, disminuye su consumo, como el de los demás bienes normales, por lo que aumenta la oferta de trabajo.</p></li>
+<li><p>Efecto sustitución –en el punto <span class="math inline">\(S\)</span>, que se obtiene de trasladar la nueva restricción a la antigua curva de indiferencia–, ya que al disminuir el salario neto, disminuye el coste de oportunidad del ocio, lo que aumentará el ocio y disminuirá la oferta de trabajo.</p></li>
+</ol>
+<p>Por lo tanto, dependiendo de cuál de los dos efectos predomine el efecto será incentivador o desincentivador sobre la oferta de trabajo<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>.</p>
+</section>
+<section id="impuesto-progresivo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-progresivo">Impuesto progresivo</h5>
+<p>Por último, si el impuesto es progresivo sobre las rentas salariales como el de la <a href="#fig-20-progresivo-y-oferta-de-trabajo" class="quarto-xref">Figura&nbsp;<span>21.1 (c)</span></a>, el tipo marginal crece con la renta. A modo de ejemplo, se consideran tres tramos con tipos <span class="math inline">\(\tau_{Pr,1}&lt;\tau_{Pr,2}&lt;\tau_{Pr,3}\)</span>, de modo que la restricción presupuestaria es <span id="eq-a-21-5"><span class="math display">\[C=w\cdot L+I-T\left(w\cdot L\right),\quad\text{con }T^{\prime}\left(w\cdot L\right)=\tau_{Pr,k}\text{ en el tramo }k \tag{21.6}\]</span></span> donde <span class="math inline">\(T\left(\cdot\right)\)</span> es la función del impuesto. La restricción deja de ser una recta y pasa a tener en cada tramo una pendiente <span class="math inline">\(-\left(1-\tau_{Pr,k}\right)\cdot w\)</span>, cada vez más plana, de modo que cada hora adicional se grava más que la anterior <span class="citation" data-cites="21_Rosen2010">(<a href="01-tema-a1.html#ref-21_Rosen2010" role="doc-biblioref">Rosen y Gayer 2010, 418</a>)</span>. El número de tramos es solo ilustrativo, ya que el razonamiento vale igual para más o para menos. En el caso dibujado, el equilibrio pasa de <span class="math inline">\(E_{0}\)</span> a <span class="math inline">\(E_{1}\)</span> con menos consumo y más ocio, por lo que se reduce la oferta de trabajo. Frente a un impuesto proporcional que recaude lo mismo, el efecto sustitución se refuerza, pero también se refuerza el efecto renta, por lo que el efecto general es ambiguo. No obstante, salvo que la oferta de trabajo tenga una pendiente muy negativa, lo más probable es que se reduzca, y la pérdida irrecuperable de eficiencia aumenta con el tipo marginal <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>.</p>
+</section>
+<section id="limitaciones-del-análisis" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="limitaciones-del-análisis">Limitaciones del análisis</h5>
+<p>Sin embargo, el análisis anterior tiene una serie de limitaciones <span class="citation" data-cites="21_Atkinson2015">(<a href="01-tema-a1.html#ref-21_Atkinson2015" role="doc-biblioref">Atkinson y Stiglitz 2015</a>)</span>:</p>
+<ol type="1">
+<li><p>El modelo supone que se pueden elegir horas trabajadas libremente, cuando normalmente existen restricciones de las horas que se pueden trabajar.</p></li>
+<li><p>Puede que el ocio sea un bien inferior y no normal para algunos individuos, en cuyo caso el efecto renta y el efecto sustitución actuarían en el mismo sentido.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p></li>
+<li><p>Según algunos autores, el análisis sería más adecuado en términos de esfuerzo o desutilidad.</p></li>
+<li><p>Es un modelo estático, cuando las decisiones de trabajo se adoptan para un horizonte temporal.</p></li>
+<li><p>No considera la incertidumbre ni las imperfecciones en el mercado de trabajo.</p></li>
+</ol>
+<div id="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.1: Efecto de impuestos sobre la oferta de trabajo
+</figcaption>
+<div aria-describedby="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-20-suma-fija-y-oferta-de-trabajo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto de suma fija">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-fig" id="fig-20-suma-fija-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Impuesto de suma fija
+</figcaption>
+<div aria-describedby="fig-20-suma-fija-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-impuesto-suma-fija-y-oferta-de-trabajo.svg" class="img-fluid figure-img" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto de suma fija">
+</div>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-20-proporcional-y-oferta-de-trabajo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto proporcional">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-fig" id="fig-20-proporcional-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Impuesto proporcional
+</figcaption>
+<div aria-describedby="fig-20-proporcional-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-impuesto-proporcional-y-oferta-de-trabajo.svg" class="img-fluid figure-img" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto proporcional">
+</div>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" style="flex-basis: 33.3%;justify-content: flex-start;">
+<div id="fig-20-progresivo-y-oferta-de-trabajo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto progresivo">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-fig" id="fig-20-progresivo-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(c) Impuesto progresivo
+</figcaption>
+<div aria-describedby="fig-20-progresivo-y-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-impuesto-progresivo-y-oferta-de-trabajo.svg" class="img-fluid figure-img" data-ref-parent="fig-20-efecto-de-impuestos-sobre-la-oferta-de-trabajo" alt="Efecto de impuestos sobre la oferta de trabajo: Impuesto progresivo">
+</div>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="imposición-y-ahorro" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="imposición-y-ahorro">Imposición y ahorro</h4>
+<p>Por otro lado, parte de la renta puede ahorrarse, por lo que se va a analizar qué efectos tiene la introducción de un impuesto sobre las rentas del ahorro en un modelo de ciclo vital de dos periodos, base de los modelos de generaciones solapadas <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>, para un agente que vive 2 periodos y que solo obtiene ingresos salariales fijos en el periodo 1, no recibiendo ni dejando herencias.</p>
+<p>Las decisiones de ahorro son un fenómeno intertemporal, por lo que se va a plantear un problema maximizador de la utilidad que le reporta el consumo tanto en el momento presente, <span class="math inline">\(C_{1}\)</span>, como en el momento futuro, <span class="math inline">\(C_{2}\)</span>, ponderado por un factor de descuento, <span class="math inline">\(\beta\)</span>, menor que 1 que indica el grado de impaciencia en el tiempo, por lo que la tasa de descuento, <span class="math inline">\(\rho\)</span>, es superior a 0: <span id="eq-a-21-6"><span class="math display">\[\max\quad u\left(C_{1}\right)+\beta\cdot u\left(C_{2}\right),\quad\beta=\dfrac{1}{1+\rho}&lt;1 \tag{21.7}\]</span></span> sujeto a una restricción presupuestaria, donde el consumo en el presente, <span class="math inline">\(C_{1}\)</span>, sumado al consumo en el futuro descontado al tipo de interés presente, <span class="math inline">\(\dfrac{C_{2}}{1+r}\)</span>, es igual a la renta disponible, <span class="math inline">\(w\)</span> <span class="math display">\[C_{1}+\dfrac{C_{2}}{1+r}=w\]</span> donde <span class="math inline">\(r\)</span> representa el tipo de interés.</p>
+<p>Las CPO de este problema establecen la ecuación de Euler, según la cual el individuo debe consumir hasta que la relación marginal de sustitución entre ambos consumos, <span class="math inline">\(RMS_{C_{1},C_{2}}\)</span>, que es el cociente entre la utilidad marginal del consumo presente y la del consumo futuro, se iguale al cociente entre uno más el tipo de interés y uno más la tasa de descuento:<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> <span id="eq-a-21-7"><span class="math display">\[RMS_{C_{1},C_{2}}=\dfrac{1+r}{1+\rho} \tag{21.8}\]</span></span></p>
+<p>Gráficamente, en un plano consumo presente, <span class="math inline">\(C_{1}\)</span>, y consumo futuro, <span class="math inline">\(C_{2}\)</span>, como el de la <a href="#fig-20-ahorro-e-impuesto-al-consumo" class="quarto-xref">Figura&nbsp;<span>21.2 (a)</span></a>, se parte de una situación de equilibrio, <span class="math inline">\(E_{0}\)</span>, que se da en el punto de tangencia entre la restricción presupuestaria y la curva de indiferencia más alejada del origen, <span class="math inline">\(u_{0}\)</span>.</p>
+<section id="impuesto-sobre-el-consumo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-sobre-el-consumo">Impuesto sobre el consumo</h5>
+<p>Si se establece un impuesto sobre el consumo con el mismo tipo en ambos periodos, la restricción presupuestaria se desplaza paralelamente hacia el origen, ya que no altera el precio relativo del consumo futuro. Se produce, por tanto, solo un efecto renta, que reduce el consumo presente y el futuro hasta un nuevo equilibrio, <span class="math inline">\(E_{1}\)</span> <span class="citation" data-cites="21_Atkinson2015 21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Atkinson2015" role="doc-biblioref">Atkinson y Stiglitz 2015</a>; <a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>. Si ambos consumos son bienes normales, el consumo presente cae menos que la renta, por lo que el ahorro disminuye.</p>
+</section>
+<section id="impuesto-sobre-el-trabajo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-sobre-el-trabajo">Impuesto sobre el trabajo</h5>
+<p>De la misma forma que en el análisis de la oferta de trabajo, un impuesto sobre las rentas salariales equivale a un impuesto a tanto alzado o de suma fija, dado que la oferta de trabajo es inelástica. Cuando no hay herencias, equivale también a un impuesto sobre el consumo <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>. Es decir, solo genera efecto renta y, por tanto, se reduce el consumo tanto en el primer periodo como en el segundo, y el ahorro disminuye.</p>
+<div id="fig-20-ahorro-e-impuestos" class="quarto-layout-panel">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-ahorro-e-impuestos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.2: Efectos de impuestos sobre el ahorro
+</figcaption>
+<div aria-describedby="fig-20-ahorro-e-impuestos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-20-ahorro-e-impuestos" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-20-ahorro-e-impuesto-al-consumo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efectos de impuestos sobre el ahorro: Impuesto al consumo">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-fig" id="fig-20-ahorro-e-impuesto-al-consumo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(a) Impuesto al consumo
+</figcaption>
+<div aria-describedby="fig-20-ahorro-e-impuesto-al-consumo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-ahorro-impuesto-al-consumo.svg" class="img-fluid figure-img" data-ref-parent="fig-20-ahorro-e-impuestos" alt="Efectos de impuestos sobre el ahorro: Impuesto al consumo">
+</div>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell-subref quarto-layout-cell" data-ref-parent="fig-20-ahorro-e-impuestos" style="flex-basis: 50.0%;justify-content: flex-start;">
+<div id="fig-20-ahorro-y-e-impuestos-a-su-rendimiento" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efectos de impuestos sobre el ahorro: Impuesto sobre los rendimientos del ahorro">
+<figure class="quarto-float quarto-subfloat-fig figure">
+<figcaption class="quarto-float-caption-top quarto-subfloat-caption quarto-subfloat-fig" id="fig-20-ahorro-y-e-impuestos-a-su-rendimiento-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+(b) Impuesto sobre los rendimientos del ahorro
+</figcaption>
+<div aria-describedby="fig-20-ahorro-y-e-impuestos-a-su-rendimiento-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-ahorro-impuesto-sobre-los-rendimien.svg" class="img-fluid figure-img" data-ref-parent="fig-20-ahorro-e-impuestos" alt="Efectos de impuestos sobre el ahorro: Impuesto sobre los rendimientos del ahorro">
+</div>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</figure>
+</div>
+</section>
+<section id="impuesto-sobre-el-ahorro" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuesto-sobre-el-ahorro">Impuesto sobre el ahorro</h5>
+<p>Por otro lado, si se establece un impuesto sobre los rendimientos del ahorro como el de la <a href="#fig-20-ahorro-y-e-impuestos-a-su-rendimiento" class="quarto-xref">Figura&nbsp;<span>21.2 (b)</span></a>, la restricción presupuestaria pivotaría hacia abajo, estableciendo un nuevo equilibrio en <span class="math inline">\(E_{1}\)</span>. De esta manera, se producen 2 efectos sobre el consumo presente:</p>
+<ol type="1">
+<li><p>Efecto sustitución, ya que al disminuir los tipos de interés el consumo futuro se encarece aumentando el consumo presente y, por lo tanto, disminuyendo el nivel de ahorro.</p></li>
+<li><p>Efecto renta, ya que al disminuir los tipos de interés si se supone que los individuos son acreedores, disminuirá su riqueza por lo que disminuirá el consumo tanto presente como futuro, aumentando los niveles de ahorro.</p></li>
+</ol>
+<p>El efecto total sobre el ahorro es, por tanto, indeterminado, aunque el consumo futuro disminuirá<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>.</p>
+</section>
+<section id="impuestos-y-deuda-pública" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuestos-y-deuda-pública">Impuestos y deuda pública</h5>
+<p>Finalmente, cabe señalar que los impuestos afectan al ahorro pero también a la deuda pública. Así, tal y como analiza la equivalencia ricardiana <span class="citation" data-cites="21_Barro1974">(<a href="01-tema-a1.html#ref-21_Barro1974" role="doc-biblioref">Barro 1974</a>)</span>, una reducción de los impuestos en el período presente financiada con un aumento de la deuda pública, que dará lugar a mayores impuestos futuros para pagar esa deuda, no altera las decisiones de consumo y ahorro si los agentes prevén esos impuestos futuros y están conectados con las generaciones futuras por una cadena de transferencias intergeneracionales –como herencias o donaciones–, y si, además, los mercados de capital son perfectos y los impuestos son de suma fija.</p>
+</section>
+</section>
+<section id="imposición-y-asunción-de-riesgos" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="imposición-y-asunción-de-riesgos">Imposición y asunción de riesgos</h4>
+<p>Por otro lado, el grado óptimo de asunción de riesgos también puede verse distorsionado al introducir un impuesto. Normalmente un individuo puede invertir su ahorro en diferentes activos, que ofrecen diferentes tasas de rendimiento y diferentes niveles de riesgo.</p>
+<p>Para analizarlo se utilizará una versión simplificada del modelo de cartera de Tobin <span class="citation" data-cites="21_Tobin1958">(<a href="01-tema-a1.html#ref-21_Tobin1958" role="doc-biblioref">Tobin 1958</a>)</span>.</p>
+<ul>
+<li><p>En este modelo, un individuo racional buscará la maximización de rendimientos con el mínimo riesgo.</p></li>
+<li><p>Teniendo en cuenta que los individuos pueden dividir su riqueza en forma de demanda de bonos y demanda de dinero, la rentabilidad esperada de la cartera, <span class="math inline">\(R_{T}\)</span>, si una proporción <span class="math inline">\(B\)</span> de la riqueza se invierte en bonos, es: <span id="eq-a-21-8"><span class="math display">\[R_{T}=B\cdot\left(g+r\right) \tag{21.9}\]</span></span> donde el rendimiento se compone del tipo de interés, <span class="math inline">\(r\)</span>, que ofrecen los bonos y la ganancia esperada de capital, <span class="math inline">\(g\)</span>, que se puede obtener por la variación del precio de los bonos. El dinero ni rinde ni tiene riesgo.</p></li>
+<li><p>Por lo tanto un individuo se enfrentará al siguiente problema de maximización de la utilidad que dependerá positivamente del rendimiento, <span class="math inline">\(R_{T}\)</span>, y negativamente del riesgo de la cartera, <span class="math inline">\(\sigma_{T}\)</span>: <span id="eq-a-21-9"><span class="math display">\[\max\quad u\left(R_{T},\sigma_{T}\right) \tag{21.10}\]</span></span> sujeto a la restricción que relaciona rendimiento con riesgo, que es proporcional al de las ganancias o pérdidas de capital de los bonos, <span class="math inline">\(\sigma_{g}\)</span>, es decir, <span class="math inline">\(\sigma_{T}=B\cdot\sigma_{g}\)</span>, de modo que: <span id="eq-a-21-10"><span class="math display">\[R_{T}=\dfrac{\sigma_{T}}{\sigma_{g}}\cdot\left(g+r\right) \tag{21.11}\]</span></span></p></li>
+</ul>
+<p>Gráficamente, en un plano de riesgo en cartera y rendimiento en cartera como el de la <a href="#fig-20-impuestos-sobre-el-rendimiento-en-cartera" class="quarto-xref">Figura&nbsp;<span>21.3</span></a> en primer lugar la recta de oportunidades de inversión, <span class="math inline">\(RO\)</span>, y, en segundo lugar, las curvas de indiferencia, <span class="math inline">\(u_{0}\)</span>, que serán convexas porque se asume que los individuos son aversos al riesgo, representando un mayor bienestar cuando se desplacen hacia arriba y hacia la izquierda ya que el rendimiento es un “bien” y el riesgo es un “mal”. El punto de equilibrio vendrá determinado por el punto de tangencia de la recta de oportunidades de inversión y la curva de indiferencia más alejada del eje de abscisas en <span class="math inline">\(E_{0}\)</span>. Por otro lado, se utilizará la inversa del riesgo de mercado para analizar cómo distribuyen los individuos su riqueza entre demanda de bonos y demanda de dinero.</p>
+<div id="fig-20-impuestos-sobre-el-rendimiento-en-cartera" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Impuestos sobre el rendimiento en cartera">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-impuestos-sobre-el-rendimiento-en-cartera-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.3: Impuestos sobre el rendimiento en cartera
+</figcaption>
+<div aria-describedby="fig-20-impuestos-sobre-el-rendimiento-en-cartera-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-impuestos-sobre-la-asuncion-de-riesgos.svg" class="img-fluid figure-img" alt="Impuestos sobre el rendimiento en cartera">
+</div>
+</figure>
+</div>
+<p>En este contexto, si se introduce un impuesto sobre los rendimientos que no permite deducir las pérdidas, la recta de oportunidades de inversión pivotará hacia la derecha con una menor pendiente, estableciendo un nuevo equilibrio en el que la rentabilidad será menor. Para analizar el efecto sobre el riesgo hay que considerar 2 efectos:</p>
+<ol type="1">
+<li><p>Efecto sustitución, al disminuir los rendimientos el dinero será más barato, aumentando la demanda de dinero y disminuyendo la demanda de bonos, por lo tanto con un riesgo menor asociado.</p></li>
+<li><p>Efecto renta, al disminuir los rendimientos, suponiendo que los individuos son acreedores, disminuirá su riqueza o sus recursos, disminuyendo la demanda de dinero y aumentando la demanda de bonos, es decir, con un mayor riesgo asociado.</p></li>
+</ol>
+<p>Por lo tanto, el efecto sobre el riesgo dependerá de cuál de los 2 efectos predomine.</p>
+<p>En cambio, si existe derecho a deducción de pérdidas, el Estado se convierte en un socio que comparte tanto las ganancias como las pérdidas. El impuesto reduce entonces el rendimiento y el riesgo que soporta el inversor en la misma proporción, de modo que la recta de oportunidades de inversión no cambia de pendiente y desaparece el efecto sustitución. Queda solo el efecto renta, que lleva a asumir más riesgo para recuperar la renta perdida. Por tanto, cuando el dinero no rinde, como en este modelo, el riesgo total asumido aumenta <span class="citation" data-cites="21_Domar1944">(<a href="01-tema-a1.html#ref-21_Domar1944" role="doc-biblioref">Domar y Musgrave 1944</a>)</span>. Si el activo sin riesgo tuviera rendimiento, el resultado sería indeterminado <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.</p>
+</section>
+<section id="imposición-e-inversión-de-las-empresas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="imposición-e-inversión-de-las-empresas">Imposición e inversión de las empresas</h4>
+<p>Hasta ahora se han analizado las decisiones de los hogares. Las empresas también ven alteradas las suyas, ya que el impuesto sobre el beneficio de las sociedades afecta a su inversión. Una empresa invierte en capital hasta que el valor del producto marginal del capital iguala su coste de uso, es decir, el tipo de interés más la depreciación <span class="citation" data-cites="21_Hall1967">(<a href="01-tema-a1.html#ref-21_Hall1967" role="doc-biblioref">Hall y Jorgenson 1967</a>)</span>. Si el impuesto grava el beneficio y permite deducir todos los costes, incluido el de financiación, es neutral y no altera la decisión de inversión. Sin embargo, en la práctica no se deduce el coste de los fondos propios, por lo que sube el coste de uso del capital y se reduce la inversión <span class="citation" data-cites="21_Rosen2010">(<a href="01-tema-a1.html#ref-21_Rosen2010" role="doc-biblioref">Rosen y Gayer 2010</a>)</span>.</p>
+</section>
+<section id="imposición-y-cumplimiento-fiscal" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="imposición-y-cumplimiento-fiscal">Imposición y cumplimiento fiscal</h4>
+<p>Por último, los impuestos también afectan al cumplimiento fiscal. Los contribuyentes pueden reducir su carga por vías ilegales, la evasión, o legales, la elusión. En la evasión, el contribuyente decide cuánta renta declara, y la decisión depende de la probabilidad de que lo detecten y de la penalización. Aumentar cualquiera de las dos reduce la evasión, mientras que el efecto del tipo impositivo es ambiguo <span class="citation" data-cites="21_Allingham1972">(<a href="01-tema-a1.html#ref-21_Allingham1972" role="doc-biblioref">Allingham y Sandmo 1972</a>)</span>. Además, la evasión es muy baja en la renta sobre la que informan terceros, como los salarios, y mayor en la renta autodeclarada <span class="citation" data-cites="21_Kleven2011">(<a href="01-tema-a1.html#ref-21_Kleven2011" role="doc-biblioref">Kleven et&nbsp;al. 2011</a>)</span>.</p>
+</section>
+</section>
+</section>
+<section id="equidad" class="level2" data-number="21.4">
+<h2 data-number="21.4" class="anchored" data-anchor-id="equidad"><span class="header-section-number">21.4</span> Equidad <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></h2>
+<p>Por otro lado, un buen sistema impositivo debe cumplir ciertos criterios de justicia o equidad. El problema es que el concepto de justicia no es compartido generalmente. La equidad se puede interpretar de varias formas:</p>
+<ol type="1">
+<li><p>Aplicando el criterio de beneficio, según el cual cada individuo debe pagar impuestos en función del beneficio que obtiene de los bienes públicos. En su versión más conocida, la de Lindahl, cada individuo paga por unidad de bien público un precio fiscal igual a su beneficio marginal, y la suma de esos precios cubre el coste marginal del bien. El problema de este método es que el sector público depende de que los individuos revelen sus preferencias y que, además, ignora la redistribución.</p></li>
+<li><p>Aplicando el principio de capacidad de pago, que tiene a su vez 2 interpretaciones:</p>
+<ol type="1">
+<li><p>Equidad horizontal, quienes tienen la misma capacidad de pago deben pagar los mismos impuestos.</p></li>
+<li><p>Equidad vertical, quienes tienen mayor capacidad de pago deben pagar más impuestos, en una proporción que depende de la concepción de justicia que se adopte.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p></li>
+</ol></li>
+<li><p>Aplicando el principio de utilidad, que reemplaza el nivel de renta por el nivel de utilidad. Resuelve algún problema teórico, pero es difícil o imposible cuantificar la utilidad y compararla entre individuos <span class="citation" data-cites="20_Pascual">(<a href="01-tema-a1.html#ref-20_Pascual" role="doc-biblioref">Pascual y Sarabia 2003</a>)</span>.</p></li>
+<li><p>Aplicando el principio del consumo, según el cual solo se grava la parte de la renta que se consume y no la que se ahorra, ya que así se impone lo que el individuo obtiene de la sociedad y no lo que aporta. Pero tendería a pagar más, en proporción, quien consume una parte mayor de su renta, de modo que los estratos de renta baja, que no pueden ahorrar, pagarían un porcentaje mayor que los ricos <span class="citation" data-cites="20_Pascual">(<a href="01-tema-a1.html#ref-20_Pascual" role="doc-biblioref">Pascual y Sarabia 2003</a>)</span>.</p></li>
+</ol>
+<p>Centrando la atención en el criterio de equidad vertical, será preciso determinar el grado de progresividad del sistema tributario.</p>
+<ul>
+<li><p>Un sistema tributario será progresivo si el tipo medio crece al hacerlo su base imponible.</p></li>
+<li><p>No obstante, aunque existe unanimidad en torno a la definición, algunos autores asocian el criterio de progresividad a un impacto redistributivo, de ahí que existan diferentes indicadores de progresividad.</p></li>
+</ul>
+<p>A continuación, se va a distinguir entre índices de progresión local o estructural, que solo van a tener en cuenta la estructura impositiva, e índices de concentración, que también tendrán en cuenta aspectos redistributivos.</p>
+<section id="índices-de-progresión-local-o-estructural" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="índices-de-progresión-local-o-estructural">Índices de progresión local o estructural</h4>
+<p>El enfoque de la progresividad local define una medida de progresividad, <span class="math inline">\(p\left(T\left(y\right)\right)\)</span>, en cada punto, <span class="math inline">\(y\)</span>, de la función de impuestos, <span class="math inline">\(T\left(\cdot\right)\)</span>. Entonces, una función es más progresiva que otra si es más progresiva en todos los puntos, esto es, <span class="math inline">\(T_{1}\left(y\right)\)</span> es más progresivo que <span class="math inline">\(T_{2}\left(y\right)\)</span> si: <span class="math display">\[p\left(T_{1}\left(y\right)\right)&gt;p\left(T_{2}\left(y\right)\right),\quad\forall y\]</span></p>
+<p><span class="citation" data-cites="20_Musgrave1948">Musgrave y Thin (<a href="01-tema-a1.html#ref-20_Musgrave1948" role="doc-biblioref">1948</a>)</span> propusieron 4 medidas alternativas de progresividad local:</p>
+<ol type="1">
+<li><p>Progresión del tipo medio, <span class="math inline">\(PTME\)</span>, evalúa la progresividad de una función en un punto por la pendiente del tipo medio, <span class="math inline">\(tme\)</span>, que es igual a la diferencia entre el tipo marginal, <span class="math inline">\(tmg\)</span>, y el tipo medio dividida por la renta, <span class="math inline">\(y\)</span>: <span id="eq-a-21-11"><span class="math display">\[PTME=\dfrac{d\left(tme\left(y\right)\right)}{dy}=\dfrac{tmg\left(y\right)-tme\left(y\right)}{y} \tag{21.12}\]</span></span> por lo que una función es progresiva si, para todo <span class="math inline">\(y\)</span>, <span class="math inline">\(PTME\)</span> es mayor que cero, igual a cero sería proporcional e inferior a cero sería regresivo. Así, un aumento de <span class="math inline">\(PTME\)</span> implica un aumento de la progresividad según esta definición.</p></li>
+<li><p>Progresión del tipo marginal, <span class="math inline">\(PTMA\)</span>, mide el crecimiento del tipo marginal en cada punto de la función de impuestos <span id="eq-a-21-12"><span class="math display">\[PTMA=\dfrac{d\left(tmg\left(y\right)\right)}{dy} \tag{21.13}\]</span></span></p>
+<p>Sin embargo, este índice ha recibido fuertes críticas porque, por ejemplo, si un impuesto tiene tipos marginales constantes –por ejemplo, un impuesto lineal con tipo único y mínimo exento–, esta medida indica que el impuesto es proporcional cuando no lo es. Por esta razón no se considera un buen índice de progresividad.</p></li>
+<li><p>Progresión de la carga o elasticidad impositiva –elasticidad de los impuestos pagados en relación a la renta antes de impuestos–, <span class="math inline">\(PC\)</span>, mide, en cada punto, en qué porcentaje aumentan los impuestos pagados cuando la renta antes de impuestos aumenta en un 1 %, y es igual al cociente entre el tipo marginal y el tipo medio: <span id="eq-a-21-13"><span class="math display">\[PC=\dfrac{tmg\left(y\right)}{tme\left(y\right)} \tag{21.14}\]</span></span> por lo que una función es progresiva si, para todo <span class="math inline">\(y\)</span>, <span class="math inline">\(PC\)</span> es mayor que 1, igual a 1 sería proporcional e inferior a 1 sería regresivo. Así, un aumento de <span class="math inline">\(PC\)</span> implica un aumento de la progresividad según esta definición.</p></li>
+<li><p>Progresión residual –elasticidad de la renta después de impuestos en relación a la renta antes de impuestos–, <span class="math inline">\(PRR\)</span>, mide, en cada punto, en qué porcentaje aumenta la renta después de impuestos cuando la renta antes de impuestos aumenta en un 1%: <span id="eq-a-21-14"><span class="math display">\[PRR=\dfrac{1-tmg}{1-tme} \tag{21.15}\]</span></span> por lo que si, para todo <span class="math inline">\(y\)</span>, PRR es inferior a 1, el impuesto es progresivo –igual a 1 sería proporcional y superior a 1 regresivo–. Esto significaría que un aumento de un 1 % en la renta antes de impuestos implica un aumento de menos del 1 % en la renta después de impuestos. Así, una reducción de <span class="math inline">\(PRR\)</span> conlleva un aumento de la progresividad.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p></li>
+</ol>
+</section>
+<section id="índices-de-concentración" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="índices-de-concentración">Índices de concentración</h4>
+<p>Por otro lado, se pueden utilizar los índices de concentración:</p>
+<ol type="1">
+<li><p>Índice de Gini, que mide la desigualdad de una distribución como su distancia respecto a un reparto igualitario. Se obtiene a partir de la curva de Lorenz <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>, que relaciona el porcentaje acumulado de la población, <span class="math inline">\(X\%\)</span>, ordenada de menor a mayor renta, con el porcentaje acumulado de la renta que le corresponde, <span class="math inline">\(Y\%\)</span>, como se observa en la <a href="#fig-20-indice-de-gini" class="quarto-xref">Figura&nbsp;<span>21.4</span></a>. El índice es el área comprendida entre la recta de perfecta igualdad y la curva de Lorenz dividida por el área total bajo esa recta. Si el índice de Gini es 0, la igualdad será absoluta y si es 1, un solo individuo dispondrá de todos los recursos.</p></li>
+<li><p>Coeficiente de concentración, que, a diferencia del índice de Gini, ordena a los individuos por su renta antes de impuestos y mide cuánto se concentra otra magnitud –las cuotas del impuesto, <span class="math inline">\(T\)</span>, o la renta después de impuestos, <span class="math inline">\(X-T\)</span>– en los de mayor renta. Si <span class="math inline">\(L_{T}\left(p\right)\)</span> es la curva de concentración de las cuotas, es decir, el porcentaje acumulado del impuesto pagado por el porcentaje <span class="math inline">\(p\)</span> de la población más pobre, el coeficiente es <span class="citation" data-cites="20_Pascual">(<a href="01-tema-a1.html#ref-20_Pascual" role="doc-biblioref">Pascual y Sarabia 2003</a>)</span>: <span class="math display">\[C_{T}=1-2\int^{1}_{0}L_{T}\left(p\right)dp\]</span></p></li>
+<li><p>Índices agregados, que comparan la distribución de la renta antes de impuestos con la distribución después de impuestos o con el reparto de las cuotas</p>
+<ol type="1">
+<li><p>Índice de Musgrave y Thin (1948), se obtiene a partir del índice de Gini antes de impuestos <span class="math inline">\(G_{X}\)</span>, y el índice de Gini después de impuestos <span class="math inline">\(G_{X-T}\)</span>: <span id="eq-a-21-15"><span class="math display">\[I_{MT}=\dfrac{1-G_{X-T}}{1-G_{X}}=1+\dfrac{G_{X}-G_{X-T}}{1-G_{X}} \tag{21.16}\]</span></span> si el impuesto es progresivo entonces <span class="math inline">\(I_{MT}&gt;1\)</span>.</p></li>
+<li><p>Índice de Pechman y Okner (1974), se basa en la medición de la progresividad de un impuesto a partir de la reducción porcentual de la desigualdad medida a través del índice de Gini, y viene dado por <span class="math display">\[I_{PO}=\dfrac{G_{X}-G_{X-T}}{G_{X}}\]</span> por lo que el impuesto corrige la desigualdad si <span class="math inline">\(I_{PO}&gt;0\)</span> y la empeora si <span class="math inline">\(I_{PO}&lt;0\)</span> <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.</p></li>
+<li><p>Índice de Reynolds-Smolensky (1977), que mide el efecto redistributivo de un impuesto como la reducción absoluta del índice de Gini que produce, es decir, la diferencia entre el Gini antes de impuestos, <span class="math inline">\(G_{X}\)</span>, y el Gini después de impuestos, <span class="math inline">\(G_{X-T}\)</span> <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>: <span id="eq-a-21-16"><span class="math display">\[I_{RS}=G_{X}-G_{X-T} \tag{21.17}\]</span></span> por lo que el impuesto será redistributivo si <span class="math inline">\(I_{RS}&gt;0\)</span>.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p></li>
+<li><p>Índice de Kakwani (1977), que se basa en la desviación respecto de la proporcionalidad que conlleva el reparto de las cargas impositivas: <span class="math display">\[K=C_{T}-G_{X}\]</span> Cuanto más se aproxime <span class="math inline">\(K\)</span>, si es positivo, a su valor máximo, <span class="math inline">\(1-G_{X}\)</span>, más progresivo será el impuesto, mientras que los valores negativos indican regresividad.</p></li>
+</ol></li>
+</ol>
+<div id="fig-20-indice-de-gini" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Índice de Gini y curva de Lorenz">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-indice-de-gini-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.4: Índice de Gini y curva de Lorenz
+</figcaption>
+<div aria-describedby="fig-20-indice-de-gini-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-curva-de-lorenz-gini.svg" class="img-fluid figure-img" alt="Índice de Gini y curva de Lorenz">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="compromiso-entre-eficiencia-y-equidad" class="level2" data-number="21.5">
+<h2 data-number="21.5" class="anchored" data-anchor-id="compromiso-entre-eficiencia-y-equidad"><span class="header-section-number">21.5</span> Compromiso entre eficiencia y equidad <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="3 minutos">3'</span></h2>
+<p>Por último, haciendo referencia al compromiso entre la eficiencia y la equidad, en rigor, el análisis de la eficiencia es plenamente aplicable solo si las cuestiones distributivas son irrelevantes. Esto solo ocurriría si la economía estuviera formada por un solo individuo o múltiples individuos idénticos.</p>
+<p>Sin embargo, si se introducen criterios de igualdad habrá que plantear un problema maximizador del bienestar: <span id="eq-a-21-17"><span class="math display">\[\max\quad W\left(u_{1},\ldots,u_{n}\right) \tag{21.18}\]</span></span></p>
+<p>donde <span class="math inline">\(W\left(\cdot\right)\)</span> es una función de bienestar social, <span class="math inline">\(FBS\)</span>, de tipo Bergson, que agrega las utilidades individuales, <span class="math inline">\(u_{i}\)</span>, e incorpora juicios de valor sobre la distribución de recursos en la sociedad. La maximización está sujeta a la siguiente restricción <span id="eq-a-21-18"><span class="math display">\[T\left(x,p,\tau\right)=\bar{T} \tag{21.19}\]</span></span> donde <span class="math inline">\(T\left(\cdot\right)\)</span> es una función impositiva que relaciona los vectores de precios, <span class="math inline">\(p\)</span>, y demandas, <span class="math inline">\(x\)</span>, con el conjunto de instrumentos impositivos de los que dispone la autoridad fiscal, <span class="math inline">\(\tau\)</span>, y que permite obtener el nivel de recaudación, <span class="math inline">\(\bar{T}\)</span>. El sistema impositivo óptimo es el que, obteniendo esa recaudación, maximiza el bienestar social, aunque para ello tenga que aceptar un mayor coste de eficiencia a cambio de una distribución más igualitaria.</p>
+<p>En un sistema ideal, redistribuir no debería acarrear necesariamente costes de eficiencia. Como afirma el segundo teorema de la economía del bienestar, bajo supuestos de competencia perfecta se podría alcanzar la meta redistributiva sin costes de eficiencia mediante transferencias de suma fija.</p>
+<section id="análisis-gráfico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de utilidades de dos individuos 1 y 2, <span class="math inline">\(U_{1}\)</span> y <span class="math inline">\(U_{2}\)</span>, como el de la <a href="#fig-20-compromiso-entre-eficiencia-y-equidad" class="quarto-xref">Figura&nbsp;<span>21.5</span></a>, se representa la Gran Frontera de Posibilidades de Utilidad, <span class="math inline">\(GFPU\)</span>,<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a> para 2 individuos, que refleja la utilidad máxima que puede alcanzar uno dada la utilidad del otro; y las Curvas de Indiferencia Social, <span class="math inline">\(CI\)</span>, asociadas a las Funciones de Bienestar Social. Además, se representa la bisectriz, que contiene los puntos en los que ambos individuos alcanzan la misma utilidad.</p>
+<div id="fig-20-compromiso-entre-eficiencia-y-equidad" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Compromiso entre eficiencia y equidad">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-compromiso-entre-eficiencia-y-equidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.5: Compromiso entre eficiencia y equidad
+</figcaption>
+<div aria-describedby="fig-20-compromiso-entre-eficiencia-y-equidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-compromiso-entre-eficiencia-y-equidad.svg" class="img-fluid figure-img" alt="Compromiso entre eficiencia y equidad">
+</div>
+</figure>
+</div>
+<p>De esta forma:</p>
+<ul>
+<li><p>Inicialmente, dado el conjunto de impuestos, se parte de un equilibrio como <span class="math inline">\(A\)</span>, sobre la curva de indiferencia original, <span class="math inline">\(CI_{0}\)</span>, que es eficiente dado que se sitúa sobre la <span class="math inline">\(GFPU\)</span> pero no maximiza el bienestar social, cuyo máximo se alcanza en el punto <span class="math inline">\(B\)</span>, sobre la curva ideal, <span class="math inline">\(CI_{1}\)</span>, el denominado óptimo social, y que es socialmente preferido.</p></li>
+<li><p>Para llegar al punto <span class="math inline">\(B\)</span>, se aplicará el Segundo Teorema del Bienestar, por lo que se podrá alcanzar dicho óptimo social <span class="math inline">\(B\)</span> mediante impuestos de suma fija sin resentir la eficiencia.</p></li>
+<li><p>Sin embargo, el uso de estos impuestos es limitado debido a problemas de información, por lo que se utilizarán impuestos distorsionantes que permitirán alcanzar la asignación <span class="math inline">\(C\)</span> que es socialmente preferida a <span class="math inline">\(A\)</span> –se encuentra en la curva a la que se llega, <span class="math inline">\(CI_{2}\)</span>, más alejada del origen que <span class="math inline">\(CI_{0}\)</span>– pero ineficiente –dado que se sitúa por debajo de la <span class="math inline">\(GFPU\)</span>, siendo <span class="math inline">\(D\)</span> un punto eficiente asociado a la misma <span class="math inline">\(CI_{2}\)</span>–.</p></li>
+<li><p>De esta forma existe un “trade-off” entre objetivos de eficiencia y equidad que la política impositiva no puede ignorar.</p></li>
+<li><p>Además, podría llegar un punto en el que si el gobierno quiere continuar con la redistribución puede que los beneficios sociales en equidad no superen a los costes en términos de eficiencia económica y la economía se acabe situando en <span class="math inline">\(E\)</span>, que sería un punto de perfecta igualdad entre los individuos 1 y 2.</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="21.6">
+<h2 data-number="21.6" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">21.6</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, la política tributaria enfrenta una tensión estructural entre eficiencia económica y equidad distributiva. Un sistema eficiente debe minimizar las distorsiones que los impuestos generan sobre la oferta de bienes y servicios, la inversión y el comportamiento de los agentes económicos. Sin embargo, esta búsqueda no puede ignorar la equidad, que se persigue mediante la progresividad fiscal: un diseño tributario que asigna una carga creciente con la capacidad de pago.</p>
+<p>A ello se suma el reto de combatir la evasión y elusión fiscal, que erosionan la base imponible y pueden debilitar la progresividad del sistema. Para abordar estos desafíos, se requiere un enfoque dual: positivo, que analice los efectos reales de los impuestos, y normativo, que proponga reformas orientadas a corregir fallos de mercado y mejorar el bienestar social.</p>
+<p>Solo si se logra un buen equilibrio entre eficiencia, equidad y cumplimiento fiscal, se puede construir un sistema de impuestos que funcione bien y sea justo para todos.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-problemas-de-la-imposición-óptima" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-problemas-de-la-imposición-óptima">21.A.1.&nbsp;&nbsp;Problemas de la imposición óptima</h3>
+<p>Las reglas de imposición óptima presentan algunos problemas, ya que pueden entrar en contradicción o no tener en cuenta la equidad.</p>
+<p>Las reglas pueden entrar en contradicción entre ellas.</p>
+<ul>
+<li><p>Pan:</p>
+<ul>
+<li><p>Las reglas de Ramsey y de la elasticidad inversa aconsejan gravarlo mucho porque su demanda es bastante inelástica.</p></li>
+<li><p>La regla de Corlett-Hague aconseja gravarlo poco porque no es un bien complementario del ocio.</p></li>
+</ul></li>
+<li><p>Hoteles, restaurantes:</p>
+<ul>
+<li><p>Las reglas de Ramsey y de la elasticidad inversa aconsejan gravarlo poco porque sus demandas son bastante elásticas.</p></li>
+<li><p>La regla de Corlett-Hague aconseja gravarlo mucho porque son bienes complementarios del ocio.</p></li>
+</ul></li>
+<li><p>No obstante, en ciertos casos las reglas coinciden. Es el caso del alcohol o el tabaco:</p>
+<ul>
+<li><p>Las reglas de Ramsey y de la elasticidad inversa aconsejan gravarlos mucho porque sus demandas son muy inelásticas.</p></li>
+<li><p>La regla de Corlett-Hague aconseja gravarlo mucho porque son bienes complementarios del ocio.</p></li>
+</ul></li>
+</ul>
+<p>Las reglas no tienen en cuenta la equidad:</p>
+<ul>
+<li><p>Si, por ejemplo, comparamos el pan y el caviar, según las reglas de la imposición óptima el pan debe gravarse mucho porque su demanda es inelástica, mientras que el caviar debe gravarse poco porque su demanda es muy elástica.</p></li>
+<li><p>Esta recomendación favorece la eficiencia, pero no tiene en cuenta la función redistribuidora que debe perseguir todo sistema fiscal.</p></li>
+</ul>
+<p>Por lo tanto, un sistema fiscal, para ser considerado óptimo en su conjunto, debería tener en cuenta tanto la eficiencia como la equidad.</p>
+</section>
+<section id="a.2.-impuesto-sobre-el-valor-del-suelo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-impuesto-sobre-el-valor-del-suelo">21.A.2.&nbsp;&nbsp;Impuesto sobre el valor del suelo</h3>
+<p>El impuesto sobre el valor del suelo –Land Value Tax, LVT– grava el valor del suelo y no el de lo construido sobre él. Su principal defensor histórico fue Henry George, quien en “Progreso y miseria” (1879) propuso sustituir los impuestos sobre el trabajo y el capital por un único impuesto sobre el valor del suelo, bajo la idea de que la renta del propietario no responde a ningún esfuerzo productivo <span class="citation" data-cites="21_Gruber2016">(<a href="01-tema-a1.html#ref-21_Gruber2016" role="doc-biblioref">Gruber 2016, 736</a>)</span>. Economistas de diferentes escuelas lo han defendido por su eficiencia, como Adam Smith<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>, Milton Friedman, que lo calificó de “el menos malo de los impuestos” <span class="citation" data-cites="21_Fox2017">(<a href="01-tema-a1.html#ref-21_Fox2017" role="doc-biblioref">Fox 2017</a>)</span>, o Paul Krugman, quien considera que los modelos de economía urbana respaldan este impuesto al menos para financiar el crecimiento de las ciudades, aunque no recaudaría lo bastante para sostener un Estado del bienestar moderno <span class="citation" data-cites="21_Moore2009">(<a href="01-tema-a1.html#ref-21_Moore2009" role="doc-biblioref">Moore 2009</a>)</span>.</p>
+<p>La razón es que la oferta de suelo es fija, de modo que el impuesto no la reduce ni altera las decisiones de los agentes, y la carga recae sobre el propietario <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>. Además, como no depende de lo que se construya, cuanto más se aprovecha el suelo, por ejemplo con más viviendas, menor es la carga en términos relativos. Eso incentiva a ofrecer más vivienda, lo que puede contribuir a reducir los precios <span class="citation" data-cites="21_Arenas2024 21_Fox2017">(<a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>; <a href="01-tema-a1.html#ref-21_Fox2017" role="doc-biblioref">Fox 2017</a>)</span>.</p>
+<p>El impuesto grava el valor potencial del suelo y no los incrementos que resultan de las mejoras del propietario. La hipótesis es que ese valor se debe a circunstancias ajenas a la propiedad, habitualmente a la inversión pública, como la peatonalización de una calle o una estación de metro. Por tanto, redistribuye a la sociedad las externalidades positivas de las infraestructuras y los servicios públicos que revalorizan el suelo <span class="citation" data-cites="21_Arenas2024">(<a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>)</span>. En modelos de bienes públicos locales, las rentas del suelo igualan el gasto público óptimo, resultado conocido como teorema de Henry George <span class="citation" data-cites="21_Atkinson2015">(<a href="01-tema-a1.html#ref-21_Atkinson2015" role="doc-biblioref">Atkinson y Stiglitz 2015</a>)</span>.</p>
+<p>También puede ser progresivo, porque los propietarios suelen tener mayor capacidad económica, y es difícil de eludir por deslocalización, ya que el suelo no se puede trasladar a otra jurisdicción <span class="citation" data-cites="21_Arenas2024">(<a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>)</span>. Además, su justificación moral, la idea de que el suelo es de todos y de que sus frutos deben repercutir en la sociedad, puede ayudar a justificarlo políticamente <span class="citation" data-cites="21_Arenas2024">(<a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>)</span>.</p>
+<p>La experiencia de Pittsburgh apunta en esa dirección, aunque con matices. En 1979-1980 pasó a gravar el suelo a un tipo más de cinco veces superior al de las construcciones, y en los años ochenta la edificación aumentó muy por encima de la de otras ciudades de la región. Según Oates y Schwab <span class="citation" data-cites="21_Oates1997">(<a href="01-tema-a1.html#ref-21_Oates1997" role="doc-biblioref">1997</a>)</span>, el principal impulso fue la escasez de espacio comercial, y la mayor imposición sobre el suelo tuvo un papel de apoyo importante.</p>
+<p>Como inconvenientes destacan:</p>
+<ul>
+<li><p>La estimación del valor potencial del suelo, es decir, la base imponible, ya que es difícil separar el valor del suelo del de las mejoras <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>.</p></li>
+<li><p>Los contribuyentes pueden encontrarse sin liquidez y verse forzados a descapitalizarse para pagar el impuesto. Sin embargo, pueden imaginarse soluciones a este problema, por ejemplo diferir el pago hasta su venta <span class="citation" data-cites="21_Arenas2024">(<a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>)</span>.</p></li>
+<li><p>La introducción del impuesto genera perdedores claros: como se capitaliza en el valor del suelo, reduce de inmediato el valor de las propiedades y perjudica a quienes eran propietarios al anunciarse, especialmente a quienes las adquirieron hace poco <span class="citation" data-cites="21_Stiglitz2015 21_Arenas2024">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>; <a href="01-tema-a1.html#ref-21_Arenas2024" role="doc-biblioref">Arenas 2024</a>)</span>.</p></li>
+<li><p>Es políticamente difícil de implantar, porque los propietarios son hoy una mayoría con alta propensión a votar y los impuestos sobre la propiedad son muy impopulares, como muestra la Proposición 13 de California <span class="citation" data-cites="21_Fox2017">(<a href="01-tema-a1.html#ref-21_Fox2017" role="doc-biblioref">Fox 2017</a>)</span>. Friedman atribuía su impopularidad a que es el único impuesto que obliga a pagar de una vez una cantidad grande, y proponía retenerlo en origen <span class="citation" data-cites="21_Fox2017">(<a href="01-tema-a1.html#ref-21_Fox2017" role="doc-biblioref">Fox 2017</a>)</span>. Pittsburgh abandonó su experimento de gravar más el suelo que las construcciones a comienzos de los años 2000 <span class="citation" data-cites="21_NSmith2017">(<a href="01-tema-a1.html#ref-21_NSmith2017" role="doc-biblioref">Smith 2017</a>)</span>.</p></li>
+</ul>
+<p>A pesar de estos inconvenientes, sus ventajas explican que se proponga como instrumento de política fiscal y de vivienda, aunque su viabilidad depende de resolver la valoración del suelo y la transición.</p>
+</section>
+<section id="a.3.-la-inflación-y-el-impuesto-de-la-renta" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-la-inflación-y-el-impuesto-de-la-renta">21.A.3.&nbsp;&nbsp;La inflación y el impuesto de la renta</h3>
+<p>Como indica <span class="citation" data-cites="20_Albi2018">Albi et&nbsp;al. (<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">2018</a>)</span>, la existencia de procesos inflacionistas origina problemas en el ámbito del impuesto sobre la renta personal. Los efectos de la inflación sobre el impuesto sobre la renta se transmiten por tres vías esencialmente: la base imponible, los elementos determinantes de la progresividad real, y los desfases y retardos recaudatorios.</p>
+<section id="la-inflación-y-la-base-imponible" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="la-inflación-y-la-base-imponible">La inflación y la base imponible</h4>
+<p>Las distorsiones de la inflación en la determinación de la base son de dos tipos:</p>
+<ol type="1">
+<li><p>Una reducción en términos reales de las cantidades exentas, y de las deducciones fijas.</p></li>
+<li><p>Una falsa determinación de las rentas reales, sobre todo del capital. Las rentas del capital tienden a menudo a estar fijadas en términos monetarios y esto les perjudica, ya que con la inflación su valor real disminuye pero su tributación se mantiene. Igualmente, la inflación origina ganancias de capital puramente nominales.</p></li>
+</ol>
+</section>
+<section id="inflación-y-progresividad-efectiva-del-impuesto" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="inflación-y-progresividad-efectiva-del-impuesto">Inflación y progresividad efectiva del impuesto</h4>
+<p>Por otro lado, los impuestos progresivos sobre la renta personal son vulnerables a la inflación. En presencia de procesos de inflación la estructura progresiva del impuesto sobre la renta genera distorsiones en la distribución de la carga tributaria y altera la progresividad real del impuesto.</p>
+<p>Los impuestos progresivos y los incrementos de precios originan aumentos impositivos que no se corresponden con aumentos reales en la capacidad de pago de los contribuyentes, si no se establecen correcciones. Este efecto se produce por dos vías:</p>
+<ol type="1">
+<li><p>La inflación, como ya se ha indicado, reduce el valor real de las cantidades exentas, desgravaciones y deducciones de cuantía fija que el impuesto introduce con objeto de reforzar la progresividad y ajustar la carga tributaria a las circunstancias personales o familiares de los contribuyentes. Como resultado, resulta necesario un ajuste anual o una indiciación de estas bonificaciones si se desea que éstas mantengan sus objetivos.</p></li>
+<li><p>La escala impositiva se establece habitualmente en términos nominales, asignando tipos impositivos mayores a rentas nominales crecientes. Cuando el impuesto es progresivo, incrementos puramente nominales en la renta enfrentan a los contribuyentes a tipos marginales superiores. Es frecuente que, ante aumentos en el nivel general de precios, los salarios nominales crezcan para compensar así la pérdida de capacidad adquisitiva de los trabajadores. Así, aquellos contribuyentes cuya renta permanece constante en términos reales a lo largo del tiempo, pero que ven aumentar su salario nominal, se desplazan en la tarifa hacia tramos de renta superiores, que están sujetos a tipos de gravamen más elevados. Una posibilidad para resolver este problema consiste en deflactar automática y anualmente la tarifa, o bien establecer una indiciación automática de la base imponible con un índice de inflación. La otra posibilidad consiste en practicar políticas discrecionales de ajuste. Esta última es, sin embargo, la opción más habitual. Como resultado, en aquellos ejercicios en los que no se producen ajustes en la tarifa, el gobierno incrementa la recaudación sin que se hayan producido aumentos en la capacidad de pago real de los contribuyentes.</p></li>
+</ol>
+<p>El efecto doble de la inflación sobre el impuesto progresivo de la renta personal, a través de las exenciones y deducciones nominales y de la tarifa nominal, en ausencia de ajustes permanentes, se denomina «progresividad en frío» o «rémora fiscal».</p>
+</section>
+<section id="retrasos-y-adelantos-recaudatorios" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="retrasos-y-adelantos-recaudatorios">Retrasos y adelantos recaudatorios</h4>
+<p>Por último, los procesos de inflación y deflación muy agudos afectan a la recaudación del sector público en términos reales y, en consecuencia, a la carga tributaria real soportada por los contribuyentes<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>.</p>
+<p>Con objeto de mantener el valor real de la recaudación cuando los precios varían a gran velocidad existen tres tipos de mecanismos esencialmente:</p>
+<ol type="1">
+<li><p>Sistemas de retenciones en el origen de la renta: en el momento en que se genera la renta, el pagador retiene un porcentaje que ha de ingresar en Hacienda en concepto de «anticipo» de la factura impositiva del perceptor.</p></li>
+<li><p>Sistemas de pagos fraccionados frecuentes: similar al sistema de retenciones, consiste en que es el propio contribuyente quien, periódicamente, debe ingresar en Hacienda ciertas cantidades en concepto de adelanto de sus obligaciones tributarias.</p></li>
+<li><p>Indiciación de la deuda tributaria con índices de inflación: esta última posibilidad consistiría en ajustar la factura impositiva de acuerdo con la evolución de los precios, de manera que se mantuviera constante el valor real de la recaudación.</p></li>
+</ol>
+<p>Sin embargo, incluso cuando se implanta alguno de estos mecanismos puede existir discriminación entre los contribuyentes en presencia de procesos inflacionistas muy intensos. Por ejemplo, cuando, por problemas de control, no se generaliza el sistema de retención en origen a todas las modalidades de renta, contribuyentes con idéntica capacidad de pago que otros, pero que obtienen su renta sin retenciones, pueden posponer los pagos impositivos, reduciendo así su carga tributaria real. Esta discriminación distorsiona la equidad vertical y horizontal del impuesto.</p>
+</section>
+</section>
+<section id="a.4.-impuesto-progresivo-al-consumo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-impuesto-progresivo-al-consumo">21.A.4.&nbsp;&nbsp;Impuesto progresivo al consumo</h3>
+<p>En un estudio del NIESR de Reino Unido <span class="citation" data-cites="21_Bhattacharjee2022">(<a href="01-tema-a1.html#ref-21_Bhattacharjee2022" role="doc-biblioref">Bhattacharjee et&nbsp;al. 2022</a>)</span> se trata el impuesto progresivo al consumo. La imposición directa sobre el consumo se distingue de un impuesto indirecto sobre el gasto corriente, como el Impuesto sobre el Valor Añadido (IVA), porque grava el consumo total de un individuo a lo largo de un año, en lugar de gravar el punto de gasto cada vez que se realiza una compra.</p>
+<p>Según estos autores, un impuesto progresivo sobre el consumo, adecuadamente diseñado, mejora el bienestar de tres maneras.</p>
+<ol type="1">
+<li><p>En primer lugar, ayuda a los hogares a suavizar su consumo a lo largo del ciclo vital. La razón es que el consumo tiende a aumentar de forma constante con la edad hasta mediados de los 40 y luego disminuye bruscamente más adelante en la vida, pero las personas experimentan una mayor satisfacción a lo largo de la vida cuando pueden realizar un consumo más estable durante toda la vida adulta.</p></li>
+<li><p>En segundo lugar, un impuesto progresivo sobre el consumo permite a los hogares tomar decisiones más flexibles sobre el equilibrio entre trabajo y ocio, al incentivar el empleo para todos los hogares, no solo los de renta baja, sino también los de renta más alta, ya que su trabajo no se grava, sino solo lo que consumen.</p></li>
+<li><p>En tercer lugar, un impuesto progresivo al consumo permite a los hogares acumular riqueza porque genera incentivos para aumentar el ahorro de todos los grupos de renta.</p></li>
+</ol>
+<p>No obstante, también apuntan que la introducción de un impuesto directo progresivo sobre el consumo plantea una serie de cuestiones de transición, como, por ejemplo, si se aplicaría de la misma manera a los bienes y servicios importados, cómo evitar la doble imposición de las pensiones y los bienes registrados y cómo abordar la fiscalidad diferenciada del capital –por ejemplo, el capital de las empresas frente al de la vivienda y el capital heredado–.</p>
+<p>Una forma de abordar estos problemas de transición es introducir gradualmente un impuesto directo progresivo sobre el consumo, que suavizaría la carga que recaería sobre las personas que mantienen un alto nivel de consumo a partir del capital heredado. Ello se debe a que el paso de un sistema fiscal a otro modificará el valor de los activos, imponiendo una carga a la riqueza acumulada antes de la reforma y a la generación que posea el capital en ese momento. Otra forma es permitir exenciones, especialmente umbrales libres de impuestos.</p>
+<p>Aunque las ventajas de un impuesto directo y progresivo sobre el consumo son evidentes, también es cierto que un sistema de este tipo tiene inconvenientes, como una larga transición, la dificultad de distinguir los distintos tipos de ingresos y gastos –por ejemplo, las herencias– y cuestiones relacionadas con los movimientos transfronterizos de bienes y servicios.</p>
+</section>
+<section id="a.5.-curva-de-laffer" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-curva-de-laffer">21.A.5.&nbsp;&nbsp;Curva de Laffer</h3>
+<p>A mediados de la década de los setenta, Arthur Laffer sugirió que cuando los tipos impositivos eran suficientemente elevados, introducían tales desincentivos a las ofertas factoriales que aumentarlos reduciría la renta del país y disminuiría la recaudación –porque los nuevos tipos más elevados se aplicarían a niveles de renta mucho más bajos–. Una reducción de los tipos impositivos, por su parte, generaría el efecto contrario: incentivaría las ofertas factoriales, lo que estimularía un fuerte crecimiento de la renta y esto, a su vez, produciría una recaudación más elevada.</p>
+<p>El razonamiento de Laffer parte de dos observaciones sencillas:</p>
+<ol type="1">
+<li><p>Cuando el tipo impositivo es cero, la recaudación es nula.</p></li>
+<li><p>Cuando el tipo impositivo es igual a uno la recaudación también es nula, ya que si una persona ve que todo lo que gane lo va a tener que pagar en impuestos optará por no trabajar, y la base del impuesto desaparecerá.</p></li>
+</ol>
+<p>Como se observa en la <a href="#fig-20-la-curva-de-laffer" class="quarto-xref">Figura&nbsp;<span>21.6</span></a>, se denomina <span class="math inline">\(R\left(t\right)\)</span> a la recaudación como función del tipo impositivo. Dado que la función nace y muere en cero, lo más plausible es que, comenzando en <span class="math inline">\(t=0\)</span>, la recaudación aumente a medida que el tipo crece hasta alcanzar un máximo en <span class="math inline">\(t^{*}\)</span>. A partir de ese punto, la recaudación comience a disminuir hasta hacerse cero cuando <span class="math inline">\(t=1\)</span>. De esta forma, tal y como se representa en la figura, la función de recaudación tendrá forma de U invertida. Para tipos impositivos superiores a <span class="math inline">\(t^{*}\)</span>, una reducción de tipos aumentará la recaudación. Por ejemplo, una reducción del tipo impositivo de <span class="math inline">\(t_{0}\)</span> a <span class="math inline">\(t_{1}\)</span> aumentará la recaudación de <span class="math inline">\(R_{0}\)</span> a <span class="math inline">\(R_{1}\)</span>.</p>
+<div id="fig-20-la-curva-de-laffer" class="quarto-float quarto-figure quarto-figure-center anchored" alt="La curva de Laffer">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-20-la-curva-de-laffer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;21.6: La curva de Laffer
+</figcaption>
+<div aria-describedby="fig-20-la-curva-de-laffer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-21-curva-de-laffer.svg" class="img-fluid figure-img" alt="La curva de Laffer">
+</div>
+</figure>
+</div>
+<p>En la práctica, el razonamiento de Laffer presenta varios problemas.</p>
+<ul>
+<li><p>En primer lugar, una reducción de tipos no cambia inmediatamente el comportamiento de los individuos, ni genera de forma inmediata aumentos de la renta nacional.En el mejor de los casos, será un resultado de medio o largo plazo y en el intermedio el sector público deberá soportar una reducción de ingresos.</p></li>
+<li><p>Esta reducción, a su vez, forzará al sector público a reducir el gasto público o aumentar el endeudamiento, lo que redundará en una reducción de la demanda agregada que, en última instancia, puede retrasar o incluso eliminar los posibles aumentos de base imponible derivados del recorte fiscal.</p></li>
+<li><p>Finalmente, determinar cuál es el tipo a partir del cual comienza la sobreimposición es complicado. Con todo, para que una reducción de tipos aumente la recaudación, la elasticidad de la base imponible respecto al tipo impositivo tiene que ser, en valor absoluto, mayor que uno, lo que no parece ocurrir con las elasticidades de la oferta de trabajo y del ahorro vistas en este tema.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a> Además, los análisis cuantitativos más recientes indican que un recorte de tipos solo se autofinancia en parte: en Estados Unidos, el 32 % de un recorte de impuestos sobre el trabajo y el 51 % de uno sobre el capital, y el 54 % y el 79 %, respectivamente, en la UE-14 <span class="citation" data-cites="21_Trabandt2011">(<a href="01-tema-a1.html#ref-21_Trabandt2011" role="doc-biblioref">Trabandt y Uhlig 2011</a>)</span>. La experiencia de Estados Unidos con los recortes de los años ochenta apunta en la misma dirección<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a>.</p></li>
+</ul>
+<p>Todo lo anterior sugiere que es probable que la zona de sobreimposición, de existir, surja a niveles de presión fiscal próximos a la confiscación, como se observa en la curva discontinua, <span class="math inline">\(\tilde{R}\left(t\right)\)</span>, pero no a los niveles de imposición que existen actualmente en los países más avanzados. Por ejemplo, el máximo de la curva de Laffer para los impuestos sobre el trabajo en Estados Unidos se sitúa en torno a un tipo medio del 58 % <span class="citation" data-cites="21_Holter2019">(<a href="01-tema-a1.html#ref-21_Holter2019" role="doc-biblioref">Holter et&nbsp;al. 2019</a>)</span>.</p>
+</section>
+<section id="a.6.-razones-para-introducir-un-sistema-fiscal-progresivo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-razones-para-introducir-un-sistema-fiscal-progresivo">21.A.6.&nbsp;&nbsp;Razones para introducir un sistema fiscal progresivo</h3>
+<p>Como indican <span class="citation" data-cites="20_Pascual">Pascual y Sarabia (<a href="01-tema-a1.html#ref-20_Pascual" role="doc-biblioref">2003</a>)</span>, parece claro que el sistema fiscal puede ser: regresivo, proporcional o progresivo. Pero, ¿cuál de ellos es preferible? Para responder a esta cuestión, se analizarán brevemente las implicaciones de cada uno.</p>
+<ul>
+<li><p>Sistema fiscal regresivo. Puede aceptarse desde el punto de vista de la asignación óptima de los recursos aunque, fijándonos únicamente en la cuestión de la equidad, parece poco razonable proponer un sistema de este tipo. Con todo, cuando se apoya el principio del beneficio o del consumo, se tiende a apostar indirectamente por un sistema fiscal que produce efectos regresivos en la distribución de la renta.</p></li>
+<li><p>Sistema fiscal proporcional. Mantiene las diferencias y desigualdades económicas por lo que se produce un efecto distributivo cuando el sistema fiscal responde al principio de la capacidad de pago. Sin embargo, podemos conformarnos con que el sistema fiscal sea proporcional, con el fin de evitar efectos negativos sobre la eficiencia económica, siempre que se asegure que el gasto público cumplirá la función de redistribución.</p></li>
+<li><p>Sistema fiscal progresivo. Reduce las desigualdades económicas y se justificaría si se sigue el principio de la utilidad al producirse una redistribución de las rentas, que la querrán evidentemente los que ganan con ella, y solo ellos.</p></li>
+</ul>
+<p>Por un lado, la política fiscal progresiva es deseada por la presión de los individuos con renta baja, ya que saldrán ganando con las políticas redistributivas –ceden una proporción de su renta bruta para financiar el gasto público que es inferior a la que pagan los individuos con rentas elevadas–. Por lo tanto, puede haber una mayoría que sale beneficiada con el sistema progresivo.</p>
+<p>Por otro lado, existirá un grupo de contribuyentes de rentas altas que, en un sistema fiscal progresivo, paga una proporción de su renta mayor que la presión fiscal media. No obstante, parte de ellos puede aceptar una política fiscal progresiva si sus funciones de utilidad son interdependientes. En el modelo de Hochman y Rodgers <span class="citation" data-cites="21_Hochman1969">(<a href="01-tema-a1.html#ref-21_Hochman1969" role="doc-biblioref">1969</a>)</span>, la utilidad de un individuo, <span class="math inline">\(U_{a}\)</span>, depende de su propia renta, <span class="math inline">\(Y_{a}\)</span>, y de la utilidad de los demás individuos, <span class="math inline">\(U_{b}\)</span>, <span class="math inline">\(U_{c}\)</span>, etcétera, es decir, <span class="math inline">\(U_{a}=f\left(Y_{a},U_{b},U_{c},\ldots\right)\)</span>. Es lo que se denomina “altruismo de cercanía”.</p>
+<p>Otros autores sostienen que las rentas altas aceptan redistribuir por temor a que las desigualdades sociales se agraven <span class="citation" data-cites="21_Brennan1973 21_Pauly1973">(<a href="01-tema-a1.html#ref-21_Brennan1973" role="doc-biblioref">Brennan 1973</a>; <a href="01-tema-a1.html#ref-21_Pauly1973" role="doc-biblioref">Pauly 1973</a>)</span>, o porque una mejor distribución puede favorecer el crecimiento futuro y beneficiar también a esas rentas. Además, el deseo de redistribuir puede surgir de una voluntad social, independiente del nivel de renta personal.</p>
+</section>
+<section id="a.7.-suavización-impositiva" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-suavización-impositiva">21.A.7.&nbsp;&nbsp;Suavización impositiva</h3>
+<p>Cuando se cumple la equivalencia ricardiana, el Gobierno no tiene motivos para elegir una determinada senda de déficit presupuestario. Sin embargo, como se ha visto, los impuestos pueden afectar a los precios relativos y, por lo tanto, ser distorsionantes, presentando así un efecto sustitución además del efecto renta propio de los impuestos de suma fija. Siendo así, la distribución temporal de los impuestos sí tiene importancia.</p>
+<p>Barro <span class="citation" data-cites="20_Barro1979">(<a href="01-tema-a1.html#ref-20_Barro1979" role="doc-biblioref">1979</a>)</span> desarrolla un modelo para averiguar cuál debe ser la senda óptima impositiva que minimice las distorsiones derivadas del sistema impositivo. En él, el Gobierno parte de una secuencia conocida y exógena de gasto público, <span class="math inline">\(G_{t}\)</span>, y de renta, <span class="math inline">\(Y_{t}\)</span>, de un tipo de interés constante, <span class="math inline">\(r\)</span>, y de una deuda inicial, <span class="math inline">\(B_{0}\)</span>. Los ingresos fiscales, <span class="math inline">\(T_{t}\)</span>, son una proporción de la renta igual al tipo impositivo medio, <span class="math inline">\(\tau_{t}\)</span>: <span class="math display">\[\tau_{t}=\dfrac{T_{t}}{Y_{t}}\]</span> El coste de recaudar, es decir, el exceso de gravamen del periodo <span class="math inline">\(t\)</span>, <span class="math inline">\(CT_{t}\)</span>, es: <span id="eq-a-21-19"><span class="math display">\[CT_{t}=Y_{t}\cdot f\left(\tau_{t}\right) \tag{21.20}\]</span></span> donde el coste aumenta proporcionalmente más que el tipo de gravamen: es decir, <span class="math inline">\(f\left(\tau_{t}\right)\)</span> es estrictamente convexa, con <span class="math inline">\(f^{\prime}&gt;0\)</span> y <span class="math inline">\(f^{\prime\prime}&gt;0\)</span>.</p>
+<p>En dicho modelo, el problema del Gobierno es diseñar una secuencia impositiva que minimice el valor actual del coste de recaudar, <span class="math inline">\(CT\)</span>: <span id="eq-a-21-20"><span class="math display">\[\min\quad CT=\sum\limits_{t=1}^{\infty}\dfrac{Y_{t}\cdot f\left(\tau_{t}\right)}{\left(1+r\right)^{t}} \tag{21.21}\]</span></span> sujeto a la restricción intertemporal del Gobierno, que iguala el valor actual del gasto más la deuda inicial al valor actual de los ingresos: <span id="eq-a-21-21"><span class="math display">\[\sum\limits_{t=1}^{\infty}\dfrac{G_{t}}{\left(1+r\right)^{t}}+B_{0}=\sum\limits_{t=1}^{\infty}\dfrac{T_{t}}{\left(1+r\right)^{t}} \tag{21.22}\]</span></span> y a la condición de transversalidad, que evita soluciones explosivas y esquemas tipo Ponzi, donde <span class="math inline">\(B_{t}\)</span> es la deuda al final del periodo <span class="math inline">\(t\)</span>, que evoluciona según <span class="math inline">\(B_{t}=\left(1+r\right)B_{t-1}+G_{t}-T_{t}\)</span>: <span id="eq-a-21-22"><span class="math display">\[\lim_{t\rightarrow\infty}\dfrac{B_{t}}{\left(1+r\right)^{t}}=0 \tag{21.23}\]</span></span></p>
+<p>La CPO exige que el coste marginal de recaudar sea el mismo en todos los periodos. Esto ocurre con independencia del tipo de interés, porque la recaudación y su coste se producen en el mismo momento. Como <span class="math inline">\(f\)</span> es estrictamente convexa, <span class="math inline">\(f^{\prime}\)</span> es estrictamente creciente y a cada valor del coste marginal le corresponde un único tipo. Por tanto: <span id="eq-a-21-23"><span class="math display">\[f^{\prime}\left(\tau_{t}\right)=f^{\prime}\left(\tau_{t+1}\right)\;\Longrightarrow\;\tau_{t}=\tau_{t+1} \tag{21.24}\]</span></span></p>
+<p>Es decir, lo óptimo es que el tipo se mantenga constante, cualquiera que sea la senda de renta y de gasto. Y es que, como el coste marginal de la distorsión es creciente con el tipo impositivo, un tipo uniforme minimiza el exceso de gravamen.</p>
+<p>Esto implica una suavización impositiva, por lo que es preferible:</p>
+<ol type="1">
+<li><p>Mantener tipos bajos durante muchos años antes que tipos altos durante un solo año.</p></li>
+<li><p>Mantener el tipo constante y dejar actuar a los estabilizadores automáticos. El déficit aparece cuando se espera un aumento temporal del gasto sobre la renta o una caída temporal de la renta, como en recesiones o guerras, y el superávit en el caso contrario. O lo que es lo mismo: el déficit público será contracíclico –es decir, ahorro público, procíclico–. En este contexto, el papel de la deuda será, pues, el de absorber los shocks para permitir la deseada suavización impositiva.</p></li>
+</ol>
+</section>
+<section id="a.8.-euromod-medir-la-redistribución-y-la-progresividad-con-microsimulación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.8.-euromod-medir-la-redistribución-y-la-progresividad-con-microsimulación">21.A.8.&nbsp;&nbsp;EUROMOD: medir la redistribución y la progresividad con microsimulación</h3>
+<p>El cuerpo del tema desarrolla las medidas de progresividad y el compromiso entre eficiencia y equidad. EUROMOD es la herramienta con la que se mide, en la práctica, el efecto de los impuestos y las prestaciones sobre la renta de los hogares europeos.</p>
+<section id="qué-simula" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="qué-simula">Qué simula</h5>
+<p>EUROMOD es el modelo de microsimulación de impuestos y prestaciones de la Unión Europea. A partir de microdatos de hogares basados en EU-SILC y de las reglas fiscales de cada Estado miembro, simula los impuestos sobre la renta, las cotizaciones sociales de empleados, autónomos y empleadores y las prestaciones, y desde 2024 también los impuestos sobre el consumo <span class="citation" data-cites="21_JRC_EUROMOD 21_SutherlandFigari2013">(<a href="01-tema-a1.html#ref-21_JRC_EUROMOD" role="doc-biblioref">Joint Research Centre s.f.</a>; <a href="01-tema-a1.html#ref-21_SutherlandFigari2013" role="doc-biblioref">Sutherland y Figari 2013</a>)</span>. Lo gestiona el Joint Research Centre de la Comisión Europea desde 2021.</p>
+</section>
+<section id="cómo-calcula-la-renta-disponible" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="cómo-calcula-la-renta-disponible">Cómo calcula la renta disponible</h5>
+<p>Con <span class="math inline">\(Y_{o}\)</span> la renta original (de mercado más transferencias regulares), <span class="math inline">\(B\)</span> las prestaciones, <span class="math inline">\(SIC\)</span> las cotizaciones sociales de los hogares y <span class="math inline">\(T\)</span> los impuestos: <span class="math display">\[Y_{d}=Y_{o}+B-SIC-T\]</span></p>
+</section>
+<section id="qué-mide" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="qué-mide">Qué mide</h5>
+<p>La redistribución se define como el índice de Gini de la renta inicial menos el de la renta disponible, y se descompone con el marco de Kakwani: <span class="math display">\[RE=L\cdot P-RR\]</span></p>
+<p>donde <span class="math inline">\(L\)</span> es el nivel (impuestos y cotizaciones menos prestaciones, sobre la renta disponible), <span class="math inline">\(P\)</span> la progresividad (el índice de Kakwani de esos impuestos netos, es decir, su índice de concentración menos el Gini de la renta inicial) y <span class="math inline">\(RR\)</span> el reordenamiento de los hogares tras los impuestos <span class="citation" data-cites="21_JRC_EUROMOD">(<a href="01-tema-a1.html#ref-21_JRC_EUROMOD" role="doc-biblioref">Joint Research Centre s.f.</a>)</span>. Es la misma estructura que relaciona el índice de Reynolds-Smolensky con el de Kakwani: la redistribución es el nivel, que hace de <span class="math inline">\(t/(1-t)\)</span> con <span class="math inline">\(t\)</span> el tipo medio, multiplicado por la progresividad de Kakwani, menos el efecto reordenación.</p>
+</section>
+<section id="qué-no-hace" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="qué-no-hace">Qué no hace</h5>
+<ul>
+<li><p>No mide la traslación: al ser un modelo estático que supone fijas las rentas brutas <span class="citation" data-cites="21_Klevmarken2022">(<a href="01-tema-a1.html#ref-21_Klevmarken2022" role="doc-biblioref">Klevmarken 2022</a>)</span>, aplica las reglas fiscales a las rentas observadas, lo que se corresponde con la incidencia de impacto, no con la efectiva. Cualquier hipótesis de traslación, por ejemplo sobre las cotizaciones empresariales o el impuesto de sociedades, debe imponerla el analista.</p></li>
+<li><p>No capta el efecto sustitución: sin respuestas de comportamiento, recoge la carga directa del impuesto, el efecto renta, pero no el efecto sustitución ni, por tanto, el exceso de gravamen ni los efectos incentivos sobre la oferta de trabajo. Para estos hacen falta elasticidades estimadas fuera del modelo.</p></li>
+<li><p>Supone cumplimiento pleno: por defecto, no hay evasión ni cobro incompleto de prestaciones, que solo se modelan con extensiones calibradas cuando la validación macro lo exige.</p></li>
+</ul>
+</section>
+<section id="impuestos-sobre-el-consumo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="impuestos-sobre-el-consumo">Impuestos sobre el consumo</h5>
+<p>Desde 2024, EUROMOD los incluye, de modo que puede medir también cuánto soportan los hogares de estos impuestos, y no solo de los impuestos directos.</p>
+<p>EUROMOD es, por tanto, el complemento empírico de la teoría: mide con microdatos la incidencia de impacto y la redistribución, mientras que los efectos de comportamiento y el compromiso entre eficiencia y equidad requieren los modelos de este tema.</p>
+</section>
+</section>
+<section id="a.9.-impuestos-e-inversión-empresarial" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.9.-impuestos-e-inversión-empresarial">21.A.9.&nbsp;&nbsp;Impuestos e inversión empresarial</h3>
+<p>Una empresa que usa capital, <span class="math inline">\(K\)</span>, y trabajo, <span class="math inline">\(L\)</span>, maximiza su beneficio, <span class="math inline">\(\Pi\)</span>: <span class="math display">\[\Pi=p\cdot F\left(K,L\right)-w\cdot L-q\cdot\left(r+\delta\right)\cdot K\]</span> donde <span class="math inline">\(p\)</span> es el precio del producto, <span class="math inline">\(F\)</span> la función de producción, <span class="math inline">\(w\)</span> el salario, <span class="math inline">\(q\)</span> el precio de los bienes de capital, <span class="math inline">\(r\)</span> el tipo de interés y <span class="math inline">\(\delta\)</span> la tasa de depreciación. La condición de primer orden para el capital, <span class="math inline">\(p\cdot F_{K}=q\cdot\left(r+\delta\right)\)</span>, iguala el valor del producto marginal del capital a su coste de uso.</p>
+<p>Con un impuesto sobre el beneficio de tipo <span class="math inline">\(u\)</span> y sin crédito fiscal a la inversión, el coste de uso, <span class="math inline">\(c\)</span>, pasa a ser: <span class="math display">\[c=q\cdot\left(r+\delta\right)\cdot\dfrac{1-u\cdot z}{1-u}\]</span> donde <span class="math inline">\(z\)</span> es el valor actual de las deducciones por depreciación de cada euro invertido <span class="citation" data-cites="21_Hall1967">(<a href="01-tema-a1.html#ref-21_Hall1967" role="doc-biblioref">Hall y Jorgenson 1967</a>)</span>. Si la inversión se amortiza de inmediato, <span class="math inline">\(z=1\)</span> y el impuesto es neutral. Si no se deduce nada, <span class="math inline">\(z=0\)</span>, el coste de uso es <span class="math inline">\(q\cdot\left(r+\delta\right)/\left(1-u\right)\)</span>, sube y la inversión se reduce. Entre ambos extremos, cuanto más rápida es la amortización fiscal, mayor es <span class="math inline">\(z\)</span> y menor el coste de uso.</p>
+<p>Hay otra vía de neutralidad: si el impuesto permite deducir los costes de financiación y la inversión marginal se financia con deuda, no altera la decisión de inversión <span class="citation" data-cites="21_Rosen2010">(<a href="01-tema-a1.html#ref-21_Rosen2010" role="doc-biblioref">Rosen y Gayer 2010</a>)</span>. Pero esta neutralidad depende de supuestos. Si la inversión se financia con acciones o beneficios retenidos, o hay restricciones de financiación o riesgo de quiebra, el efecto depende de la estructura financiera. Y supone que a la empresa le cuesta lo mismo financiarse con fondos propios que con ajenos. Con restricciones de liquidez, el impuesto reduce los fondos internos y, con ellos, la inversión <span class="citation" data-cites="21_Rosen2010">(<a href="01-tema-a1.html#ref-21_Rosen2010" role="doc-biblioref">Rosen y Gayer 2010</a>)</span>.</p>
+</section>
+<section id="a.10.-evasión-y-elusión-fiscal" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.10.-evasión-y-elusión-fiscal">21.A.10.&nbsp;&nbsp;Evasión y elusión fiscal</h3>
+<p>La evasión consiste en el impago voluntario de impuestos debidos y es ilícita, mientras que la elusión consiste en reducir la carga tributaria mediante disposiciones legales y es lícita <span class="citation" data-cites="20_Albi2018 21_Slemrod2002">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>; <a href="01-tema-a1.html#ref-21_Slemrod2002" role="doc-biblioref">Slemrod y Yitzhaki 2002</a>)</span>.</p>
+<p>Allingham y Sandmo <span class="citation" data-cites="21_Allingham1972">(<a href="01-tema-a1.html#ref-21_Allingham1972" role="doc-biblioref">1972</a>)</span> modelan la decisión de evadir como una elección bajo incertidumbre. Un contribuyente con renta real <span class="math inline">\(W\)</span> declara una renta <span class="math inline">\(X\)</span>, sobre la que paga un tipo impositivo <span class="math inline">\(\theta\)</span>. Con probabilidad <span class="math inline">\(p\)</span> es inspeccionado y paga además un tipo de penalización <span class="math inline">\(\pi\)</span>, mayor que <span class="math inline">\(\theta\)</span>, sobre la renta no declarada. Maximiza su utilidad esperada y declara menos de lo debido si <span class="math inline">\(p\cdot\pi&lt;\theta\)</span>. Un aumento de la probabilidad de detección o de la penalización aumenta la renta declarada. El efecto del tipo impositivo es ambiguo, porque el efecto sustitución reduce la renta declarada y el efecto renta la aumenta.</p>
+<p>La evidencia de un experimento de auditoría en Dinamarca matiza el modelo: la evasión es casi nula para la renta con información de terceros, como los salarios, y sustancial para la renta autodeclarada <span class="citation" data-cites="21_Kleven2011">(<a href="01-tema-a1.html#ref-21_Kleven2011" role="doc-biblioref">Kleven et&nbsp;al. 2011</a>)</span>.</p>
+</section>
+<section id="a.11.-curva-del-gran-gatsby" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.11.-curva-del-gran-gatsby">21.A.11.&nbsp;&nbsp;Curva del gran Gatsby</h3>
+<p>La curva del gran Gatsby relaciona la desigualdad de la renta en un momento dado con la movilidad entre generaciones. Alan Krueger, presidente del Consejo de Asesores Económicos de Estados Unidos, la popularizó a partir de los trabajos de Corak y le dio el nombre del personaje de Fitzgerald <span class="citation" data-cites="21_Stiglitz2015 21_Durlauf2022">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>; <a href="01-tema-a1.html#ref-21_Durlauf2022" role="doc-biblioref">Durlauf et&nbsp;al. 2022</a>)</span>. En el eje horizontal se mide la desigualdad con el coeficiente de Gini, y en el vertical la persistencia con la elasticidad intergeneracional de la renta, IGE, que relaciona la renta permanente de padres e hijos. Cuanto mayor es la IGE, menor es la movilidad.</p>
+<p>La relación es positiva: los países con más desigualdad tienden a tener menos movilidad. Por ejemplo, los países de la OCDE con más desigualdad en los años ochenta tenían más persistencia de la renta entre generaciones, y Krueger estima que la IGE de Estados Unidos aumentará de 0,47 a 0,56 en la próxima generación <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>.</p>
+<p>Parte de esta relación es mecánica. Si el logaritmo de la renta de los hijos, <span class="math inline">\(y_{t+1}\)</span>, depende del de los padres, <span class="math inline">\(y_{t}\)</span>, según <span class="math display">\[y_{t+1}=\alpha+\beta\cdot y_{t}+\varepsilon_{t}\]</span> donde <span class="math inline">\(\alpha\)</span> es una constante, <span class="math inline">\(\beta\)</span> la IGE y <span class="math inline">\(\varepsilon_{t}\)</span> un término de error, entonces la varianza de la renta futura es <span class="math display">\[\mathrm{Var}\left(y_{t+1}\right)=\beta^{2}\cdot\mathrm{Var}\left(y_{t}\right)+\mathrm{Var}\left(\varepsilon\right)\]</span> de modo que la persistencia y la desigualdad futura están ligadas matemáticamente. Según Berman, esta relación explica casi dos tercios de la variación de la IGE entre países y más del 90 % de su variación en el tiempo en Estados Unidos <span class="citation" data-cites="21_Durlauf2022">(<a href="01-tema-a1.html#ref-21_Durlauf2022" role="doc-biblioref">Durlauf et&nbsp;al. 2022</a>)</span>. Por eso, interpretar que la desigualdad genera persistencia exige tratar la ecuación como una relación estadística y no estructural.</p>
+<p>Durlauf, Kourtellos y Tan <span class="citation" data-cites="21_Durlauf2022">(<a href="01-tema-a1.html#ref-21_Durlauf2022" role="doc-biblioref">2022</a>)</span> distinguen cinco clases de teorías, que no compiten entre sí, para explicar el mecanismo:</p>
+<ul>
+<li><p>Inversión de las familias: los padres reparten su renta entre educar a los hijos y consumir, y las restricciones de crédito hacen que la renta de los padres limite esa inversión.</p></li>
+<li><p>Habilidades: las capacidades cognitivas y no cognitivas dependen de los insumos familiares durante la infancia, incluida la estructura familiar y el momento en que se reciben.</p></li>
+<li><p>Influencias sociales: la segregación de ricos y pobres en barrios distintos, con educación financiada localmente, transmite el estatus socioeconómico entre generaciones.</p></li>
+<li><p>Economía política: la desigualdad determina el voto sobre la redistribución y, con él, la inversión pública en educación, como en el modelo del votante mediano.</p></li>
+<li><p>Aspiraciones: la desigualdad aumenta la dispersión de las aspiraciones, que se forman por influencias familiares y sociales.</p></li>
+</ul>
+<p>Más allá de la comparación entre países, la curva se ha estudiado dentro de países y regiones con resultados desiguales. En China, por ejemplo, la relación entre la desigualdad provincial y la persistencia se debilita sustancialmente al estimarla en primeras diferencias <span class="citation" data-cites="21_Durlauf2022">(<a href="01-tema-a1.html#ref-21_Durlauf2022" role="doc-biblioref">Durlauf et&nbsp;al. 2022</a>)</span>.</p>
+<p>La curva interesa porque sugiere que una sociedad puede perseguir a la vez la igualdad de resultados y la de oportunidades, y porque cuestiona que Estados Unidos acepte más desigualdad a cambio de más oportunidades. Como el estatus de los padres es algo de lo que los hijos no son responsables, la persistencia indica que parte de la desigualdad es injusta según el igualitarismo sensible a la responsabilidad <span class="citation" data-cites="21_Durlauf2022">(<a href="01-tema-a1.html#ref-21_Durlauf2022" role="doc-biblioref">Durlauf et&nbsp;al. 2022</a>)</span>. Enlaza así con el compromiso entre eficiencia y equidad del cuerpo del tema.</p>
+</section>
+<section id="a.12.-deflactación-de-la-tarifa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.12.-deflactación-de-la-tarifa">21.A.12.&nbsp;&nbsp;Deflactación de la tarifa</h3>
+<p>La progresividad en frío, vista en el apartado 21.A.3, es un aumento del tipo medio sin que se haya producido una subida de la renta en términos reales. Para evitarla se deflactan los tramos de la tarifa, y la discusión es si deben ajustarse con la inflación o con el crecimiento de la renta <span class="citation" data-cites="21_Almunia2022">(<a href="01-tema-a1.html#ref-21_Almunia2022" role="doc-biblioref">Almunia 2022</a>)</span>.</p>
+<p>Deflactar tiene límites. Quienes están por debajo del mínimo exento no se benefician, porque no pagan el impuesto, y en ese tramo de la distribución cualquier rebaja del IRPF es regresiva. Además, deflactar cuando la inflación es muy alta estimula la demanda y puede causar más inflación, de modo que un IRPF sin deflactar actúa como estabilizador automático de la inflación. A ello se suma el coste fiscal, con un déficit estructural de aproximadamente el 4 % del PIB y una deuda del 118 % <span class="citation" data-cites="21_Almunia2022">(<a href="01-tema-a1.html#ref-21_Almunia2022" role="doc-biblioref">Almunia 2022</a>)</span>.</p>
+<p>En la práctica, Estados Unidos deflacta anualmente con la inflación desde los años ochenta, algo menos de la mitad de los países de la Unión Europea lo hacen de forma automática, entre ellos Francia y los países nórdicos, y Alemania cada dos años. La conclusión del autor es que deflactar es necesario a largo plazo, pero que a corto plazo se puede hacer de varias maneras y hay que elegir bien el momento <span class="citation" data-cites="21_Almunia2022">(<a href="01-tema-a1.html#ref-21_Almunia2022" role="doc-biblioref">Almunia 2022</a>)</span>.</p>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-20_Albi2018" class="csl-entry" role="listitem">
+Albi, Emilio, José Manuel González-Páramo, Rosa M. Urbanos, y Ignacio Zubiri. 2018. <em><span>Econom<span>í</span>a P<span>ú</span>blica II: Teor<span>í</span>a de la imposici<span>ó</span>n. Sistema impositivo. Otros ingresos p<span>ú</span>blicos. Econom<span>í</span>a P<span>ú</span>blica Internacional</span></em>. Ariel.
+</div>
+<div id="ref-21_Allingham1972" class="csl-entry" role="listitem">
+Allingham, Michael G., y Agnar Sandmo. 1972. <span>«<span>Income Tax Evasion: A Theoretical Analysis</span>»</span>. <em>Journal of Public Economics</em> 1 (3-4): 323-38.
+</div>
+<div id="ref-21_Almunia2022" class="csl-entry" role="listitem">
+Almunia, Miguel. 2022. <em><span>Pros y contras de ajustar el IRPF con la inflaci<span>ó</span>n</span></em>. Nada es Gratis. <a href="https://nadaesgratis.es/miguel-almunia/pros-y-contras-de-ajustar-el-irpf-con-la-inflacion">https://nadaesgratis.es/miguel-almunia/pros-y-contras-de-ajustar-el-irpf-con-la-inflacion</a>.
+</div>
+<div id="ref-21_Arenas2024" class="csl-entry" role="listitem">
+Arenas, Andreu. 2024. <em><span>¿Llegó la hora del impuesto sobre el valor del suelo?</span></em> Nada es Gratis. <a href="https://nadaesgratis.es/andreu-arenas/llego-la-hora-del-impuesto-sobre-el-valor-del-suelo">https://nadaesgratis.es/andreu-arenas/llego-la-hora-del-impuesto-sobre-el-valor-del-suelo</a>.
+</div>
+<div id="ref-21_Atkinson2015" class="csl-entry" role="listitem">
+Atkinson, Anthony B., y Joseph E. Stiglitz. 2015. <em><span>Lectures on Public Economics</span></em>. Updated. Princeton University Press.
+</div>
+<div id="ref-21_Barro1974" class="csl-entry" role="listitem">
+Barro, Robert J. 1974. <span>«<span>Are Government Bonds Net Wealth?</span>»</span> <em>Journal of Political Economy</em> 82 (6): 1095-117.
+</div>
+<div id="ref-20_Barro1979" class="csl-entry" role="listitem">
+Barro, Robert J. 1979. <span>«<span>On the Determination of the Public Debt</span>»</span>. <em>Journal of Political Economy</em> 87 (5, Part 1): 940-71. <a href="https://doi.org/10.1086/260807">https://doi.org/10.1086/260807</a>.
+</div>
+<div id="ref-21_Benz2008" class="csl-entry" role="listitem">
+Benz, Matthias, y Bruno S. Frey. 2008. <span>«<span>Being Independent is a Great Thing: Subjective Evaluations of Self-Employment and Hierarchy</span>»</span>. <em>Economica</em> 75 (298): 362-83. <a href="https://doi.org/10.1111/j.1468-0335.2007.00594.x">https://doi.org/10.1111/j.1468-0335.2007.00594.x</a>.
+</div>
+<div id="ref-21_Bhattacharjee2022" class="csl-entry" role="listitem">
+Bhattacharjee, Arnab, Adrian Pabst, Larissa da Silva Marioni, Andrew Aitken, Elena Lisauskaite, y Justin van de Ven. 2022. <em><span>Fairer Taxation? The Case For and Against More Progressive Consumption Taxes in the UK</span></em>. Informe. National Institute of Economic; Social Research. <a href="https://niesr.ac.uk/publications/fairer-taxation-case-and-against-more-progressive-consumption-taxes-uk">https://niesr.ac.uk/publications/fairer-taxation-case-and-against-more-progressive-consumption-taxes-uk</a>.
+</div>
+<div id="ref-21_Boadway1984" class="csl-entry" role="listitem">
+Boadway, Robin W., y Neil Bruce. 1984. <em><span>Welfare Economics</span></em>. Basil Blackwell.
+</div>
+<div id="ref-21_Borjas2016" class="csl-entry" role="listitem">
+Borjas, George J. 2016. <em><span>Labor Economics</span></em>. 7.ª ed. McGraw-Hill Education.
+</div>
+<div id="ref-21_Bowles2005" class="csl-entry" role="listitem">
+Bowles, Samuel, y Yongjin Park. 2005. <span>«<span>Emulation, Inequality, and Work Hours: Was Thorsten Veblen Right?</span>»</span> <em>The Economic Journal</em> 115 (507): F397-412. <a href="https://doi.org/10.1111/j.1468-0297.2005.01042.x">https://doi.org/10.1111/j.1468-0297.2005.01042.x</a>.
+</div>
+<div id="ref-21_Brennan1973" class="csl-entry" role="listitem">
+Brennan, Geoffrey. 1973. <span>«<span>Pareto Desirable Redistribution: The Non-Altruistic Dimension</span>»</span>. <em>Public Choice</em> 14 (1): 43-67. <a href="https://doi.org/10.1007/BF01718441">https://doi.org/10.1007/BF01718441</a>.
+</div>
+<div id="ref-21_Cesarini2017" class="csl-entry" role="listitem">
+Cesarini, David, Erik Lindqvist, Matthew J. Notowidigdo, y Robert Östling. 2017. <span>«<span>The Effect of Wealth on Individual and Household Labor Supply: Evidence from Swedish Lotteries</span>»</span>. <em>American Economic Review</em> 107 (12): 3917-46. <a href="https://doi.org/10.1257/aer.20151589">https://doi.org/10.1257/aer.20151589</a>.
+</div>
+<div id="ref-20_Corlett1953" class="csl-entry" role="listitem">
+Corlett, W. J., y D. C. Hague. 1953. <span>«<span>Complementarity and the Excess Burden of Taxation</span>»</span>. <em>The Review of Economic Studies</em> 21 (1): 21-30. <a href="http://www.jstor.org/stable/2296257">http://www.jstor.org/stable/2296257</a>.
+</div>
+<div id="ref-21_Diamond1971b" class="csl-entry" role="listitem">
+Diamond, Peter A., y James A. Mirrlees. 1971. <span>«<span>Optimal Taxation and Public Production II: Tax Rules</span>»</span>. <em>American Economic Review</em> 61 (3): 261-78.
+</div>
+<div id="ref-21_Domar1944" class="csl-entry" role="listitem">
+Domar, Evsey D., y Richard A. Musgrave. 1944. <span>«<span>Proportional Income Taxation and Risk-Taking</span>»</span>. <em>The Quarterly Journal of Economics</em> 58 (3): 388-422.
+</div>
+<div id="ref-21_Durlauf2022" class="csl-entry" role="listitem">
+Durlauf, Steven N., Andros Kourtellos, y Chih Ming Tan. 2022. <span>«<span>The Great Gatsby Curve</span>»</span>. <em>Annual Review of Economics</em> 14 (agosto): 571-605. <a href="https://doi.org/10.1146/annurev-economics-082321-122703">https://doi.org/10.1146/annurev-economics-082321-122703</a>.
+</div>
+<div id="ref-21_Fox2017" class="csl-entry" role="listitem">
+Fox, Justin. 2017. <em><span>Why Economists Love Property Taxes and You Don’t</span></em>. Bloomberg Opinion. <a href="https://www.bloomberg.com/opinion/articles/2017-11-28/why-economists-love-property-taxes-and-you-don-t">https://www.bloomberg.com/opinion/articles/2017-11-28/why-economists-love-property-taxes-and-you-don-t</a>.
+</div>
+<div id="ref-21_Gruber2016" class="csl-entry" role="listitem">
+Gruber, Jonathan. 2016. <em><span>Public Finance and Public Policy</span></em>. 5.ª ed. Worth Publishers.
+</div>
+<div id="ref-21_Hall1967" class="csl-entry" role="listitem">
+Hall, Robert E., y Dale W. Jorgenson. 1967. <span>«<span>Tax Policy and Investment Behavior</span>»</span>. <em>American Economic Review</em> 57 (3): 391-414.
+</div>
+<div id="ref-21_Hamilton2000" class="csl-entry" role="listitem">
+Hamilton, Barton H. 2000. <span>«<span>Does Entrepreneurship Pay? An Empirical Analysis of the Returns to Self-Employment</span>»</span>. <em>Journal of Political Economy</em> 108 (3): 604-31. <a href="https://doi.org/10.1086/262131">https://doi.org/10.1086/262131</a>.
+</div>
+<div id="ref-21_Hochman1969" class="csl-entry" role="listitem">
+Hochman, Harold M., y James D. Rodgers. 1969. <span>«<span>Pareto Optimal Redistribution</span>»</span>. <em>American Economic Review</em> 59 (4): 542-57.
+</div>
+<div id="ref-21_Holter2019" class="csl-entry" role="listitem">
+Holter, Hans A., Dirk Krueger, y Serhiy Stepanchuk. 2019. <span>«<span>How Do Tax Progressivity and Household Heterogeneity Affect Laffer Curves?</span>»</span> <em>Quantitative Economics</em> 10 (4): 1317-56. <a href="https://doi.org/10.3982/QE653">https://doi.org/10.3982/QE653</a>.
+</div>
+<div id="ref-21_Imbens2001" class="csl-entry" role="listitem">
+Imbens, Guido W., Donald B. Rubin, y Bruce I. Sacerdote. 2001. <span>«<span>Estimating the Effect of Unearned Income on Labor Earnings, Savings, and Consumption: Evidence from a Survey of Lottery Players</span>»</span>. <em>American Economic Review</em> 91 (4): 778-94. <a href="https://doi.org/10.1257/aer.91.4.778">https://doi.org/10.1257/aer.91.4.778</a>.
+</div>
+<div id="ref-21_JRC_EUROMOD" class="csl-entry" role="listitem">
+Joint Research Centre. s.f. <em><span>EUROMOD: the tax-benefit microsimulation model for the European Union</span></em>. Comisi<span>ó</span>n Europea. <a href="https://euromod-web.jrc.ec.europa.eu/">https://euromod-web.jrc.ec.europa.eu/</a>.
+</div>
+<div id="ref-21_Kleven2011" class="csl-entry" role="listitem">
+Kleven, Henrik Jacobsen, Martin B. Knudsen, Claus Thustrup Kreiner, Søren Pedersen, y Emmanuel Saez. 2011. <span>«<span>Unwilling or Unable to Cheat? Evidence from a Tax Audit Experiment in Denmark</span>»</span>. <em>Econometrica</em> 79 (3): 651-92. <a href="https://doi.org/10.3982/ECTA9113">https://doi.org/10.3982/ECTA9113</a>.
+</div>
+<div id="ref-21_Klevmarken2022" class="csl-entry" role="listitem">
+Klevmarken, A. 2022. <span>«<span>Modeling Behavioural Response in EUROMOD</span>»</span>. <em>International Journal of Microsimulation</em> 15 (1): 89-96. <a href="https://doi.org/10.34196/ijm.00252">https://doi.org/10.34196/ijm.00252</a>.
+</div>
+<div id="ref-21_Moore2009" class="csl-entry" role="listitem">
+Moore, Michael Scott. 2009. <em><span>This Land Is Your Land</span></em>. Pacific Standard. <a href="https://psmag.com/news/this-land-is-your-land-3392">https://psmag.com/news/this-land-is-your-land-3392</a>.
+</div>
+<div id="ref-20_Musgrave1948" class="csl-entry" role="listitem">
+Musgrave, R. A., y Tun Thin. 1948. <span>«<span>Income Tax Progression, 1929-48</span>»</span>. <em>Journal of Political Economy</em> 56 (6): 498-514.
+</div>
+<div id="ref-21_Oates1997" class="csl-entry" role="listitem">
+Oates, Wallace E., y Robert M. Schwab. 1997. <span>«<span>The Impact of Urban Land Taxation: The Pittsburgh Experience</span>»</span>. <em>National Tax Journal</em> 50 (1): 1-21. <a href="https://www.jstor.org/stable/41789240">https://www.jstor.org/stable/41789240</a>.
+</div>
+<div id="ref-20_Pascual" class="csl-entry" role="listitem">
+Pascual, Marta, y José María Sarabia. 2003. <em><span>La Medici<span>ó</span>n de la Equidad en la Implementaci<span>ó</span>n de los Sistemas Impositivos</span></em>. Documento de Trabajo 21/03. Instituto de Estudios Fiscales.
+</div>
+<div id="ref-21_Pauly1973" class="csl-entry" role="listitem">
+Pauly, Mark V. 1973. <span>«<span>Income Redistribution as a Local Public Good</span>»</span>. <em>Journal of Public Economics</em> 2 (1): 35-58.
+</div>
+<div id="ref-21_Ramsey1927" class="csl-entry" role="listitem">
+Ramsey, F. P. 1927. <span>«<span>A Contribution to the Theory of Taxation</span>»</span>. <em>The Economic Journal</em> 37 (145): 47-61. <a href="https://doi.org/10.2307/2222721">https://doi.org/10.2307/2222721</a>.
+</div>
+<div id="ref-21_Rosen2010" class="csl-entry" role="listitem">
+Rosen, Harvey S., y Ted Gayer. 2010. <em><span>Public Finance</span></em>. 9.ª ed. McGraw-Hill/Irwin.
+</div>
+<div id="ref-21_Slemrod2002" class="csl-entry" role="listitem">
+Slemrod, Joel, y Shlomo Yitzhaki. 2002. <span>«<span>Tax Avoidance, Evasion, and Administration</span>»</span>. Chap. 22 en <em>Handbook of Public Economics</em>, editado por Alan J. Auerbach y Martin Feldstein, vol. 3. Elsevier.
+</div>
+<div id="ref-21_NSmith2017" class="csl-entry" role="listitem">
+Smith, Noah. 2017. <em><span>Faster Growth Begins With a Land Tax in U.S. Cities</span></em>. Bloomberg Opinion.
+</div>
+<div id="ref-21_Stern2004" class="csl-entry" role="listitem">
+Stern, Scott. 2004. <span>«<span>Do Scientists Pay to Be Scientists?</span>»</span> <em>Management Science</em> 50 (6): 835-53. <a href="https://doi.org/10.1287/mnsc.1040.0241">https://doi.org/10.1287/mnsc.1040.0241</a>.
+</div>
+<div id="ref-21_Stiglitz2015" class="csl-entry" role="listitem">
+Stiglitz, Joseph E., y Jay K. Rosengard. 2015. <em><span>Economics of the Public Sector</span></em>. 4.ª ed. W. W. Norton &amp; Company.
+</div>
+<div id="ref-21_SutherlandFigari2013" class="csl-entry" role="listitem">
+Sutherland, Holly, y Francesco Figari. 2013. <span>«<span>EUROMOD: the European Union tax-benefit microsimulation model</span>»</span>. <em>International Journal of Microsimulation</em> 6 (1): 4-26. <a href="https://doi.org/10.34196/ijm.00075">https://doi.org/10.34196/ijm.00075</a>.
+</div>
+<div id="ref-21_Tobin1958" class="csl-entry" role="listitem">
+Tobin, James. 1958. <span>«<span>Liquidity Preference as Behavior Towards Risk</span>»</span>. <em>The Review of Economic Studies</em> 25 (2): 65-86. <a href="https://doi.org/10.2307/2296205">https://doi.org/10.2307/2296205</a>.
+</div>
+<div id="ref-21_Trabandt2011" class="csl-entry" role="listitem">
+Trabandt, Mathias, y Harald Uhlig. 2011. <span>«<span>The Laffer Curve Revisited</span>»</span>. <em>Journal of Monetary Economics</em> 58 (4): 305-27. <a href="https://doi.org/10.1016/j.jmoneco.2011.07.003">https://doi.org/10.1016/j.jmoneco.2011.07.003</a>.
+</div>
+<div id="ref-21_OMB_FRED" class="csl-entry" role="listitem">
+U.S. Office of Management and Budget. 2026. <em><span>Federal Receipts as Percent of Gross Domestic Product (FYFRGDA188S) y Federal Surplus or Deficit as Percent of Gross Domestic Product (FYFSGDA188S)</span></em>. FRED, Federal Reserve Bank of St. Louis. <a href="https://fred.stlouisfed.org/series/FYFRGDA188S">https://fred.stlouisfed.org/series/FYFRGDA188S</a>.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>La intuición es que un impuesto de suma fija también cambia la conducta, porque empobrece al contribuyente, pero no le ofrece ninguna forma de pagar menos. Con un impuesto distorsionante, en cambio, trabajar, consumir o ahorrar menos de lo gravado reduce la factura fiscal.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Según <span class="citation" data-cites="20_Albi2018">Albi et&nbsp;al. (<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">2018</a>)</span>, el único ejemplo en la historia reciente de un impuesto de tanto alzado es, precisamente, el de un impuesto de capitación –impuesto de tanto alzado en el que todos los contribuyentes pagan la misma cantidad– introducido por el gobierno conservador de Margaret Thatcher en el Reino Unido en 1990 como instrumento de financiación de los municipios: el denominado Poll Tax.</p>
+<p>Este impuesto básicamente consistía en que cada municipio dividiera su presupuesto de gasto entre todos los contribuyentes y cobrara a cada uno de ellos un impuesto igual a la cantidad resultante. Sin embargo, este impuesto se encontró con los problemas de equidad que, debido a los problemas de información, tienen en la práctica los impuestos de tanto alzado. Como el Poll Tax hacía pagar a todos –ricos o pobres– lo mismo, iba en contra de las normas de equidad dominantes y suscitó numerosas protestas que, en última instancia, forzaron a que fuera revocado. La inconsistencia con la equidad, interpretada como que el que tenga más pague impuestos más altos, es, probablemente, la causa del escaso uso en la práctica de los impuestos de tanto alzado.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>El signo negativo se debe a que el efecto sustitución propio, <span class="math inline">\(S_{ii}\)</span>, es negativo, de modo que el sumatorio es negativo y el exceso de gravamen resulta positivo. El factor <span class="math inline">\(1/2\)</span> procede de aproximar linealmente la pérdida de bienestar por el área de un triángulo, lo que equivale a suponer demandas compensadas lineales <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>La intuición es que, como el exceso de gravamen crece con el cuadrado del tipo, si un impuesto distorsiona más que otro por el último euro recaudado, conviene recaudar un euro menos con él y uno más con el otro <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>La pregunta de cuál es el patrón de impuestos sobre los bienes que menos distorsiona, sin poder recurrir a impuestos de suma fija, se la planteó a Ramsey su profesor, A. C. Pigou, y Ramsey la resolvió en 1927 <span class="citation" data-cites="21_Stiglitz2015">(<a href="01-tema-a1.html#ref-21_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015, 621-22</a>)</span>. El año 1947 que figura en algunas referencias corresponde a la 3.ª edición de “A Study in Public Finance”, de Pigou, y no a la fecha de la pregunta. Por eso la regla se atribuye hoy a Ramsey, aunque algunos textos la llaman regla de Pigou <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Diferencia con la regla de elección excluyente. Aunque en un primer momento esta regla parece ser la misma que la de la elección excluyente, esto no es así:</p>
+<ul>
+<li><p>La regla de elección excluyente solo tiene en cuenta la elasticidad y aconseja, por tanto, gravar un único bien</p></li>
+<li><p>La regla de la elasticidad inversa considera que, además de la elasticidad, el tipo impositivo también influye en el exceso de gravamen, y de forma más que proporcional, ya que este crece con el cuadrado del tipo. Por tanto, la regla de la elasticidad inversa aconseja gravar muchos bienes cuya demanda sea inelástica, de modo que el tipo sea reducido.</p></li>
+</ul>
+<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn7"><p>La intuición es que gravar lo que se consume junto con el tiempo libre, como los servicios turísticos, es una forma indirecta de gravar el ocio, que el Estado no puede gravar directamente <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>La intuición es que esta regla indica que las distorsiones creadas por los impuestos no deberían modificar sustancialmente las proporciones en las que se consumen los distintos bienes.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Nótese que en el extremo derecho de la recta, donde el ocio es máximo, el agente no trabaja y consume solo sus rentas no salariales: <span class="math inline">\(C=I\)</span> antes del impuesto y <span class="math inline">\(C=I-T\)</span> tras el impuesto de suma fija.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>La evidencia empírica sugiere que la elasticidad de la oferta de trabajo de los asalariados principales, típicamente los hombres, es baja, en torno a 0,21-0,25, y considerablemente menor que la de los trabajadores secundarios, típicamente las mujeres <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a> a partir de Blundell y MaCurdy, 1999)</span>.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Un bien es inferior cuando su consumo disminuye al aumentar la renta. Un ocio inferior implica, por tanto, que al subir la renta la persona desea menos ocio y trabaja más horas <span class="citation" data-cites="21_Borjas2016">(<a href="01-tema-a1.html#ref-21_Borjas2016" role="doc-biblioref">Borjas 2016, cap. 2</a>)</span>. Es un caso poco habitual, pero puede darse en situaciones como estas:</p>
+<ul>
+<li><p>Trabajo con utilidad propia: cuando trabajar resulta en sí gratificante, como puede ocurrir entre investigadores, emprendedores y autónomos <span class="citation" data-cites="21_Stern2004 21_Benz2008 21_Hamilton2000">(<a href="01-tema-a1.html#ref-21_Stern2004" role="doc-biblioref">Stern 2004</a>; <a href="01-tema-a1.html#ref-21_Benz2008" role="doc-biblioref">Benz y Frey 2008</a>; <a href="01-tema-a1.html#ref-21_Hamilton2000" role="doc-biblioref">Hamilton 2000</a>)</span>, la persona puede querer dedicarle más tiempo a medida que aumenta su renta.</p></li>
+<li><p>Emulación: si importa la renta de los demás, la presión por mantener o mejorar la posición relativa puede llevar a trabajar más horas <span class="citation" data-cites="21_Bowles2005">(<a href="01-tema-a1.html#ref-21_Bowles2005" role="doc-biblioref">Bowles y Park 2005</a>)</span>.</p></li>
+</ul>
+<p>La evidencia sobre rentas no salariales, como los premios de lotería, indica en cambio que el ocio es un bien normal, con una propensión marginal a consumir ocio en torno a 0,1 por cada unidad de renta adicional <span class="citation" data-cites="21_Imbens2001 21_Cesarini2017">(<a href="01-tema-a1.html#ref-21_Imbens2001" role="doc-biblioref">Imbens et&nbsp;al. 2001</a>; <a href="01-tema-a1.html#ref-21_Cesarini2017" role="doc-biblioref">Cesarini et&nbsp;al. 2017</a>)</span>.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>La intuición es que un euro consumido hoy debe proporcionar la misma utilidad que ahorrarlo y consumir <span class="math inline">\(1+r\)</span> euros mañana, descontados con el factor <span class="math inline">\(\beta\)</span>. Por eso la condición puede escribirse <span class="math inline">\(u'(C_{1})=\beta\cdot(1+r)\cdot u'(C_{2})\)</span>, y lo que se iguala al precio relativo del consumo presente en términos de consumo futuro, <span class="math inline">\(1+r\)</span>, es la relación marginal de sustitución que ya incluye el descuento.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>La mayoría de las estimaciones internacionales de la elasticidad del ahorro respecto al tipo de interés se sitúan entre 0 y 0,4, con predominio de valores cercanos a cero, y la renta disponible parece un determinante más importante del ahorro que el tipo de interés <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>La intuición es que la equidad vertical no exige por sí sola un impuesto progresivo, porque un impuesto proporcional ya hace pagar más a quien más gana. Que deba pagar más que proporcionalmente es un juicio de valor adicional <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>De las cuatro medidas locales, la <span class="math inline">\(PRR\)</span> es la única consistente con la idea de redistribución como reducción de la desigualdad tras impuestos. En concreto, dadas dos funciones de impuestos, <span class="math inline">\(T_{1}\)</span> y <span class="math inline">\(T_{2}\)</span>, la distribución de renta después de impuestos que produce <span class="math inline">\(T_{1}\)</span> domina en el sentido de Lorenz a la que produce <span class="math inline">\(T_{2}\)</span>, cualquiera que sea la distribución antes de impuestos, si y solo si la <span class="math inline">\(PRR\)</span> de <span class="math inline">\(T_{1}\)</span> es menor que la de <span class="math inline">\(T_{2}\)</span> para todo nivel de renta. Además, cada medida local induce solo una ordenación parcial, distinta de las demás, por lo que ninguna sirve por sí sola para clasificar todas las funciones de impuestos <span class="citation" data-cites="20_Albi2018">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>)</span>.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Algunos autores calculan este índice con el índice de concentración de la renta después de impuestos, <span class="math inline">\(C_{X-T}\)</span>, que ordena a los individuos por su renta antes de impuestos, en lugar de con su Gini: <span class="math inline">\(I_{RS}=G_{X}-C_{X-T}\)</span> <span class="citation" data-cites="20_Pascual">(<a href="01-tema-a1.html#ref-20_Pascual" role="doc-biblioref">Pascual y Sarabia 2003</a>)</span>. Ambas versiones coinciden si el impuesto no altera la ordenación de los individuos. Con <span class="math inline">\(C_{X-T}\)</span> se cumple exactamente <span class="math inline">\(I_{RS}=\dfrac{t}{1-t}\cdot K\)</span>, siendo <span class="math inline">\(t\)</span> el tipo medio y <span class="math inline">\(K\)</span> el índice de Kakwani, mientras que con el Gini hay que restar además el efecto reordenación.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>La Frontera de Posibilidades de Utilidad, FPU, recoge las combinaciones de utilidad de los individuos que resultan de las asignaciones eficientes para un punto de producción dado. La gran FPU es la envolvente de todas ellas para todos los puntos de producción posibles <span class="citation" data-cites="21_Boadway1984">(<a href="01-tema-a1.html#ref-21_Boadway1984" role="doc-biblioref">Boadway y Bruce 1984, 79</a>)</span>. Se usa aquí porque el compromiso entre eficiencia y equidad se plantea para el conjunto de la economía y no para una única asignación. Por el segundo teorema del bienestar, con impuestos de suma fija se puede alcanzar cualquier punto de la GFPU. Con impuestos distorsionantes la economía queda en el interior, como el punto C de la figura. Otros textos llaman FPU a esta misma frontera <span class="citation" data-cites="20_Albi2018 21_Atkinson2015">(<a href="01-tema-a1.html#ref-20_Albi2018" role="doc-biblioref">Albi et&nbsp;al. 2018</a>; <a href="01-tema-a1.html#ref-21_Atkinson2015" role="doc-biblioref">Atkinson y Stiglitz 2015</a>)</span>.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Este es un pasaje de su obra “La Riqueza de las Naciones” (libro V, capítulo II), sobre las rentas del suelo y de las casas:</p>
+<p><em>“Though a part of this revenue should be taken from him in order to defray the expences of the state, no discouragement will thereby be given to any sort of industry. The annual produce of the land and labour of the society, the real wealth and revenue of the great body of the people, might be the same after such a tax as before.”</em><a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>Por ejemplo, en períodos de inflación muy intensa los pagos de impuestos en el ejercicio siguiente al que tuvieron lugar los ingresos reducen la recaudación real del gobierno. Lo contrario ocurriría en períodos de deflación muy intensa.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>La recaudación es <span class="math inline">\(R(t)=t\cdot B(t)\)</span>, siendo <span class="math inline">\(B(t)\)</span> la base imponible, de modo que <span class="math inline">\(R'(t)=B(t)\cdot(1-\varepsilon)\)</span>, donde <span class="math inline">\(\varepsilon=-\dfrac{t}{B}\cdot\dfrac{dB}{dt}\)</span> es la elasticidad de la base respecto al tipo. La recaudación cae al subir el tipo si <span class="math inline">\(\varepsilon&gt;1\)</span>. Expresada respecto a la parte de la renta que queda tras el impuesto, <span class="math inline">\(1-t\)</span>, la condición equivale a una elasticidad superior a <span class="math inline">\((1-t)/t\)</span>, que con un tipo del 50 % es 1 y con un tipo del 30 % es 2,3.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>Concretamente, durante el mandato de Ronald Reagan (1981-1989) se aplicaron fuertes recortes impositivos, inspirados en los argumentos de la economía de la oferta. Los ingresos federales cayeron del 18,7 % del PIB en 1981 al 16,5 % en 1983-1984, y el déficit pasó del 2,5 % al 5,7 % del PIB entre 1981 y 1983 <span class="citation" data-cites="21_OMB_FRED">(<a href="01-tema-a1.html#ref-21_OMB_FRED" role="doc-biblioref">U.S. Office of Management and Budget 2026</a>)</span>.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./20-tema-a20.html" class="pagination-link" aria-label="Teoría de la imposición">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./22-tema-a22.html" class="pagination-link" aria-label="Federalismo fiscal">
+        <span class="nav-page-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

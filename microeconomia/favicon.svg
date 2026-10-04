@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Sello MCG: purpura leones (#7A1F4B) con letras en color papel (#F7F4EC) -->
+  <rect width="64" height="64" rx="7" fill="#7A1F4B"/>
+  <text x="32" y="41" text-anchor="middle" font-family="Georgia, 'Noto Serif', serif"
+        font-size="24" font-weight="700" letter-spacing="0.5" fill="#F7F4EC">MCG</text>
+</svg>

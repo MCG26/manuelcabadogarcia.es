@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Cómo se reparten ingresos y gastos entre niveles de gobierno: la justificación económica de la descentralización, la asignación de competencias y la financiación de los gobiernos subcentrales.">
+
+<title>Tema A22. Federalismo fiscal | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./glosario.html" rel="next">
+<link href="./21-tema-a21.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A22. Federalismo fiscal | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Cómo se reparten ingresos y gastos entre niveles de gobierno: la justificación económica de la descentralización, la asignación de competencias y la financiación de los gobiernos subcentrales.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A22. Federalismo fiscal | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Cómo se reparten ingresos y gastos entre niveles de gobierno: la justificación económica de la descentralización, la asignación de competencias y la financiación de los gobiernos subcentrales.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A22. Federalismo fiscal",
+ "alternateName": "Federalismo fiscal",
+ "description": "Cómo se reparten ingresos y gastos entre niveles de gobierno: la justificación económica de la descentralización, la asignación de competencias y la financiación de los gobiernos subcentrales.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/22-tema-a22.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./22-tema-a22.html"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">22.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#justificación-económica-de-la-descentralización" id="toc-justificación-económica-de-la-descentralización" class="nav-link" data-scroll-target="#justificación-económica-de-la-descentralización"><span class="header-section-number">22.2</span> Justificación económica de la descentralización <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="7 minutos">7'</span></a>
+  <ul class="collapse">
+  <li><a href="#eficiencia" id="toc-eficiencia" class="nav-link" data-scroll-target="#eficiencia">Eficiencia</a></li>
+  <li><a href="#equidad" id="toc-equidad" class="nav-link" data-scroll-target="#equidad">Equidad</a></li>
+  <li><a href="#estabilización" id="toc-estabilización" class="nav-link" data-scroll-target="#estabilización">Estabilización</a></li>
+  <li><a href="#aplicación-en-españa" id="toc-aplicación-en-españa" class="nav-link" data-scroll-target="#aplicación-en-españa">Aplicación en España</a></li>
+  </ul></li>
+  <li><a href="#tamaño-de-la-jurisdicción-y-el-reparto-de-competencias" id="toc-tamaño-de-la-jurisdicción-y-el-reparto-de-competencias" class="nav-link" data-scroll-target="#tamaño-de-la-jurisdicción-y-el-reparto-de-competencias"><span class="header-section-number">22.3</span> Tamaño de la jurisdicción y el reparto de competencias <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></a></li>
+  <li><a href="#financiación-de-las-haciendas-territoriales" id="toc-financiación-de-las-haciendas-territoriales" class="nav-link" data-scroll-target="#financiación-de-las-haciendas-territoriales"><span class="header-section-number">22.4</span> Financiación de las haciendas territoriales <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="7 minutos">7'</span></a>
+  <ul class="collapse">
+  <li><a href="#impuestos-propios" id="toc-impuestos-propios" class="nav-link" data-scroll-target="#impuestos-propios">Impuestos propios</a></li>
+  <li><a href="#transferencias" id="toc-transferencias" class="nav-link" data-scroll-target="#transferencias">Transferencias</a></li>
+  <li><a href="#emisión-de-deuda" id="toc-emisión-de-deuda" class="nav-link" data-scroll-target="#emisión-de-deuda">Emisión de deuda</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">22.5</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-otros-desarrollos-de-la-teoría-del-federalismo-fiscal" id="toc-a.1.-otros-desarrollos-de-la-teoría-del-federalismo-fiscal" class="nav-link" data-scroll-target="#a.1.-otros-desarrollos-de-la-teoría-del-federalismo-fiscal">22.A.1.&nbsp;&nbsp;Otros desarrollos de la teoría del federalismo fiscal</a></li>
+  <li><a href="#a.2.-hechos-estilizados-sobre-la-descentralización" id="toc-a.2.-hechos-estilizados-sobre-la-descentralización" class="nav-link" data-scroll-target="#a.2.-hechos-estilizados-sobre-la-descentralización">22.A.2.&nbsp;&nbsp;Hechos estilizados sobre la descentralización</a></li>
+  <li><a href="#a.3.-retos-de-la-financiación-autonómica-y-local-en-españa" id="toc-a.3.-retos-de-la-financiación-autonómica-y-local-en-españa" class="nav-link" data-scroll-target="#a.3.-retos-de-la-financiación-autonómica-y-local-en-españa">22.A.3.&nbsp;&nbsp;Retos de la financiación autonómica y local en España</a></li>
+  <li><a href="#a.4.-ordinalidad-y-redistribución" id="toc-a.4.-ordinalidad-y-redistribución" class="nav-link" data-scroll-target="#a.4.-ordinalidad-y-redistribución">22.A.4.&nbsp;&nbsp;Ordinalidad y redistribución</a></li>
+  <li><a href="#a.5.-el-índice-de-autoridad-regional" id="toc-a.5.-el-índice-de-autoridad-regional" class="nav-link" data-scroll-target="#a.5.-el-índice-de-autoridad-regional">22.A.5.&nbsp;&nbsp;El Índice de Autoridad Regional</a></li>
+  <li><a href="#a.6.-ejemplos-de-transferencias" id="toc-a.6.-ejemplos-de-transferencias" class="nav-link" data-scroll-target="#a.6.-ejemplos-de-transferencias">22.A.6.&nbsp;&nbsp;Ejemplos de transferencias</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="22.1">
+<h2 data-number="22.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">22.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>La Economía del Sector Público estudia la intervención del sector público en una economía de mercado fundamentalmente a través de sus programas de ingresos y gastos públicos, con el objetivo de cumplir sus funciones asignativa, distributiva y de estabilización y crecimiento.</p>
+<p>No obstante, el sector público no toma todas sus decisiones de manera centralizada, sino que, generalmente, en todos los países existe un gobierno central que diseña la política exterior o de defensa y un gobierno de carácter local o regional que tiene asignadas la capacidad de decisión en algunas cuestiones públicas en lo que afecta exclusivamente a los residentes en su jurisdicción.</p>
+<p>Además, en algunos países, los denominados fiscalmente federales, existe un conjunto de gobiernos intermedios de carácter regional interpuestos entre el gobierno central y los gobiernos locales, como las CCAA en España, los Länder en Alemania, los Estados en EEUU o los Cantones en Suiza.</p>
+<p>Concretamente, según el Índice de Autoridad Regional<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, España se sitúa entre los países más descentralizados del mundo, junto con Alemania, Bosnia y Herzegovina e India.</p>
+<p>La Teoría del Federalismo Fiscal es la parte de la Economía del Sector Público que se encarga de analizar cómo se adoptan las decisiones descentralizadas, tratando de resolver cuestiones como:</p>
+<ul>
+<li><p>¿Cuál es la justificación económica de la descentralización?</p></li>
+<li><p>¿Cómo se deben repartir las competencias?</p></li>
+<li><p>¿Cuántos niveles de gobierno deben existir?</p></li>
+<li><p>¿Cómo se deben financiar los niveles de gobierno?</p></li>
+</ul>
+<p>Por consiguiente, el objetivo del presente tema es responder a las cuestiones anteriores a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Justificación económica de la descentralización, desde un punto de vista de eficiencia, equidad y estabilización.</p></li>
+<li><p>Niveles de gobierno y competencias.</p></li>
+<li><p>Financiación, mediante impuestos propios, transferencias y emisión de deuda.</p></li>
+</ol>
+</section>
+<section id="justificación-económica-de-la-descentralización" class="level2" data-number="22.2">
+<h2 data-number="22.2" class="anchored" data-anchor-id="justificación-económica-de-la-descentralización"><span class="header-section-number">22.2</span> Justificación económica de la descentralización <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="7 minutos">7'</span></h2>
+<p>Comenzando por la justificación económica, la descentralización se justifica en la medida en que el reparto del poder decisorio entre gobierno central y gobiernos territoriales permita alcanzar mejor los objetivos de eficiencia<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, equidad y estabilización.</p>
+<section id="eficiencia" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="eficiencia">Eficiencia</h3>
+<p>Partiendo de la base de que a los gobiernos territoriales les interesa el bienestar de sus ciudadanos, la descentralización por motivos de eficiencia está muy ligada a la provisión de bienes públicos locales, es decir, aquellos cuyos beneficios solo son disfrutados por aquellos individuos que vivan cerca de donde se provean. Ejemplos de ellos son el alumbrado público, el servicio de bomberos o una presa, pero no la defensa o las relaciones exteriores, que benefician a todos los residentes del país.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<p>Existe una serie de motivos por los cuales se justifica la descentralización:</p>
+<ul>
+<li><p>Según <span class="citation" data-cites="22_Oates1972">Oates (<a href="01-tema-a1.html#ref-22_Oates1972" role="doc-biblioref">1972</a>)</span>, la descentralización permite solventar mejor el problema de información imperfecta y asimétrica pues los gobiernos territoriales, al estar más cerca de los residentes en una jurisdicción, conocen mejor sus preferencias. En consecuencia, el Gobierno central tenderá a proveer un nivel uniforme de bienes públicos en todos los territorios, lo que puede resultar ineficiente si estos tienen preferencias diferentes.<br>
+Por ejemplo, es más que probable que los habitantes de Andalucía tengan unas preferencias más intensas por el gasto público en agricultura que los habitantes de Madrid.</p></li>
+<li><p>Teorema de descentralización: esto nos lleva a enunciar el Teorema de Descentralización de Oates, que sostiene que el nivel de bienestar alcanzado cuando cada jurisdicción escoge su nivel de consumo público de forma independiente será siempre igual o superior (y, casi siempre, superior) al que resultaría de un nivel uniforme de consumo, siempre que no existan ahorros de coste por provisión centralizada ni externalidades interjurisdiccionales.</p></li>
+</ul>
+<section id="solución-descentralización-fiscal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="solución-descentralización-fiscal">Solución: descentralización fiscal</h5>
+<p>Si se permite que cada jurisdicción decida de manera autónoma sobre su nivel de bien público, podrá adaptarlo a las preferencias de sus residentes y acercarse a la condición de Samuelson de provisión eficiente de bienes públicos, según la cual un bien público debe proveerse hasta que la valoración social, es decir, la suma de las utilidades marginales de los residentes, <span class="math inline">\(\sum UMg_{i}\)</span>, iguale al coste marginal social, <span class="math inline">\(CMg_{S}\)</span><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>: <span id="eq-a-22-1"><span class="math display">\[\sum UMg_{i}=CMgS \tag{22.1}\]</span></span> por ejemplo, una provisión uniforme del bien público, <span class="math inline">\(G^{*}\)</span>, puede resultar ineficiente por exceso para el territorio <span class="math inline">\(A\)</span> y por defecto para el territorio <span class="math inline">\(B\)</span>.</p>
+</section>
+<section id="problema-de-revelación-de-preferencias" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problema-de-revelación-de-preferencias">Problema de revelación de preferencias</h5>
+<p>Aun con descentralización fiscal, puede ocurrir que no se cumpla la condición de Samuelson si el Gobierno territorial no es capaz de agregar las preferencias de los individuos de su jurisdicción (es decir, obtener <span class="math inline">\(\sum UMg_{i}\)</span>). Esto puede ocurrir si hay problemas de revelación y de agregación de preferencias:</p>
+<ul>
+<li><p>Problema de revelación de preferencias. Los individuos, sabedores de que sus preferencias reveladas determinarán la renta que el sector público les detraerá, pueden preferir revelar una utilidad menor y actuar como free-riders, por lo que se produciría infraproducción del bien público.</p></li>
+<li><p>Problema de agregación de preferencias. Aun cuando los individuos estén dispuestos a revelar sus auténticas preferencias por el bien público, ¿cómo agrega el Gobierno territorial las preferencias de los distintos individuos para obtener <span class="math inline">\(\sum UMg_{i}\)</span>?</p></li>
+</ul>
+<p>Una posible solución a los dos problemas anteriores sería permitir el voto, de manera que el nivel de bien/gasto público sea decidido por mayoría simple. El problema del sistema de mayoría simple es que no asegura el cumplimiento de la condición de eficiencia de Samuelson, pues el nivel de gasto público vendrá determinado por las preferencias del votante mediano.</p>
+<p>Para evitar los problemas de revelación y agregación y, además, asegurar la eficiencia de la condición de Samuelson, la descentralización fiscal y la regla del voto deben ir acompañadas de la libre movilidad de individuos entre las jurisdicciones. Es lo que se conoce como voto con los pies de <span class="citation" data-cites="22_Tiebout1956">Tiebout (<a href="01-tema-a1.html#ref-22_Tiebout1956" role="doc-biblioref">1956</a>)</span>.</p>
+</section>
+<section id="sistema-de-voto-con-los-pies" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="sistema-de-voto-con-los-pies">Sistema de voto con los pies</h5>
+<ul>
+<li><p>Cada hacienda territorial decide su combinación de bienes públicos locales e impuestos de acuerdo a las preferencias de los ciudadanos de su jurisdicción, esto es, mediante voto con mayoría simple (es decir, elecciones). Pero ello supone que el bien se proveerá conforme a las preferencias del votante mediano, como advertíamos, no necesariamente eficiente.</p></li>
+<li><p>Si a la descentralización fiscal y al voto se añade movilidad entre jurisdicciones (y sus costes son bajos), los individuos descontentos con la política fiscal de su territorio se desplazarán a la jurisdicción que ofrezca una combinación fiscal más cercana a sus preferencias personales (es decir, votarán “con los pies”).</p></li>
+<li><p>Conforme se acentúan los movimientos de personas entre jurisdicciones, las preferencias dentro de cada jurisdicción se vuelven más similares, hasta el punto de que todos los votantes de una jurisdicción acaban siendo homogéneos y se convierten todos ellos en el mismo “votante mediano”. Por tanto, llegará un punto en que el nivel de bien/gasto público de cada jurisdicción será eficiente, pues, al venir determinado por el votante mediano y ser todos los ciudadanos de dicho territorio iguales al votante mediano, la asignación será eficiente.</p></li>
+</ul>
+<p>Así, habrá jurisdicciones que ofrezcan muchas ventajas en términos de bienes públicos locales a familias con hijos (parques, columpios, etc.), mientras que otras estarán muy centradas en las necesidades de la tercera edad (accesibilidad, servicios sociales, etc.).</p>
+</section>
+<section id="críticas-al-sistema-de-voto-con-los-pies" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="críticas-al-sistema-de-voto-con-los-pies">Críticas al sistema de voto con los pies</h5>
+<ol type="1">
+<li><p>Coste de movilidad. La movilidad entre jurisdicciones es costosa (por ejemplo, cambio de casa, mudanza, hacer nuevas amistades, etc.). Puede ser factible a nivel municipal pero no a nivel país/entre países.</p></li>
+<li><p>Congestión. La emigración en masa a una jurisdicción puede ser ineficiente si produce externalidades negativas (por ejemplo, congestión de los bienes públicos si son impuros –como las carreteras o los parques–)<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p></li>
+<li><p>Otros factores. La decisión de un individuo de vivir en una determinada jurisdicción no solo se basa en sus preferencias sobre bienes públicos e impuestos, sino también en otras variables (incluso más determinantes) como la familia, las amistades, las costumbres, etc.</p></li>
+<li><p>La existencia de un número limitado de jurisdicciones, que impide cubrir todo el abanico de preferencias de los agentes<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>.</p></li>
+<li><p>Evidencia empírica limitada. El modelo, aunque sugerente, solo se ajusta parcialmente a la evidencia empírica, que es limitada y mixta.</p></li>
+</ol>
+</section>
+<section id="restricciones-políticas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="restricciones-políticas">Restricciones políticas</h5>
+<p>La descentralización se puede justificar también porque pueden existir restricciones políticas por parte del gobierno central para proveer distintas cantidades de bienes en distintos territorios. Así, los gobiernos centrales se pueden enfrentar a distintas restricciones éticas o jurídicas que impediría la provisión de niveles eficientes en el sentido de Pareto del bien público en cada uno de los territorios.</p>
+<p>A pesar de esto, no es raro encontrarse con programas de provisión de bienes públicos a cargo de un gobierno central que establecen diferentes niveles de provisión en función del territorio.</p>
+</section>
+<section id="conclusión" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="conclusión">Conclusión</h5>
+<p>El federalismo fiscal conduce a ganancias de eficiencia asignativa.<br>
+No obstante, hay que recordar que la eficiencia no se manifiesta únicamente en su forma asignativa (es decir, distribución de recursos de la mejor manera posible), sino también en su vertiente productiva (es decir, menores costes de producción posibles): una excesiva descentralización de ciertos servicios públicos puede conducir a una pérdida de economías de escala que produzca pérdidas importantes de eficiencia productiva (por ejemplo, aeropuertos).</p>
+</section>
+<section id="críticas-y-recomendaciones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="críticas-y-recomendaciones">Críticas y recomendaciones</h5>
+<p>Más recientemente esta corriente de opinión se ha visto debilitada y contrarrestada por argumentos pro centralización. Las teorías que demuestran las ventajas de la descentralización van acompañadas de que no suelen verificarse en la práctica, lo que ha estimulado la realización de trabajos empíricos. Esta revisión de la teoría, que incorpora la teoría de la elección colectiva (incentivos de políticos y burócratas, problemas de información) y abandona la idea del planificador benevolente, se conoce como federalismo fiscal de segunda generación. Además, la toma en consideración de otros aspectos de la economía política ha venido a poner ciertos frenos a las recomendaciones indiscriminadas de descentralización:</p>
+<ul>
+<li><p>Las contribuciones de Rodden <span class="citation" data-cites="22_Rodden2003">(<a href="01-tema-a1.html#ref-22_Rodden2003" role="doc-biblioref">2003</a>)</span> han sido importantes en este sentido. Subrayan los riesgos de indisciplina fiscal que van ligados a una creciente descentralización. Además, viene a demostrar que la supuesta reducción de gasto público asociada a la descentralización de las tareas de gobierno solo se cumple cuando los gobiernos subcentrales tienen una notable dosis de autonomía tributaria, y se financian en gran medida con impuestos propios sobre los que poseen una amplia capacidad normativa.</p></li>
+<li><p>También son reseñables las aportaciones de Tanzi <span class="citation" data-cites="22_Tanzi1996">(<a href="01-tema-a1.html#ref-22_Tanzi1996" role="doc-biblioref">1996</a>)</span> o Huther y Shah <span class="citation" data-cites="22_HutherShah1998">(<a href="01-tema-a1.html#ref-22_HutherShah1998" role="doc-biblioref">1998</a>)</span> en el sentido de subrayar las desventajas en un marco de un desarrollo institucional débil o la apertura de mayores posibilidades de cultivar la corrupción en el nivel local.</p></li>
+</ul>
+<p>La mayor o menor eficiencia en la prestación descentralizada de bienes públicos se relaciona casi siempre con el carácter, local o nacional, de dichos bienes. Así, la recomendación consiste en que la provisión de bienes públicos de carácter local se haga por el nivel descentralizado mientras que la correspondiente a los bienes nacionales se provea a un nivel central. En la práctica, no obstante, existen frecuentes interacciones entre los distintos niveles de gobierno. O dicho de otra manera, es habitual reconocer las ganancias de eficiencia en la prestación de determinados bienes y servicios por parte del nivel descentralizado, pero con ciertas limitaciones, lo que justifica la existencia de regulaciones por parte del nivel central que dotan de cierta uniformidad a la prestación de los bienes y servicios<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>.</p>
+</section>
+</section>
+<section id="equidad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equidad">Equidad</h3>
+<p>Al igual que ocurre con la provisión de los bienes públicos locales, podría también descentralizarse la función de redistribución, de forma que cada jurisdicción decidiera unilateralmente cuánta redistribución desea. Esto, sin embargo, plantea distintos problemas:</p>
+<ol type="1">
+<li><p>En las haciendas territoriales cuyos individuos tengan, por lo general, una elevada renta, las preferencias de sus ciudadanos por la redistribución serán, en principio, menores, por lo que las políticas de equidad serán escasas. Esto hará que los individuos más pobres emigren a otras jurisdicciones donde las preferencias por la redistribución sean mayores, es decir, jurisdicciones generalmente más pobres, por lo que el coste de la redistribución se traslada a las jurisdicciones con menos recursos.</p></li>
+<li><p>Al mismo tiempo, los individuos de elevada renta de las jurisdicciones más pobres se desplazarán a los territorios que menos gastan en redistribución, lo que a su vez disminuirá la capacidad redistributiva de las jurisdicciones más pobres. Por lo tanto, la descentralización de la redistribución puede hacer que las distintas jurisdicciones tengan distinta capacidad redistributiva.<br>
+Así, las regiones con individuos más pobres tendrían menor capacidad para llevar a cabo la redistribución, con lo que persistiría la desigualdad entre los residentes de distintas jurisdicciones. Dado que la concepción de equidad es de ámbito global, esto obligaría al gobierno central a intervenir para reducir la desigualdad entre jurisdicciones.</p></li>
+</ol>
+<section id="resultado" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="resultado">Resultado</h5>
+<p>El federalismo fiscal no promueve la equidad, por lo que es preferible que el Gobierno central conserve poderes fiscales para asegurar una redistribución entre territorios. Es necesario el papel del Estado para imponer coactivamente la redistribución.</p>
+</section>
+<section id="problema" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problema">Problema</h5>
+<p>Aunque es cierto que la redistribución ejecutada a nivel central es más efectiva que una descentralizada, también es cierto que el Gobierno central puede no ejercer dicha labor de manera correcta por tener incentivos perversos. En efecto, podría infravalorar a las regiones más despobladas y pobres, que son poco importantes en las elecciones, y priorizar el gasto en las regiones más pobladas y ricas.<br>
+Además, ha habido otras aportaciones que subrayan que también existe campo para la acción de los gobiernos territoriales con fines redistributivos.</p>
+<p>En este sentido, la aportación de Pauly <span class="citation" data-cites="22_Pauly1973">(<a href="01-tema-a1.html#ref-22_Pauly1973" role="doc-biblioref">1973</a>)</span> puede considerarse que inició este tipo de recomendaciones:</p>
+<ul>
+<li><p>Partía de la base de que la redistribución puede considerarse como un bien público local, del cual puede haber distintas demandas en los distintos territorios.</p></li>
+<li><p>Los individuos de mayor nivel de renta obtienen una mayor utilidad de los aumentos de renta que obtengan los individuos más desfavorecidos en su territorio. Es por ello que los ricos de una región preferirán una política redistributiva con acento local.</p></li>
+<li><p>Dado que los individuos de mayor nivel de renta obtienen utilidad de las transferencias realizadas a personas de renta más baja, la tarea de redistribución se considera óptima en el sentido de Pareto.</p></li>
+<li><p>Esta idea de que los objetivos de redistribución pueden ser alcanzados de manera más eficiente a través de políticas ejercidas por los gobiernos subcentrales se fortalece bajo supuestos de movilidad imperfecta y de eficiencia en la toma de decisiones colectivas.</p></li>
+</ul>
+</section>
+<section id="conclusión-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="conclusión-1">Conclusión</h5>
+<p>En definitiva, en la Teoría del Federalismo Fiscal no existe consenso respecto a la deseabilidad de la descentralización por motivos de equidad, aunque la visión predominante <span class="citation" data-cites="22_Musgrave1959 22_Oates1972">(<a href="01-tema-a1.html#ref-22_Musgrave1959" role="doc-biblioref">Musgrave 1959</a>; <a href="01-tema-a1.html#ref-22_Oates1972" role="doc-biblioref">Oates 1972</a>)</span> es, como veíamos, que la función redistributiva debe ser llevada a cabo de forma centralizada<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>.</p>
+</section>
+</section>
+<section id="estabilización" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="estabilización">Estabilización</h3>
+<p>Por último, la estabilización es una función de carácter macroeconómico, cuyo objetivo es atenuar las fluctuaciones cíclicas de la economía en torno a su senda potencial de crecimiento, tratando de lograr la estabilidad de precios y empleo.</p>
+<p>Existe un amplio consenso en que el objetivo de estabilización debe estar centralizado por al menos 3 razones:</p>
+<ol type="1">
+<li><p>Los gobiernos territoriales, al no emitir su propia moneda carecen de política monetaria, elemento importante en el diseño de las políticas de estabilización y que debe coordinarse con la política fiscal.<br>
+Además, en el caso de la política monetaria, la descentralización generaría una mayor expansión monetaria, fomentando la inflación. La política monetaria y la emisión de moneda están siempre en el núcleo duro de las funciones de cualquier configuración estatal, se reservan al ámbito central.</p></li>
+<li><p>La mayoría de variables macroeconómicas –nivel de precios, tipo de cambio, tipo de interés e incluso, en función de la movilidad, la tasa de paro– se determinan en el ámbito nacional o supranacional, por lo que las jurisdicciones son incapaces de influir. Esto convierte a las jurisdicciones de un sistema federal en lo que en Macroeconomía se denomina “economías pequeñas abiertas”.</p></li>
+<li><p>Una política fiscal aplicada localmente se difuminaría rápidamente entre jurisdicciones, afectando relativamente menos a quien la aplica y generando efectos externos sobre el resto de jurisdicciones<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>.</p></li>
+</ol>
+<section id="resultado-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="resultado-1">Resultado</h5>
+<p>El federalismo fiscal no facilita la tarea estabilizadora de la política económica, por lo que es preferible que el Gobierno central conserve poderes fiscales para asegurar un correcto control del ciclo.</p>
+</section>
+</section>
+<section id="aplicación-en-españa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="aplicación-en-españa">Aplicación en España</h3>
+<p>Hemos visto que el federalismo fiscal se justifica por motivos de eficiencia, pero no por motivos de equidad ni de estabilización. De ahí que los países descentralizados hayan tratado de buscar un equilibrio en el respeto de estos principios.</p>
+<ul>
+<li><p>En España, por ejemplo, se ha desarrollado un sistema fiscal fuertemente descentralizado para asegurar la eficiencia, es decir, que las decisiones políticas se corresponden con las preferencias de los ciudadanos de cada territorio (por ejemplo, la mayor descentralización se ha producido en los bienes públicos más sensibles para los ciudadanos, como son sanidad, educación y servicios sociales).</p></li>
+<li><p>Pero, al mismo tiempo, se han articulado fondos para asegurar la equidad entre los distintos territorios (por ejemplo, Fondo de Compensación Interterritorial, Fondo de Garantía, Fondos de Convergencia) y se han conservado las potestades fiscales más importantes para garantizarse poderes estabilizadores del ciclo (por ejemplo, el Estado conserva la potestad legislativa sobre los impuestos más importantes –IVA e IS– y sobre la mayor parte del IRPF, en el que las CCAA solo tienen margen sobre la tarifa autonómica, habiéndose desprendido únicamente de tributos con escasa capacidad recaudadora –Impuesto sobre el Patrimonio, sobre Sucesiones y Donaciones, sobre el Juego, etc.–)<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="tamaño-de-la-jurisdicción-y-el-reparto-de-competencias" class="level2" data-number="22.3">
+<h2 data-number="22.3" class="anchored" data-anchor-id="tamaño-de-la-jurisdicción-y-el-reparto-de-competencias"><span class="header-section-number">22.3</span> Tamaño de la jurisdicción y el reparto de competencias <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></h2>
+<p>Hasta ahora hemos justificado por qué es beneficiosa la descentralización fiscal: la función asignativa debe descentralizarse, pero no las funciones redistributiva y estabilizadora.</p>
+<p>Esto plantea dos cuestiones: cuántos niveles de gobierno debe haber y qué gastos de asignación deben corresponder a cada nivel. Para responder a la primera se analiza el tamaño óptimo de las áreas descentralizadas, es decir, el tamaño de la población a cubrir por cada uno de los gobiernos territoriales. Esta cuestión puede responderse a través de una analogía introducida por Buchanan: la Teoría de los Clubes <span class="citation" data-cites="22_Buchanan1965">(<a href="01-tema-a1.html#ref-22_Buchanan1965" role="doc-biblioref">Buchanan 1965</a>)</span>.</p>
+<section id="hipótesis" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="hipótesis">Hipótesis</h5>
+<p>Esta teoría se basa en los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Jurisdicción = club. Buchanan señala que una jurisdicción se puede asimilar a un club: se trata de un grupo de individuos que se unen para lograr un fin común: la provisión de un bien público local. Determinar el tamaño óptimo de la jurisdicción es por tanto equivalente a decidir el número óptimo de socios de un club.</p></li>
+<li><p>Mismas preferencias.</p></li>
+<li><p>Misma renta. En estas circunstancias (si se cumple que las preferencias y la renta son iguales), el bien público puede financiarse mediante un impuesto de suma fija (de capitación<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>) dado que este será eficiente y equitativo.</p></li>
+</ol>
+</section>
+<section id="desarrollo-teórico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="desarrollo-teórico">Desarrollo teórico</h5>
+<p>La idea básica es que al ampliar el tamaño de la jurisdicción (es decir, al ampliar el ámbito de aplicación de un bien o servicio público a un individuo más), se producen 2 efectos contrapuestos para los beneficiarios:</p>
+<ol type="1">
+<li><p>(+) Beneficio marginal. La financiación del bien se reparte entre más individuos, por lo que el coste de financiación per cápita (es decir, lo que paga cada beneficiario) es menor. Suponemos que la provisión del bien público está sujeta a fuertes costes fijos, por lo que un aumento de los usuarios aumenta los costes variables, pero disminuye los costes unitarios (es decir, disminuye el pago que cada beneficiario tiene que hacer para financiarlo).</p></li>
+<li><p>(–) Coste marginal. Al atender a más usuarios, el bien público se congestiona, de modo que para mantener el mismo nivel de servicio hay que aumentar la dotación y el coste total de provisión crece.</p></li>
+</ol>
+<p>Por consiguiente, el ámbito óptimo de aplicación (es decir, número de individuos, o nivel de descentralización) será aquel en el que el <span class="math inline">\(BMg\)</span> se iguale al <span class="math inline">\(CMg\)</span>, es decir, aquel en el que el ahorro de impuestos por incorporar a un individuo adicional iguala al coste marginal de proveerle el servicio.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<p>Gráficamente, en un plano de coste por habitante, <span class="math inline">\(C/N\)</span>, y tamaño de la jurisdicción, <span class="math inline">\(N\)</span>, como el de la <a href="#fig-22-tamano-optimo-de-jurisdiccion" class="quarto-xref">Figura&nbsp;<span>22.1</span></a> se puede representar la curva de costes medios, <span class="math inline">\(CMe\)</span>, que tendrá forma de U, es decir, presenta rendimientos a escala mixtos. Aquí, <span class="math inline">\(C\left(N,G\right)\)</span> es el coste de proveer el nivel <span class="math inline">\(G\)</span> del bien público a una jurisdicción de <span class="math inline">\(N\)</span> habitantes, de modo que el coste medio es <span class="math inline">\(CMe=C/N\)</span> y el coste marginal, <span class="math inline">\(CMg=\partial C/\partial N\)</span>, es el de incorporar un habitante más. Por lo tanto, la teoría de costes nos ayudará a resolver este problema.</p>
+<p>Así, el tamaño óptimo de la jurisdicción vendrá determinado por el mínimo de la curva de costes medios que, además, coincidirá con el punto de intersección con la curva de costes marginales, <span class="math inline">\(CMg\)</span>, de provisión del bien público, es decir, en <span class="math inline">\(N^{*}\)</span>:</p>
+<ul>
+<li><p>Si <span class="math inline">\(N&lt;N^{*}\)</span> (como en <span class="math inline">\(N_{1}\)</span>) el bien público está infrautilizado, y aumentar <span class="math inline">\(N\)</span> tiene un <span class="math inline">\(CMg\)</span> bajo y permite reducir el <span class="math inline">\(CMe\)</span> (existen rendimientos a escala en la provisión del bien público).</p></li>
+<li><p>Si <span class="math inline">\(N&gt;N^{*}\)</span> (como en <span class="math inline">\(N_{2}\)</span>) el bien público se va congestionando, y para mantener la utilidad de los individuos constante serán necesarios desembolsos crecientes (por ejemplo, habrá que hacer más carreteras y aumentarán los costes de gestión).</p></li>
+</ul>
+<div id="fig-22-tamano-optimo-de-jurisdiccion" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Tamaño óptimo de la jurisdicción">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-22-tamano-optimo-de-jurisdiccion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;22.1: Tamaño óptimo de la jurisdicción
+</figcaption>
+<div aria-describedby="fig-22-tamano-optimo-de-jurisdiccion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-22-tamano-optimo-jurisdiccion.svg" class="img-fluid figure-img" alt="Tamaño óptimo de la jurisdicción">
+</div>
+</figure>
+</div>
+</section>
+<section id="desarrollo-analítico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="desarrollo-analítico">Desarrollo analítico</h5>
+<p>Supongamos que la función de utilidad del agente representativo depende del consumo del bien privado, <span class="math inline">\(X\)</span>, del consumo del bien público, <span class="math inline">\(G\)</span>, y del número de individuos del club, <span class="math inline">\(N\)</span> (es decir, del tamaño de la jurisdicción) <span id="eq-a-22-2"><span class="math display">\[\max_{\{X,G,N\}}U\left(X,G,N\right) \tag{22.2}\]</span></span> sujeto a dos restricciones: <span id="eq-a-22-3"><span class="math display">\[\begin{aligned}
+P_{X}\cdot X+\tau=Y\\
+\tau\cdot N=CF+P_{G}\cdot G
+\end{aligned} \tag{22.3}\]</span></span> donde <span class="math inline">\(\tau\)</span> es el impuesto de suma fija a pagar por cada beneficiario del bien o servicio público, <span class="math inline">\(CF\)</span> son los costes fijos de provisión, <span class="math inline">\(P_{X}\)</span> es el precio del bien privado (igual a su <span class="math inline">\(CMg\)</span>) y <span class="math inline">\(P_{G}\)</span> es el coste variable de cada unidad de bien público (<span class="math inline">\(CMg\)</span>).</p>
+<p>Resolviendo el problema<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>, obtenemos que el tamaño de la región descentralizada (<span class="math inline">\(N\)</span>) será mayor cuanto:</p>
+<ul>
+<li><p>Mayor sea la demanda del bien o servicio público, <span class="math inline">\(u^{\prime}_{G}\)</span> (utilidad marginal del bien público).</p></li>
+<li><p>Menor sea, en valor absoluto, la pérdida de utilidad por congestión que causa un miembro adicional, <span class="math inline">\(u^{\prime}_{N}\)</span>, que es negativa.</p></li>
+<li><p>Mayor sea el coste fijo de proveer el bien, <span class="math inline">\(CF\)</span>.</p></li>
+</ul>
+</section>
+<section id="aplicación-práctica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="aplicación-práctica">Aplicación práctica</h5>
+<p>El objetivo del modelo anterior es determinar un “club” o jurisdicción de individuos con las mismas preferencias sobre un bien o servicio público. Es decir, que habría tantos clubs/jurisdicciones como preferencias para cada bien público. Esto implica que un mismo individuo podría estar sujeto a diferentes jurisdicciones para cada bien público (por ejemplo, un individuo pertenecería a un club para la prestación del servicio de bomberos y a otro diferente para el servicio de recogida de basuras). Por lo tanto:</p>
+<ul>
+<li><p>Resulta obvio que la descentralización que es óptima en teoría resulta inviable en la práctica, porque los meros costes de gestión y coordinación de dicho sistema serían sin duda superiores a las ganancias de eficiencia<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>.</p></li>
+<li><p>Así, la teoría de la descentralización óptima debe entenderse no como una teoría a aplicar a rajatabla, sino como una teoría que guíe la acción política.</p></li>
+<li><p>Además, tampoco podemos olvidar la existencia de razones históricas y políticas en el establecimiento de los límites jurisdiccionales.</p></li>
+</ul>
+</section>
+<section id="reparto-de-competencias" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="reparto-de-competencias">Reparto de competencias</h5>
+<p>Respecto a qué gastos asignativos corresponden a cada nivel, la descentralización se rige también por los dos principios anteriores: cada gobierno territorial debe decidir sobre las cuestiones que afectan exclusivamente a sus residentes, siempre que esto agote los rendimientos a escala en la provisión <span class="citation" data-cites="22_Albi2017">(<a href="01-tema-a1.html#ref-22_Albi2017" role="doc-biblioref">Albi et&nbsp;al. 2017</a>)</span>. De ello se derivan tres implicaciones:</p>
+<ul>
+<li><p>Incluso gobiernos de igual naturaleza, como los municipios, deberían tener competencias de gasto diferentes en función de su tamaño.</p></li>
+<li><p>Cuando la provisión individualizada suponga pérdidas considerables de rendimientos a escala, deberían crearse uniones entre jurisdicciones para proveer conjuntamente esos bienes y servicios.</p></li>
+<li><p>Si, por una descentralización imperfecta, el gasto local genera efectos externos, el gobierno central debería intervenir para internalizarlos, por ejemplo cofinanciando el gasto mediante una transferencia condicionada.</p></li>
+</ul>
+</section>
+</section>
+<section id="financiación-de-las-haciendas-territoriales" class="level2" data-number="22.4">
+<h2 data-number="22.4" class="anchored" data-anchor-id="financiación-de-las-haciendas-territoriales"><span class="header-section-number">22.4</span> Financiación de las haciendas territoriales <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="7 minutos">7'</span></h2>
+<p>Ya hemos visto la justificación de la descentralización fiscal y el tamaño óptimo que deben adoptar las haciendas territoriales para proveer bienes y servicios públicos, además de otras cuestiones relacionadas. Ahora vamos a ver las diferentes formas en que dichas haciendas territoriales pueden financiar los bienes públicos.</p>
+<p>Existen diferentes opciones, que pueden coexistir, como en el caso de España:</p>
+<ol type="1">
+<li><p>Impuestos propios.</p></li>
+<li><p>Transferencias de niveles superiores de gobierno.</p></li>
+<li><p>Emisión de deuda. Analicemos en detalle las diferentes formas de financiación.</p></li>
+</ol>
+<section id="impuestos-propios" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="impuestos-propios">Impuestos propios</h3>
+<p>Comenzando por los impuestos, la financiación de las haciendas territoriales a través de tributos propios tiene como objetivo principal la corresponsabilidad fiscal, esto es, que las haciendas financien una parte sustantiva de su gasto mediante impuestos propios y visibles para los contribuyentes, pues así:</p>
+<ol type="1">
+<li><p>Los Gobiernos territoriales se vuelven más responsables en sus decisiones de gasto, tratando de ajustarlo a sus ingresos, claramente definidos. Es decir, permite limitar las expansiones ineficientes de gasto que se podrían dar si la financiación se realizase únicamente mediante transferencias.</p></li>
+<li><p>Los ciudadanos de dicho territorio perciben mejor el verdadero coste de los bienes y servicios públicos que reciben, pues los financian en buena parte con sus propios impuestos.</p></li>
+<li><p>Se rebajan las tensiones entre el Gobierno central y el territorial sobre las transferencias necesarias, pues con tributos propios las haciendas disponen, en teoría, de herramientas para cubrir sus gastos.</p></li>
+</ol>
+<p>En el caso de la descentralización de los tributos, y a diferencia de lo que ocurre con el gasto, su objetivo principal no es la obtención de ganancias de eficiencia, sino corresponsabilizar al gobierno territorial en la obtención de los recursos. Así, la descentralización de los tributos se convierte en un ejercicio de compromiso entre:</p>
+<ul>
+<li><p>Conceder a los gobiernos territoriales discrecionalidad suficiente para que puedan determinar su nivel de ingresos.</p></li>
+<li><p>Limitar dicha discrecionalidad para no mermar la capacidad de redistribución y estabilización del gobierno central.</p></li>
+</ul>
+<section id="tipos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="tipos">Tipos</h5>
+<p>A su vez, la financiación mediante “tributos propios” puede adoptar diferentes formas de más a menos margen de actuación por parte de las haciendas territoriales<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>:</p>
+<ul>
+<li><p>Impuestos propios en sentido estricto, que son aquellos diseñados y gestionados (es decir, liquidación, recaudación, e inspección) por las haciendas territoriales. En el caso español, esto es posible siempre que los impuestos que se establezcan no invadan hechos imponibles ya gravados por el Estado, es decir, se trata básicamente de impuestos relacionados con el medioambiente.</p></li>
+<li><p>Impuestos cedidos, que son aquellos creados y regulados por el Estado, pero cuya recaudación y buena parte de la gestión se ceden a las haciendas territoriales, junto con una capacidad normativa limitada. En el caso español, se trata básicamente de impuestos sobre la riqueza (Patrimonio, Sucesiones y Donaciones, etc.).</p></li>
+<li><p>Impuestos compartidos, que son aquellos en los que el Estado diseña los elementos básicos del impuesto y los gestiona, pero deja cierta discrecionalidad de diseño a las haciendas territoriales. En el caso español, se trata del IRPF, para el que se prevé una tarifa autonómica. La tarifa autonómica del IRPF se corresponde con una participación autonómica del 50% en el rendimiento de este impuesto.</p></li>
+<li><p>Impuestos participados (cesión parcial de la recaudación), que son aquellos regulados, gestionados y recaudados por el Estado, pero en los que este transfiere parte de la recaudación a las haciendas territoriales. En el caso español, se trata sobre todo de impuestos indirectos armonizados a nivel europeo (IVA, impuestos especiales, etc.).</p>
+<ul>
+<li><p>50% de la recaudación líquida por IVA (según un índice de consumo).</p></li>
+<li><p>58% de la recaudación líquida por impuestos especiales.</p></li>
+<li><p>100% de la recaudación líquida por el Impuesto sobre la Electricidad.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="recargos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="recargos">Recargos</h5>
+<p>Además de los tipos anteriores, en ocasiones no se descentraliza por completo un tributo, sino que se establece un sistema de recargos, en el que el gobierno central fija las normas para el cálculo de la base imponible y el esquema liquidatorio del tributo y los gobiernos territoriales establecen un recargo (aumento de los tipos) o una bonificación (disminución de tipos).</p>
+</section>
+<section id="competencia-fiscal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="competencia-fiscal">Competencia fiscal</h5>
+<p>Otorgar autonomía a las haciendas territoriales en el diseño de los impuestos permite cumplir mejor con el principio de corresponsabilidad fiscal, pero puede dar lugar a competencia fiscal, es decir, al intento de cada hacienda territorial de atraer a su jurisdicción, con impuestos más bajos, empresas y factores productivos instalados en otras (política de tipo beggar-thy-neighbour). Si todas hacen lo mismo, ninguna consigue atraer factores, porque la base imponible de cada hacienda acaba siendo la misma, pero los tipos quedan por debajo de los necesarios para financiar el nivel adecuado de gasto público. Se trata de una situación del dilema del prisionero.</p>
+<table class="caption-top table">
+<caption>Dilema del prisionero en competencia fiscal</caption>
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th style="text-align: center;">C</th>
+<th style="text-align: center;">NC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">C</td>
+<td style="text-align: center;"><span class="math inline">\(2,2\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(0,3\checkmark\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">NC</td>
+<td style="text-align: center;"><span class="math inline">\(3\checkmark,0\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(1\checkmark,1\checkmark\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Los gobiernos territoriales pueden cooperar (C,C) y establecer un tributo razonable que les permita una recaudación aceptable, o pueden no cooperar, reduciendo el tipo impositivo con el fin de aumentar la base imponible del tributo y con ello su recaudación. Como vemos, se trata de un juego de tipo dilema del prisionero que lleva a un equilibrio de Nash ineficiente (NC, NC). Ello hace necesario establecer mecanismos de cooperación regional que eviten un race to the bottom.</p>
+</section>
+<section id="eficiencia-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="eficiencia-1">Eficiencia</h5>
+<p>El principio de eficiencia establece que el tributo no debe generar movimientos de factores o actividades económicas. De acuerdo con este principio, un impuesto será descentralizable si una diferenciación de tipos entre jurisdicciones no genera movimientos significativos.<br>
+De ahí que los impuestos que en mayor o menor medida se suelen descentralizar sean aquellos que gravan actividades poco móviles: fallecimiento (Sucesiones), patrimonio, bienes inmuebles (IBI), rendimientos del trabajo (IRPF, ineficiencia reducida dada la limitada movilidad de los trabajadores), consumo (IVA<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>), etc., mientras que se ha mantenido la competencia estatal plena sobre otros impuestos que gravan actividades más móviles (por ejemplo, impuesto de sociedades, cuya descentralización generaría ineficiencias importantes por ser el capital muy móvil).</p>
+</section>
+</section>
+<section id="transferencias" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="transferencias">Transferencias</h3>
+<p>En ocasiones, la descentralización de tributos puede no ser suficiente para financiar la totalidad de los gastos de los gobiernos territoriales, por lo que se complementan sus ingresos mediante transferencias, que son una cantidad de dinero que un gobierno (donante) entrega a otro (beneficiario) para que financie sus gastos.</p>
+<section id="ventajas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ventajas">Ventajas</h5>
+<p>Las transferencias funcionan como un mecanismo de equidad y redistribución. Las transferencias de nivelación cubren la diferencia entre la capacidad fiscal y la necesidad de gasto de cada jurisdicción. Corrigen dos tipos de desequilibrio: el vertical, entre niveles de gobierno (por ejemplo, el Estado conserva las fuentes tributarias pero las CCAA asumen competencias de gasto), y el horizontal, entre jurisdicciones del mismo nivel. Corregir el vertical no elimina el horizontal, que exige llevar recursos de las regiones ricas a las pobres. Además, también existen motivos de eficiencia que justifican la existencia de transferencias entre niveles de gobierno, en particular, transferencias de naturaleza compensatoria.</p>
+</section>
+<section id="desventajas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="desventajas">Desventajas</h5>
+<ul>
+<li><p>No contribuyen a la corresponsabilidad fiscal, porque una parte del gasto la pagan contribuyentes de otros territorios, lo que puede llevar a un gasto público excesivo. El riesgo es mayor si el gobierno territorial espera que, cuando gaste o se endeude en exceso, el gobierno central acuda a rescatarlo, situación que se conoce como restricción presupuestaria blanda<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>.</p></li>
+<li><p>Puede crear tensiones entre las haciendas territoriales y el Estado.</p></li>
+</ul>
+</section>
+<section id="tipos-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="tipos-1">Tipos</h5>
+<p>Las transferencias que realiza el Gobierno a las haciendas territoriales pueden ser de tres tipos<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>:</p>
+<ol type="1">
+<li><p>Transferencias incondicionales, que son aquellas que se conceden sin condiciones sobre su destino (por ejemplo, el Gobierno central transfiere 1.000 M€ al territorio, y éste es libre para decidir su destino).</p></li>
+<li><p>Transferencias condicionales no compensatorias, que son aquellas que se conceden condicionadas a un uso particular, pero cuya cuantía no depende del nivel de gasto del beneficiario en dicho concepto. El donante transfiere una cuantía fija independientemente del gasto del beneficiario (por ejemplo, el Gobierno central transfiere 1.000 M€ al territorio para que éste lo dedique a infraestructuras).</p></li>
+<li><p>Transferencias condicionales compensatorias (cofinanciación), que son aquellas que se conceden condicionadas a un uso particular, y, además, su cuantía depende del nivel de gasto de la hacienda territorial en dicho concepto (por ejemplo, el Gobierno central aporta un euro por cada euro que aporta el territorio, es decir, financia el 50 % de su gasto en infraestructuras).</p></li>
+</ol>
+</section>
+<section id="transferencias-incondicionales" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="transferencias-incondicionales">Transferencias incondicionales</h4>
+<p>Las transferencias incondicionales son aquellas que se conceden sin condiciones sobre su destino, por lo que no hay una restricción del uso de los fondos. Para analizarlas, se partirá de los siguientes supuestos:</p>
+<ul>
+<li><p>Existe una jurisdicción que provee un único bien público local, <span class="math inline">\(G\)</span>, no sujeto a congestión y de coste unitario de producción, <span class="math inline">\(p_{G}\)</span>, definido en términos de renta privada a la que se renuncia para financiar el gasto del bien público.</p></li>
+<li><p>La jurisdicción tiene una renta <span class="math inline">\(Y_{0}\)</span>, que se supone fija, de modo que la renta disponible, <span class="math inline">\(Y_{d}\)</span>, tras el pago de impuestos para financiar el bien será: <span class="math inline">\(Y_{d}=Y_{0}-p_{G}\cdot G\)</span>. Por lo tanto, en ausencia de transferencias, los impuestos serán suficientes para financiar <span class="math inline">\(G\)</span>.</p></li>
+<li><p>La decisión entre usos públicos y privados se realiza a través de una función de utilidad que depende de la renta disponible y el gasto público<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>: <span class="math inline">\(u\left(Y_{d},G\right)\)</span>.</p></li>
+</ul>
+<p>De esta forma, el nivel óptimo de provisión del bien público se obtendrá resolviendo el siguiente problema de maximización: <span id="eq-a-22-4"><span class="math display">\[\max\quad u\left(Y_{d},G\right) \tag{22.4}\]</span></span> sujeto a la restricción presupuestaria de los agentes de esta jurisdicción, según la cual la renta es igual a la renta disponible (que determina sus posibilidades de consumo privado) más la cuantía destinada al consumo del bien público local: <span id="eq-a-22-5"><span class="math display">\[Y_{0}=Y_{d}+p_{G}\cdot G \tag{22.5}\]</span></span> que ante la transferencia incondicional pasaría a ser <span id="eq-22-restriccion-con-transferencia-incondicional"><span class="math display">\[Y_{0}+T=Y_{d}+p_{G}\cdot G \tag{22.6}\]</span></span></p>
+<p>Gráficamente, en un plano <span class="math inline">\(Y_{d}\)</span> y <span class="math inline">\(G\)</span> como el de la <a href="#fig-22-transferencia-incondicional" class="quarto-xref">Figura&nbsp;<span>22.2</span></a>, se representa la curva de indiferencia <span class="math inline">\(CI_{0}\)</span> y la restricción, <span class="math inline">\(\dfrac{Y_{0}}{p_{G}}\)</span>, siendo la solución óptima el punto de tangencia <span class="math inline">\(E_{0}\)</span> donde se alcanza el nivel óptimo de provisión del bien público. En este contexto:</p>
+<ul>
+<li><p>Si se establece una transferencia incondicional, <span class="math inline">\(T\)</span>, para financiar el gasto público, se genera un efecto renta puro ya que no afecta a los precios relativos <span class="math inline">\(\dfrac{p_{G}}{p_{x}}\)</span>, donde <span class="math inline">\(p_{x}\)</span> es el precio del bien privado <span class="math inline">\(x\)</span>, de modo que se incrementa el consumo del bien público y del bien privado si ambos bienes son normales. Además, el aumento del gasto público será inferior a la cuantía de la transferencia, ya que aumenta también la demanda del bien privado.</p></li>
+<li><p>Por consiguiente, el nuevo equilibrio sería <span class="math inline">\(E_{1}\)</span>, donde se produce la tangencia entre la curva de indiferencia <span class="math inline">\(CI_{1}\)</span> y la restricción, <span class="math inline">\(\dfrac{Y_{0}+T}{p_{G}}\)</span>, y no <span class="math inline">\(E_{2}\)</span> donde la transferencia se destinaría plenamente al gasto público<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a>.</p></li>
+</ul>
+<div id="fig-22-transferencia-incondicional" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Transferencia incondicional">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-22-transferencia-incondicional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;22.2: Transferencia incondicional
+</figcaption>
+<div aria-describedby="fig-22-transferencia-incondicional-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-22-transferencia-incondicional.svg" class="img-fluid figure-img" alt="Transferencia incondicional">
+</div>
+</figure>
+</div>
+</section>
+<section id="transferencias-condicionales-no-compensatorias" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="transferencias-condicionales-no-compensatorias">Transferencias condicionales no compensatorias</h4>
+<p>Por otro lado, las transferencias condicionales no compensatorias son aquellas que se conceden condicionadas a un uso particular, pero cuya cuantía no depende del nivel de gasto de la hacienda territorial en dicho concepto.</p>
+<p>Así, la restricción de condicionalidad podría interpretarse como el requisito de que el gasto final en el bien para el que se realiza la transferencia aumente, al menos, en la cuantía de lo transferido.</p>
+<p>Gráficamente, como se observa en la <a href="#fig-22-transferencia-condicional-no-compensatoria" class="quarto-xref">Figura&nbsp;<span>22.3</span></a> se produce de nuevo un desplazamiento paralelo hacia afuera de la restricción presupuestaria de la hacienda territorial, con la diferencia de que ahora la nueva restricción se define por tramos: no son alcanzables aquellos puntos en los que el nuevo gasto público sea inferior a la transferencia, ya que esta se concede para dedicarse en su integridad a dicho fin. Con esto en cuenta el nuevo equilibrio sería el punto <span class="math inline">\(E_{2}\)</span>, donde el gasto público aumentaría en la cuantía de la transferencia.</p>
+<p>Sin embargo:</p>
+<ul>
+<li><p>Para que esto fuera viable el donante debería saber cuánto habría gastado el beneficiario en gasto público de no haberse realizado la transferencia. El problema es que en la mayoría de los casos relevantes no dispondrá de esta información<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a>.</p></li>
+<li><p>Siendo esto así, la restricción de condicionalidad solo puede interpretarse de forma que el gasto final, <span class="math inline">\(G_{1}\)</span>, en el bien para el que se realiza la transferencia sea mayor que la cuantía de lo transferido, <span class="math inline">\(p_{G}\cdot G_{1}\geq T\)</span>.</p></li>
+<li><p>Esto se traduce en una extensión del tramo presupuestario por la línea de puntos, donde los puntos a la izquierda del punto <span class="math inline">\(E_{3}\)</span> no serían accesibles dada la restricción de condicionalidad.</p></li>
+<li><p>El nuevo equilibrio dependerá de las preferencias comunitarias por la provisión pública.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></p></li>
+</ul>
+<div id="fig-22-transferencia-condicional-no-compensatoria" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Transferencia condicional no compensatoria">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-22-transferencia-condicional-no-compensatoria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;22.3: Transferencia condicional no compensatoria
+</figcaption>
+<div aria-describedby="fig-22-transferencia-condicional-no-compensatoria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-22-transferencia-condicional-no-compensatoria.svg" class="img-fluid figure-img" alt="Transferencia condicional no compensatoria">
+</div>
+</figure>
+</div>
+</section>
+<section id="transferencias-condicionales-compensatorias-o-cofinanciación" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="transferencias-condicionales-compensatorias-o-cofinanciación">Transferencias condicionales compensatorias o cofinanciación</h4>
+<p>Por su parte, las transferencias condicionales compensatorias o cofinanciación son aquellas que se conceden condicionadas a un uso particular, pero cuya cuantía depende del nivel de gasto de la hacienda territorial en dicho concepto. La transferencia compensatoria supone que el gobierno central aporta <span class="math inline">\(\tau\)</span> unidades monetarias por cada unidad monetaria que aporta el beneficiario, por lo que el coste unitario de provisión del bien público para el gobierno subcentral se reduce de <span class="math inline">\(p_{G}\)</span> a <span class="math inline">\(\dfrac{p_{G}}{1+\tau}\)</span>.</p>
+<p>Ahora la restricción presupuestaria sería: <span id="eq-a-22-6"><span class="math display">\[Y_{d}+\dfrac{p_{G}}{1+\tau}G=Y_{0} \tag{22.7}\]</span></span></p>
+<p>Gráficamente, en un plano <span class="math inline">\(Y_{d}\)</span> y <span class="math inline">\(G\)</span> como el de la <a href="#fig-22-transferencia-condicional-compen" class="quarto-xref">Figura&nbsp;<span>22.4</span></a>, la transferencia:</p>
+<ul>
+<li><p>Modifica la pendiente de la restricción, pasándose de un equilibrio inicial, <span class="math inline">\(E_{0}\)</span>, a un equilibrio final en el punto <span class="math inline">\(E_{1}\)</span>.</p></li>
+<li><p>También podría darse en el equilibrio <span class="math inline">\(E_{2}\)</span>, pero la evidencia empírica señala que es más factible el punto <span class="math inline">\(E_{1}\)</span><a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a>.</p></li>
+<li><p>Por otro lado, si se compara con una transferencia incondicional de idéntica cuantía, es decir, trazando una línea paralela a la restricción inicial que corte al equilibrio <span class="math inline">\(E_{1}\)</span>, accediendo a una curva de indiferencia más alejada del origen, <span class="math inline">\(CI_{3}\)</span>, en el punto <span class="math inline">\(E_{3}\)</span>. Del punto <span class="math inline">\(E_{3}\)</span> se puede observar que tiene dos propiedades importantes en relación a <span class="math inline">\(E_{1}\)</span>:</p>
+<ul>
+<li><p>El nivel de provisión del bien público es menor en <span class="math inline">\(E_{3}\)</span> que en <span class="math inline">\(E_{1}\)</span>, ya que la transferencia condicionada compensatoria de <span class="math inline">\(E_{1}\)</span> genera, además del efecto renta, un efecto sustitución. Este efecto sustitución, al abaratar relativamente el bien público, refuerza la expansión del gasto público por encima de la que se produciría con una transferencia incondicional.<br>
+Por lo tanto, a igual coste para el donante, el aumento del gasto público de la hacienda territorial es mayor con cofinanciación que con una transferencia incondicional o condicional no compensatoria.</p></li>
+<li><p>El nivel de utilidad de la jurisdicción es mayor en <span class="math inline">\(E_{3}\)</span>, ya que la transferencia condicionada compensatoria de <span class="math inline">\(E_{1}\)</span> limita la elección al obligar a consumir más del bien público, reduciendo de esta forma la posibilidad de alcanzar niveles de utilidad mayores.</p></li>
+</ul></li>
+</ul>
+<div id="fig-22-transferencia-condicional-compen" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Transferencia condicional compensatoria">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-22-transferencia-condicional-compen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;22.4: Transferencia condicional compensatoria
+</figcaption>
+<div aria-describedby="fig-22-transferencia-condicional-compen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-22-transferencia-condicional-compensatoria.svg" class="img-fluid figure-img" alt="Transferencia condicional compensatoria">
+</div>
+</figure>
+</div>
+</section>
+<section id="conclusiones-de-la-financiación-territorial-mediante-transferencias" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="conclusiones-de-la-financiación-territorial-mediante-transferencias">Conclusiones de la financiación territorial mediante transferencias</h4>
+<p>Las conclusiones respecto a las transferencias son claras:</p>
+<ul>
+<li><p>Si el Gobierno central quiere estimular el gasto público territorial, lo aconsejable es una transferencia condicional compensatoria (esto es, la cofinanciación).<br>
+Si el gasto público local o regional produce efectos externos positivos sobre otras jurisdicciones, los gobiernos locales estarían infravalorando los beneficios de ese bien público por lo que lo infraproveen. En estos casos, una transferencia condicionada compensatoria, al estimular la provisión del bien, servirá para internalizar el efecto externo.</p></li>
+<li><p>Si el Gobierno central quiere maximizar el bienestar territorial, lo aconsejable es una transferencia incondicional.<br>
+Las transferencias incondicionales están generalmente ligadas a objetivos de equidad interregional, ya que las regiones más pobres tendrían unos niveles de provisión de bienes públicos más bajos. Por consiguiente, las transferencias incondicionales permitirían garantizar unas provisiones mínimas aceptables.</p></li>
+</ul>
+</section>
+<section id="sistema-español" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="sistema-español">Sistema español</h4>
+<p>El sistema español de financiación autonómica se basa, además de en los impuestos propios que veíamos anteriormente, en transferencias del Estado (que se nutren, a su vez, de parte de la recaudación de los “impuestos propios” de las CCAA). Dichas transferencias se articulan a través de fondos.</p>
+<p>El más importante de ellos es el “Fondo de Garantía de Servicios Públicos Fundamentales”, que busca la equidad, es decir, que todas las Comunidades puedan ofrecer un nivel similar en la prestación de los servicios públicos fundamentales: sanidad, educación y servicios sociales.</p>
+<p>Sin embargo, se trata de un fondo que no condiciona sus transferencias al gasto en dichos bienes públicos. Es decir, se trata de transferencias no condicionales, por lo que, conforme al análisis teórico visto antes, podemos decir que, en el fondo, el sistema español busca maximizar el bienestar territorial más que estimular el gasto público.</p>
+<p>A continuación se harán 2 precisiones con respecto al análisis anterior de los efectos en el gasto público de la financiación vía transferencias:</p>
+<ol type="1">
+<li><p>Bien público como bien inferior.</p></li>
+<li><p>Efecto adherencia o efecto papel matamoscas.</p></li>
+</ol>
+</section>
+<section id="bien-público-inferior" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="bien-público-inferior">Bien público inferior</h4>
+<p>Los análisis anteriores se basaban en dos bienes, el privado y el público, que eran normales, de manera que cuando aumentaba la renta de los individuos, aumentaba el consumo de los bienes. Sin embargo, merece la pena plantearse la posibilidad de un bien o servicio público inferior, es decir, aquel cuya demanda por parte de la comunidad disminuye cuando aumenta su renta:</p>
+<ul>
+<li><p>Pensar en un bien público inferior no es un mero ejercicio teórico sin ninguna aplicabilidad práctica. La sanidad y la educación públicas, servicios provistos públicamente aunque no sean bienes públicos puros, pueden comportarse como bienes inferiores: cuando no disponen de renta suficiente, muchos ciudadanos acuden a los hospitales públicos y envían a sus hijos a colegios públicos.</p></li>
+<li><p>Pero cuando su renta aumenta lo suficiente, abandonan la sanidad y educación públicas y comienzan a utilizar la sanidad privada (para ahorrarse las esperas) y la educación privada (para proporcionar a sus hijos mayores oportunidades), por lo que la demanda del bien público se reduce con la renta.</p></li>
+<li><p>Pues bien, en el caso de bienes públicos inferiores, una transferencia del Gobierno central a las haciendas territoriales podría disminuir el consumo de bien público (disminuirá seguro en el caso de una transferencia incondicional –efecto renta negativo–, y podría disminuir en el caso de cofinanciación –efecto renta negativo pero efecto sustitución positivo–).</p></li>
+</ul>
+<section id="implicaciones-de-política-económica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica">Implicaciones de política económica</h5>
+<p>Por lo tanto, a la hora de diseñar sus objetivos de gasto público, el Gobierno central no solo debe analizar el tipo de transferencia que hará, sino también la naturaleza del bien público cuyo consumo quiere estimular.</p>
+</section>
+</section>
+<section id="el-efecto-adherencia-o-efecto-papel-matamoscas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="el-efecto-adherencia-o-efecto-papel-matamoscas">El efecto adherencia o efecto papel matamoscas</h4>
+<p>Pese a que el modelo anterior permite analizar las transferencias sobre el gasto algunas de sus implicaciones no son consistentes con la evidencia empírica:</p>
+<ul>
+<li><p>Por ejemplo, según el modelo una transferencia incondicionada de <span class="math inline">\(T_{0}\)</span> es equivalente a un incremento de la renta privada de los residentes de la jurisdicción en la misma cuantía, provocando el mismo desplazamiento en la recta presupuestaria como se puede observar en (<a href="#eq-22-restriccion-con-transferencia-incondicional" class="quarto-xref">&nbsp;<span>22.6</span></a>).</p></li>
+<li><p>Por consiguiente, las transferencias incondicionales dan lugar al mismo aumento del gasto público que los aumentos de renta privada de la misma magnitud.</p></li>
+<li><p>No obstante, los estudios empíricos no corroboran dicha predicción de la teoría, sino que sugieren que una transferencia incondicional de una unidad monetaria da lugar a un aumento del gasto público mayor que un aumento de la misma magnitud en la renta privada de los residentes de la jurisdicción<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a>. Este fenómeno se denomina efecto adherencia o efecto papel matamoscas –flypaper effect–, porque refleja que el dinero tiende a quedarse “pegado” en el primer sector, público o privado, en el que “impacta”.</p></li>
+</ul>
+<p><span class="citation" data-cites="22_Albi2017">Albi et&nbsp;al. (<a href="01-tema-a1.html#ref-22_Albi2017" role="doc-biblioref">2017</a>)</span> señalan que al efecto papel matamoscas se le han dado diversas explicaciones. La más frecuente consiste en suponer que las elecciones públicas se adoptan por votación mayoritaria, pero que los votantes desconocen la cuantía de las transferencias incondicionadas que reciben sus gobernantes.</p>
+<p>Además, al igual que en la teoría de la burocracia de <span class="citation" data-cites="22_Niskanen1971">Niskanen (<a href="01-tema-a1.html#ref-22_Niskanen1971" role="doc-biblioref">1971</a>)</span>, el objetivo de los gobernantes es maximizar el tamaño de su presupuesto. Por ello, con el fin de aumentar su presupuesto y mantener los votos, los gobernantes pueden introducir una ilusión fiscal cuando reciben una transferencia <span class="math inline">\(T_{0}\)</span>, consistente en hacer creer a los votantes que el coste de provisión del bien <span class="math inline">\(G\)</span> es menor que su coste real. Por ejemplo, podrían reducir los impuestos en la cuantía de la transferencia <span class="math inline">\(T_{0}\)</span> y hacer creer a los votantes que el coste unitario de provisión del gasto público <span class="math inline">\(G\)</span> es <span class="math inline">\(\left(p_{G}\cdot G-T_{0}\right)/G\)</span> en vez de <span class="math inline">\(p_{G}\)</span>. Ante esta reducción del precio observado –reflejada en menores impuestos–, los ciudadanos votarán aumentos en el nivel de gasto.</p>
+<section id="implicaciones-de-política-económica-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-1">Implicaciones de política económica</h5>
+<p>Por lo tanto, a la hora de diseñar sus objetivos de gasto público, el Gobierno central debe considerar la posibilidad de que una transferencia incondicional a las haciendas territoriales no sea equivalente a una transferencia de recursos al sector privado, por lo que, si su objetivo es maximizar el bienestar de los ciudadanos de esa jurisdicción, podría ser conveniente transferir dichos recursos directamente a los ciudadanos (aunque en la práctica, es muy difícil para el Gobierno central articular transferencias directas a los ciudadanos de un determinado territorio –por ejemplo, una bajada de impuestos afecta a todos los territorios–)<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a>.</p>
+</section>
+</section>
+</section>
+<section id="emisión-de-deuda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="emisión-de-deuda">Emisión de deuda</h3>
+<p>Por último, el gobierno central puede permitir que las haciendas territoriales emitan deuda para financiarse, lo que se justifica por dos motivos: financiar inversiones de largo alcance repartiendo su coste entre generaciones (por equidad intergeneracional, como recoge la regla de oro de las finanzas públicas), y servir de alternativa a los impuestos cuando la capacidad tributaria propia es limitada. No obstante, su uso debe ser limitado por 2 motivos:</p>
+<ol type="1">
+<li><p>Erosión de la función estabilizadora del Gobierno central: la deuda no solo es un medio de financiación, sino también un instrumento fundamental de política económica por sus efectos sobre el tipo de interés, la demanda agregada, etc., pudiéndose poner en riesgo la política de estabilización del gobierno central<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a>.</p></li>
+<li><p>Riesgo moral y free-rider: existen incentivos a endeudarse indefinidamente, llevando a las haciendas territoriales a aplicar políticas fiscales expansivas financiadas con deuda, pues existe un problema de riesgo moral y de free-rider<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a>. La hacienda territorial tendrá incentivos para llevar políticas fiscales expansivas, pues se beneficiará del aumento de la demanda agregada de dicha política, pero sin tener que hacer frente a los costes asociados a esta<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a>.</p></li>
+</ol>
+<p>En efecto, las regiones saben que la insostenibilidad de su política fiscal no se va a traducir directamente en un aumento del riesgo región, ya que con la unión monetaria que representa el país el riesgo región de cada jurisdicción se difumina en el riesgo moneda, común para todo el país (es decir, se considera que los bonos regionales, emitidos en la moneda común, son perfectamente sustitutivos).</p>
+<p>Además, aun cuando eventualmente los mercados de deuda se fragmentasen y aumentara la prima de riesgo de la región, la hacienda territorial podría tener la esperanza de recibir ayuda financiera del Gobierno central ante el miedo de éste a que:</p>
+<ul>
+<li><p>Se produzca un contagio y se extienda el pánico financiero al resto del país; y</p></li>
+<li><p>Los gobiernos regionales culpen al Gobierno central de forma creíble al no disponer las haciendas territoriales de una capacidad tributaria propia plena.</p></li>
+</ul>
+<p>Esto es precisamente lo que ha ocurrido en España: muchas CCAA y ayuntamientos se endeudaron en exceso aprovechándose del bajo riesgo país de España. Y cuando los mercados de deuda se fragmentaron y las primas de riesgo de algunas CCAA y Ayuntamientos aumentaron, se produjo un “rescate” encubierto del Estado a través del Fondo de Liquidez Autonómica (planteándose incluso la posibilidad de quitas), sentando un precedente que puede acentuar en el futuro los problemas de riesgo moral.</p>
+<section id="soluciones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="soluciones">Soluciones</h5>
+<p>Por lo tanto, las soluciones deben pasar por:</p>
+<ol type="1">
+<li><p>Limitar el endeudamiento de las haciendas territoriales. En España a través de la Ley Orgánica 2/2012 de Estabilidad Presupuestaria y Sostenibilidad financiera, el artículo 13 fija el límite de deuda de cada comunidad autónoma en el 13% de su PIB regional.</p></li>
+<li><p>Sujetar la emisión de deuda territorial a la autorización estatal. Artículo 135.3 de la Constitución, que exige autorización por ley para emitir deuda pública o contraer crédito, y artículo 14.3 de la LOFCA: “Para concertar operaciones de crédito en el extranjero y para la emisión de deuda o cualquier otra apelación de crédito público, las Comunidades Autónomas precisarán autorización del Estado”</p></li>
+<li><p>Compromiso de no rescate de las haciendas territoriales por parte del Estado.</p></li>
+</ol>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="22.5">
+<h2 data-number="22.5" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">22.5</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, el federalismo fiscal va más allá de un simple reparto de competencias, sino que nos obliga a reflexionar sobre su aplicación práctica en España.</p>
+<p>Por un lado, la descentralización a las CCAA ha creado una situación única donde el poder de gasto y el control de los ingresos se superponen. Sin embargo, la cesión simultánea de soberanía fiscal a la UE, junto al control del BCE sobre la política monetaria, genera una tensión que dificulta la capacidad del Gobierno central para estabilizar la economía.</p>
+<p>Por otro lado, como señala un informe de FEDEA de 2024, la existencia de una “restricción presupuestaria blanda” y la falta de transparencia en el sistema actual plantean un interrogante crucial: ¿cómo se puede garantizar la equidad y la responsabilidad fiscal si los incentivos políticos no están alineados con la sostenibilidad financiera? La teoría es clara, pero la realidad demuestra que los sistemas de financiación deben ser lo suficientemente flexibles y transparentes para adaptarse a un entorno de gobernanza multinivel sin sacrificar la coherencia ni la estabilidad.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-otros-desarrollos-de-la-teoría-del-federalismo-fiscal" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-otros-desarrollos-de-la-teoría-del-federalismo-fiscal">22.A.1.&nbsp;&nbsp;Otros desarrollos de la teoría del federalismo fiscal</h3>
+<p>A continuación se presentan otros desarrollos no vistos en el tema</p>
+<section id="transparencia-y-rendición-de-cuentas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="transparencia-y-rendición-de-cuentas">Transparencia y rendición de cuentas</h4>
+<p>Otras aportaciones de la Teoría del Federalismo Fiscal se centran en la relación de agencia entre políticos (agentes) y electorado (principal). En este caso, el electorado debe tener un criterio para valorar la actuación del gobierno y decidir sobre su reelección.</p>
+<p>La descentralización favorece además la competencia por comparación entre gobiernos (argumento a favor de la descentralización).<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a> Al poder comparar los resultados de distintos gobiernos, los votantes obtienen información adicional que les permite valorar mejor la actuación del suyo de cara a la reelección, lo que aumenta los incentivos de los gobiernos a seguir el interés público <span class="citation" data-cites="22_BoadwayShah2009">(<a href="01-tema-a1.html#ref-22_BoadwayShah2009" role="doc-biblioref">Boadway y Shah 2009</a>)</span>.</p>
+<p>La provisión descentralizada abre la puerta a la competencia entre gobiernos locales. La teoría de la Hacienda pública subraya a menudo la carencia de incentivos para actuar de manera eficiente en la labor de gobierno, lo que sucede en mayor medida en el marco de un único gobierno que ejerce todas las competencias. Las ventajas de la competencia entre gobiernos son mayores cuanto mayor sea la capacidad de los individuos de irse a vivir a otra región. Breton <span class="citation" data-cites="22_Breton1996">(<a href="01-tema-a1.html#ref-22_Breton1996" role="doc-biblioref">1996</a>)</span> sitúa esta competencia entre gobiernos como la principal razón para descentralizar el sector público. Brennan y Buchanan <span class="citation" data-cites="22_BrennanBuchanan1980">(<a href="01-tema-a1.html#ref-22_BrennanBuchanan1980" role="doc-biblioref">1980</a>)</span> llevan este argumento más lejos. Si el sector público no es un planificador benevolente, sino un Leviatán que trata de maximizar su tamaño, la competencia entre gobiernos y la movilidad de los contribuyentes limitan su capacidad para recaudar y, con ella, el nivel de gasto <span class="citation" data-cites="22_Albi2017">(<a href="01-tema-a1.html#ref-22_Albi2017" role="doc-biblioref">Albi et&nbsp;al. 2017</a>)</span>.</p>
+<p>Asociado a las ventajas de competencia, se encuentran los incentivos a incrementar la innovación en el campo del suministro de los bienes locales. No siempre está claro cuál es el método más eficiente de prestar un determinado servicio público. Ante la duda, una buena receta es la de dejar ensayar métodos diferenciados en diferentes regiones, lo que permitirá comparar los resultados e ir convergiendo hacia la utilización del método más eficiente.</p>
+</section>
+<section id="reparto-del-riesgo-entre-las-distintas-jurisdicciones" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="reparto-del-riesgo-entre-las-distintas-jurisdicciones">Reparto del riesgo entre las distintas jurisdicciones</h4>
+<p>Se trata de una cuestión relacionada con la función aseguradora de la política fiscal. Si las diferentes jurisdicciones se enfrentan a shocks aleatorios imperfectamente correlacionados y existe aversión al riesgo queda justificada la contratación de un seguro. Para ello existen varias soluciones:</p>
+<ul>
+<li><p>El Gobierno central asume la función aseguradora, en cuyo caso aparecen problemas de riesgo moral.</p></li>
+<li><p>Constitución de rainy day funds: los gobiernos regionales constituyen provisiones en periodo de bonanza para hacer frente a tiempos difíciles. Es una solución menos habitual, aunque se utiliza en algunos países (por ejemplo, Finlandia).</p></li>
+<li><p>Creación de un sistema de reparto de riesgo entre jurisdicciones, basado en la diversificación del riesgo o risk pooling: cada región aporta a un fondo común que compensa a la que sufre un shock, de modo que el coste se reparte entre todas. Funciona mejor cuanto menos correlacionados estén los shocks, y si son independientes la varianza del coste que soporta cada una de las <span class="math inline">\(N\)</span> regiones se divide por <span class="math inline">\(N\)</span>.</p></li>
+</ul>
+</section>
+<section id="relación-más-estrecha-entre-costes-y-beneficios" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="relación-más-estrecha-entre-costes-y-beneficios">Relación más estrecha entre costes y beneficios</h4>
+<p>El papel que juegan los precios en el mercado a la hora de estimular la eficiencia se puede trasladar a la prestación de servicios públicos: la eficiencia aumentará cuanto más estrecha sea la vinculación entre los servicios provistos y el pago correspondiente de impuestos. Esto es, cuando exista una estrecha correspondencia entre el pago de impuestos por parte de los ciudadanos y los beneficios que recibe en forma de servicios públicos. Parece claro que esta vinculación, o al menos la percepción de la misma, es mayor para los ciudadanos cuando la prestación es llevada a cabo por una administración local.</p>
+<p>Ahora bien, esta adecuación entre costes y beneficios será mayor cuando el gasto correspondiente a la provisión de bienes públicos por parte de los gobiernos locales se haya financiado con recursos provenientes de impuestos financiados por los ciudadanos de ese territorio.</p>
+<p>Si el gobierno local depende de transferencias del gobierno central para financiar la prestación, los incentivos se trasladan hacia la negociación entre gobiernos con el fin de obtener las máximas transferencias posibles. De esta forma se reducen los incentivos de los ciudadanos a controlar la acción de gobierno local a través del voto. Este razonamiento proporciona un motivo para hacer descansar la financiación de los gobiernos locales preferentemente en impuestos propios.</p>
+</section>
+<section id="la-restricción-presupuestaria-blanda" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="la-restricción-presupuestaria-blanda">La restricción presupuestaria blanda</h4>
+<p>Se habla de restricción presupuestaria blanda cuando un gobierno subcentral espera que el gobierno central le preste ayuda financiera si gasta en exceso o se endeuda demasiado, de modo que no soporta todo el coste de sus decisiones. Es un problema de riesgo moral propio de los sistemas descentralizados <span class="citation" data-cites="22_BoadwayShah2009">(<a href="01-tema-a1.html#ref-22_BoadwayShah2009" role="doc-biblioref">Boadway y Shah 2009</a>)</span>.</p>
+<p>Surge porque los gobiernos subcentrales dependen de transferencias, que en parte se diseñan para que puedan cubrir sus necesidades de gasto, y porque prestan servicios esenciales como la sanidad o la educación. Si no pueden prestarlos con un mínimo de calidad, el gobierno central se siente obligado a intervenir, a veces por mandato legal (en Alemania, por ejemplo, un municipio no puede quebrar). El incentivo a excederse es mayor cuanto más discrecionales son las transferencias. La capacidad de endeudarse añade una vía más, aunque el problema puede darse también sin deuda.</p>
+<p>En España se manifiesta en la percepción de que parte de los costes de las CCAA puede trasladarse a la Administración Central mediante aportaciones adicionales de fondos o la condonación de la deuda acumulada <span class="citation" data-cites="22_Fuente2024">(<a href="01-tema-a1.html#ref-22_Fuente2024" role="doc-biblioref">Fuente 2024</a>)</span>. El Fondo de Liquidez Autonómica es el ejemplo más reciente (ver “Emisión de deuda”).</p>
+<p>Anunciar que no habrá rescate no basta, porque ese compromiso es difícil de sostener. Las soluciones que se plantean son:</p>
+<ul>
+<li><p>Transferencias basadas en fórmulas objetivas y no en el déficit real de cada gobierno, que resultan más creíbles que las discrecionales.</p></li>
+<li><p>Que los gobiernos subcentrales se financien con deuda propia, sometida a la disciplina de los mercados (como en Canadá), lo que exige una autonomía real sobre su presupuesto.</p></li>
+<li><p>Cláusulas de no rescate y reglas fiscales. El Tratado de Maastricht prohíbe el rescate de un gobierno por los bancos centrales o por la UE, y el Pacto de Estabilidad refuerza esas disposiciones.</p></li>
+</ul>
+</section>
+</section>
+<section id="a.2.-hechos-estilizados-sobre-la-descentralización" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-hechos-estilizados-sobre-la-descentralización">22.A.2.&nbsp;&nbsp;Hechos estilizados sobre la descentralización</h3>
+<p>A continuación se presentan algunos hechos estilizados sobre la descentralización.</p>
+<section id="la-descentralización-en-el-mundo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="la-descentralización-en-el-mundo">La descentralización en el mundo</h5>
+<p>A nivel mundial, existe una clara tendencia hacia la descentralización. Un ejemplo de ello es Latinoamérica, cuyo índice de centralización del gasto público pasó del 76% en 1975 al 70% en 1995. Además, parece haber una correlación positiva entre el nivel de descentralización y nivel de desarrollo de los países. En los países más desarrollados la centralización del gasto público suele ser sustancialmente inferior, rondando el 50%. Los SP africanos suelen estar muy centralizados, con un grado de centralización superior al 80%.</p>
+</section>
+<section id="nivel-de-descentralización-por-funciones-del-sector-público" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="nivel-de-descentralización-por-funciones-del-sector-público">Nivel de descentralización por funciones del sector público</h5>
+<p>Se pueden encontrar una serie de patrones en cuanto al grado de descentralización en la provisión del SP en la mayoría de países:</p>
+<ul>
+<li><p>Los servicios comunitarios y de vivienda suelen ser los más descentralizados, con un grado de descentralización del 71%.</p></li>
+<li><p>Les siguen los servicios de educación y sanidad, con un grado de descentralización del 64%.</p></li>
+<li><p>Los servicios menos descentralizados son los relacionados con la Seguridad Social y el Bienestar, con una media del 18%.</p></li>
+</ul>
+<p>Estos grados de descentralización son consistentes con el enfoque normativo, que establece que los servicios de distribución son alcanzados en mayor grado a nivel central.</p>
+</section>
+<section id="determinantes-de-la-descentralización" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="determinantes-de-la-descentralización">Determinantes de la descentralización</h5>
+<p>La literatura positiva de la descentralización ha encontrado varias fuerzas que promueven la descentralización:</p>
+<ul>
+<li><p>Oates <span class="citation" data-cites="22_Oates1972">(<a href="01-tema-a1.html#ref-22_Oates1972" role="doc-biblioref">1972</a>)</span> encuentra, a través de un análisis de sección cruzada a nivel nacional, que el tamaño del país y la renta per cápita son determinantes a la hora de explicar la descentralización.</p></li>
+<li><p>Panizza <span class="citation" data-cites="22_Panizza1999">(<a href="01-tema-a1.html#ref-22_Panizza1999" role="doc-biblioref">1999</a>)</span>, a partir de la estimación de un modelo teórico de un país lineal, encuentra que la descentralización aumenta de nuevo con el tamaño del país y la renta per cápita, pero también con el nivel de democracia, la fragmentación etnolingüística y la diversidad cultural.</p></li>
+<li><p>Finalmente, la descentralización puede no responder a motivos de eficiencia, sino a motivos políticos: la descentralización se utiliza también para acallar deseos secesionistas. Italia (Lombardía) y Bélgica (Flandes) son buenos ejemplos de este tipo de descentralización.</p></li>
+</ul>
+</section>
+</section>
+<section id="a.3.-retos-de-la-financiación-autonómica-y-local-en-españa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-retos-de-la-financiación-autonómica-y-local-en-españa">22.A.3.&nbsp;&nbsp;Retos de la financiación autonómica y local en España</h3>
+<p>El apunte “Financiación autonómica y local” de Ángel de la Fuente <span class="citation" data-cites="22_Fuente2024">(<a href="01-tema-a1.html#ref-22_Fuente2024" role="doc-biblioref">2024</a>)</span>, publicado por Fedea en enero de 2024, recopila y resume los principales trabajos de Fedea sobre la materia.</p>
+<section id="diagnóstico-del-sistema-actual" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="diagnóstico-del-sistema-actual">Diagnóstico del sistema actual</h5>
+<p>Se identifican tres grandes problemas en el sistema de financiación territorial:</p>
+<ol type="1">
+<li><p>Complejidad y falta de transparencia. El modelo es tan enrevesado que resulta incomprensible para el ciudadano medio. Las transferencias entre el Estado y las comunidades autónomas (CCAA) se canalizan con criterios variados y a veces contradictorios, lo que dificulta la rendición de cuentas.</p></li>
+<li><p>Distribución desigual y arbitraria. El reparto de recursos entre CCAA no sigue criterios claros de equidad ni de capacidad fiscal. Sin contar las comunidades forales, y con datos de 2021, hay un abanico de unos 25 puntos porcentuales entre la mejor y la peor financiada por habitante ajustado. Las comunidades forales (País Vasco y Navarra) reciben entre 50 y 100 puntos más que la mejor financiada del régimen común.</p></li>
+<li><p>Déficit de responsabilidad fiscal. Las CCAA, sobre todo las de régimen común, no son plenamente responsables de sus decisiones de gasto, ya que parte de sus costes son asumidos por la Administración Central. Esto genera una “restricción presupuestaria blanda”, que incentiva el gasto excesivo sin asumir el coste político de subir impuestos.</p></li>
+</ol>
+</section>
+<section id="propuestas-de-reforma" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="propuestas-de-reforma">Propuestas de reforma</h5>
+<p>Se propone avanzar hacia un sistema más simple, transparente, equitativo y responsable, mediante una reforma gradual y coordinada. Las principales recomendaciones son:</p>
+<ul>
+<li><p>Revisión de competencias y herramientas fiscales. Es necesario adaptar la división de competencias entre administraciones y revisar el régimen foral para que participe en los mecanismos de solidaridad interterritorial.</p></li>
+<li><p>Fondo complementario de nivelación. Como medida inmediata, se propone crear un fondo financiado por el Estado para reducir o eliminar la distancia que separa de la media del régimen común a las comunidades peor financiadas (Murcia, Valencia, Andalucía y Castilla-La Mancha). El coste estimado sería de unos 3.000 millones de euros.</p></li>
+<li><p>Mejoras técnicas. Se sugiere reformar el sistema de retenciones y entregas a cuenta para que reflejen más rápidamente las decisiones fiscales de las CCAA, mejorar el cálculo de la recaudación normativa y regular las escalas de referencia de los tributos cedidos.</p></li>
+<li><p>Mecanismos colectivos de responsabilidad fiscal. Para evitar desequilibrios horizontales, se plantea crear tramos autonómicos colegiados del IVA y los Impuestos Especiales, cuyos tipos serían fijados por las CCAA y repartidos según población ajustada. Esto permitiría aumentar los recursos sin beneficiar desproporcionadamente a unas regiones sobre otras.</p></li>
+</ul>
+</section>
+<section id="necesidad-de-pacto-político" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="necesidad-de-pacto-político">Necesidad de pacto político</h5>
+<p>Se subraya que dos cuestiones clave requieren consenso político:</p>
+<ul>
+<li><p>Nivel de servicios públicos deseado. Es necesario decidir cuánto se está dispuesto a pagar en impuestos para mantener o mejorar las prestaciones públicas.</p></li>
+<li><p>Grado de nivelación territorial. Se debe pactar qué parte de las diferencias fiscales entre territorios debe corregirse mediante transferencias. Aunque la nivelación debe ser alta para garantizar la cohesión, podría no llegar al 100% si eso facilita el acuerdo con las comunidades más reacias a la redistribución.</p></li>
+</ul>
+<p>Se advierte del riesgo de una deriva hacia un sistema de financiación “a la carta”, negociado bilateralmente con algunas comunidades, lo que podría debilitar la capacidad del Estado para garantizar la cohesión social y territorial. Se reconoce que esta situación ya existe en el régimen foral, pero se insiste en que no debe extenderse a otras regiones.</p>
+</section>
+</section>
+<section id="a.4.-ordinalidad-y-redistribución" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-ordinalidad-y-redistribución">22.A.4.&nbsp;&nbsp;Ordinalidad y redistribución</h3>
+<p>La ordinalidad y la nivelación son dos principios que se contraponen en el debate sobre la financiación autonómica.</p>
+<section id="ordinalidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ordinalidad">Ordinalidad</h5>
+<p>La ordinalidad es el principio según el cual la nivelación no debe alterar el orden de las comunidades autónomas por capacidad fiscal por habitante, de modo que una comunidad con más capacidad fiscal que otra antes de las transferencias debe seguir teniendo más financiación por habitante después, aunque la diferencia entre ellas se reduzca.<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a> Sus defensores sostienen que incentiva la responsabilidad fiscal y la eficiencia: si una comunidad se esfuerza por mejorar su economía y recaudar más, se beneficia de ello, y se premia así la buena gestión de sus finanzas.</p>
+</section>
+<section id="nivelación" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="nivelación">Nivelación</h5>
+<p>La nivelación (o redistribución) es el proceso por el cual el sistema de financiación transfiere recursos de las CCAA con más capacidad fiscal a las que tienen menos, para que todas dispongan de una financiación similar por habitante ajustado, es decir, por unidad de necesidad de gasto, y puedan ofrecer servicios públicos básicos (como educación y sanidad) en condiciones de igualdad. Es fundamental para la cohesión social y territorial, porque el acceso a los servicios no depende entonces del lugar de residencia, y refuerza la solidaridad dentro del país. Sin embargo, una nivelación muy intensa puede desincentivar a las comunidades de renta alta a recaudar más, ya que gran parte de ese esfuerzo se destina a otras regiones, y puede generar riesgo moral en las receptoras, que sienten menos presión para gestionar eficientemente sus recursos o aumentar sus ingresos.</p>
+</section>
+<section id="críticas-al-principio-de-ordinalidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="críticas-al-principio-de-ordinalidad">Críticas al principio de ordinalidad</h5>
+<p>De la Torre y Fernández-Villaverde <span class="citation" data-cites="22_DeLaTorre2025">(<a href="01-tema-a1.html#ref-22_DeLaTorre2025" role="doc-biblioref">2025</a>)</span> rechazan el principio de ordinalidad, tanto en su versión débil, la definida arriba, como en la fuerte, según la cual quien más aporta debe recibir más, y lo consideran una idea equivocada que se presenta como razonable y justa. Sus razones son las siguientes:</p>
+<ul>
+<li><p>Contradice la lógica redistributiva del Estado del bienestar, en el que cada persona contribuye según su capacidad y recibe según su necesidad. Por ejemplo, una comunidad con más niños escolarizados debe recibir más financiación aunque eso altere el orden de renta entre comunidades.</p></li>
+<li><p>Exigir que las comunidades mantengan su posición relativa de renta tras impuestos y transferencias ignora las diferencias en necesidades de gasto, como la estructura demográfica. Un ejemplo ilustrativo es el de dos regiones que comparten un sistema común de pensiones y de sanidad: una más productiva y joven y otra menos productiva y más envejecida. Tras cotizaciones, impuestos y transferencias, la región menos productiva y más envejecida puede acabar con más recursos por habitante que la otra, lo que, en su opinión, muestra que el principio es absurdo. Según estos autores, regiones con ese perfil existen en España, como Asturias o Cantabria.</p></li>
+<li><p>Carece, según estos autores, de consenso académico y político.</p></li>
+<li><p>En su versión fuerte, un contribuyente de renta muy alta recibiría más del Estado que un jubilado sin ingresos.</p></li>
+<li><p>Reconocen como legítimo el argumento de que una redistribución excesiva desincentiva el esfuerzo, pero consideran que debe plantearse de forma abierta y no a través de la ordinalidad.</p></li>
+<li><p>Fernández-Villaverde resume su postura señalando que no es posible defender a la vez el Estado del bienestar y la ordinalidad territorial sin contradicción.</p></li>
+</ul>
+</section>
+<section id="la-tensión-entre-ambos-principios" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="la-tensión-entre-ambos-principios">La tensión entre ambos principios</h5>
+<p>Existe una tensión inherente entre la ordinalidad y la nivelación. Una nivelación total (que los recursos por habitante ajustado sean iguales en todas las comunidades para los mismos servicios) puede alterar el orden original de las comunidades. Por el contrario, respetar estrictamente la ordinalidad puede generar grandes desigualdades en la capacidad de gasto. El desafío en cualquier reforma es encontrar un equilibrio que promueva la solidaridad sin penalizar la eficiencia ni la buena gestión fiscal. En esta línea, Fedea considera que el grado de nivelación y el respeto de la ordenación original (la ordinalidad) ofrecen un margen de negociación que podría acomodar parcialmente las demandas de los territorios de renta alta dentro de un esquema razonable <span class="citation" data-cites="22_Fuente2024">(<a href="01-tema-a1.html#ref-22_Fuente2024" role="doc-biblioref">Fuente 2024</a>)</span>.</p>
+</section>
+</section>
+<section id="a.5.-el-índice-de-autoridad-regional" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-el-índice-de-autoridad-regional">22.A.5.&nbsp;&nbsp;El Índice de Autoridad Regional</h3>
+<p>El Índice de Autoridad Regional (RAI, por sus siglas en inglés) mide la autoridad política que ejercen las regiones o estados subnacionales dentro de un país. Lo ha desarrollado un equipo de académicos liderado por Liesbet Hooghe, Gary Marks y Arjan H. Schakel <span class="citation" data-cites="22_Hooghe2016 22_ShairRosenfield2021">(<a href="01-tema-a1.html#ref-22_Hooghe2016" role="doc-biblioref">Hooghe et&nbsp;al. 2016</a>; <a href="01-tema-a1.html#ref-22_ShairRosenfield2021" role="doc-biblioref">Shair-Rosenfield et&nbsp;al. 2021</a>)</span>. Su objetivo es ir más allá de la distinción tradicional entre Estados “federales” y “unitarios” y cuantificar de forma matizada el grado de descentralización en 96 países, con datos anuales de 1950 a 2018. Se considera región cualquier nivel de gobierno situado entre el municipal y el nacional cuya población media supere los 150.000 habitantes.</p>
+<section id="frente-a-los-indicadores-fiscales" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="frente-a-los-indicadores-fiscales">Frente a los indicadores fiscales</h5>
+<p>El índice nace como alternativa a las medidas fiscales habituales, como el peso del gasto o de los ingresos subnacionales, que tienen dos limitaciones. El volumen de gasto no indica quién decide: un gobierno regional puede gestionar mucho dinero con poca autonomía real. Además, dan una sola cifra para todos los niveles subnacionales y no recogen regímenes diferenciados, como los territorios forales del País Vasco y Navarra. Los datos lo confirman: el gasto subnacional explica solo en parte la variación del RAI (R² = 0,39) y el desequilibrio vertical, medido como transferencias sobre gasto subnacional, no guarda relación con él (R² = 0,00). Canadá, Suiza o Estados Unidos, muy descentralizados, tienen un desequilibrio comparable al de países centralizados como Bulgaria o Eslovaquia.</p>
+</section>
+<section id="medición-de-la-autoridad-regional" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="medición-de-la-autoridad-regional">Medición de la autoridad regional</h5>
+<p>El RAI evalúa la autoridad regional a través de diez dimensiones, que se agrupan en dos grandes categorías:</p>
+<ol type="1">
+<li><p>Autogobierno (“self-rule”). Mide la capacidad de una región para ejercer poder dentro de sus propias fronteras. Evalúa si la región tiene su propio parlamento y ejecutivo, el alcance de sus competencias políticas (como la sanidad o la educación), y su autonomía fiscal y de endeudamiento.</p></li>
+<li><p>Participación en el gobierno central (“shared-rule”). Mide la influencia que una región ejerce en el gobierno central del país. Se analiza su participación en la aprobación de leyes nacionales, su control sobre el ejecutivo central, su poder en la distribución de los impuestos nacionales y su papel en las reformas constitucionales.</p></li>
+</ol>
+<p>Cada dimensión puntúa en una escala corta (por ejemplo, de 0 a 3 la profundidad institucional y de 0 a 4 la autonomía fiscal), de modo que cada región o nivel regional obtiene hasta 18 puntos de autogobierno y 12 de gobierno compartido, un máximo de 30. La puntuación de un país suma la de todos sus niveles, ponderada por población, por lo que puede superar los 30 y favorece a los países con más niveles. El índice se actualiza cada año y registra más de 1.300 cambios entre 1950 y 2010.</p>
+</section>
+<section id="posición-de-españa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="posición-de-españa">Posición de España</h5>
+<p>Con datos de 2018, España suma 35,6 puntos (22,6 de autogobierno y 13,0 de gobierno compartido)<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a>. Solo la superan Alemania (37,7) y Bosnia y Herzegovina (36,3), y empata con India (35,6). Queda por delante de Bélgica (33,9), Estados Unidos (29,6), Canadá (27,8), Suiza (26,5), Italia (26,0), Francia (21,8) y Reino Unido (9,6), y es el país con mayor puntuación del mundo en gobierno compartido. Esta posición es notable porque España no es un Estado federal en el sentido clásico.</p>
+<p>La trayectoria muestra la rapidez del proceso: el índice pasa de 3,4 en 1977 a 29,4 en 1983, cuando todas las comunidades autónomas ya tenían estatuto e instituciones propias, y se estabiliza en torno a 35 desde 2002. Los propios autores del índice describen esa etapa como una cascada de pactos territoriales iniciada por el País Vasco, Cataluña y Galicia, que el Estado extendió a todo el territorio con la fórmula del “café para todos” <span class="citation" data-cites="22_ShairRosenfield2021">(<a href="01-tema-a1.html#ref-22_ShairRosenfield2021" role="doc-biblioref">Shair-Rosenfield et&nbsp;al. 2021</a>)</span>.</p>
+<p>La posición depende de cómo se agregue. Si se considera solo el nivel regional más autoritativo, que en España son las comunidades autónomas, la puntuación es de 23,7 sobre 30, la octava de 79 países, por detrás de Alemania (27,0), Bosnia y Herzegovina (26,7), Suiza (26,5), Bélgica (25,5), Australia (25,5), Argentina (25,0) y Estados Unidos (24,6). La diferencia se debe a que la cifra nacional suma también otros niveles, como las provincias, y las regiones con régimen diferenciado.</p>
+</section>
+<section id="perfil-de-las-comunidades-autónomas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="perfil-de-las-comunidades-autónomas">Perfil de las comunidades autónomas</h5>
+<p>El perfil es desigual. Las comunidades puntúan al máximo en instituciones propias (3 sobre 3) y representación (4 sobre 4), y alto en competencias (3 sobre 4) y gobierno compartido, gracias a las conferencias sectoriales y a la Conferencia de Presidentes. En cambio, su autonomía fiscal es de 2,9 sobre 4, frente a unos 4 puntos en Estados Unidos, Canadá o Suiza (salvo el País Vasco y Navarra, que alcanzan el máximo por su régimen foral), y su autonomía de endeudamiento es de 1 sobre 3, por la autorización previa del Estado, frente a 3 en Estados Unidos, Canadá, Alemania o Suiza. La descentralización española es, por tanto, más de gasto y de participación que de ingresos y deuda, lo que ayuda a entender el déficit de corresponsabilidad fiscal y la restricción presupuestaria blanda.</p>
+</section>
+</section>
+<section id="a.6.-ejemplos-de-transferencias" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-ejemplos-de-transferencias">22.A.6.&nbsp;&nbsp;Ejemplos de transferencias</h3>
+<p>A continuación se presentan ejemplos prácticos tanto de España como de la UE.</p>
+<section id="transferencias-incondicionales-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="transferencias-incondicionales-1">Transferencias incondicionales</h5>
+<p>Son fondos que se otorgan sin restricciones sobre su uso. Los gobiernos receptores tienen total libertad para gastarlos en lo que consideren más adecuado para sus ciudadanos.</p>
+<ul>
+<li>Ejemplo en España. El Fondo de Suficiencia Global. Es una transferencia que el Estado hace a las Comunidades Autónomas para financiar sus competencias, y los recursos pueden ser utilizados de forma discrecional.</li>
+</ul>
+</section>
+<section id="transferencias-condicionales-no-compensatorias-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="transferencias-condicionales-no-compensatorias-1">Transferencias condicionales no compensatorias</h5>
+<p>También conocidas como subvenciones no compensatorias, estas transferencias están condicionadas a que el gobierno receptor gaste los fondos en un área específica, pero la cantidad de la transferencia no depende del gasto que la entidad receptora ya esté realizando en ese sector.</p>
+<ul>
+<li><p>Ejemplo en España. Los fondos de políticas activas de empleo del Servicio Público de Empleo Estatal (SEPE). Se reparten entre las comunidades autónomas en la Conferencia Sectorial de Empleo y Asuntos Laborales con criterios objetivos y deben destinarse a esas políticas, pero la cuantía de cada comunidad no depende de cuánto gaste con sus recursos propios.</p></li>
+<li><p>Ejemplo en la UE. Las subvenciones del Mecanismo de Recuperación y Resiliencia (NextGenerationEU). Cada Estado miembro tiene asignada una cuantía máxima de contribución financiera no reembolsable, que recibe a medida que cumple los hitos y objetivos de las reformas e inversiones acordadas con la Comisión Europea. La cantidad no se calcula como un porcentaje del gasto propio del Estado, sino que se vincula al cumplimiento de esos hitos y objetivos.</p></li>
+</ul>
+</section>
+<section id="transferencias-condicionales-compensatorias-cofinanciación" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="transferencias-condicionales-compensatorias-cofinanciación">Transferencias condicionales compensatorias (cofinanciación)</h5>
+<p>Son fondos que “igualan” o complementan una parte del gasto del gobierno receptor en un área específica. Para recibir el dinero, el gobierno subnacional debe aportar su propia parte del coste.</p>
+<ul>
+<li>Ejemplo en la UE. Los Fondos Estructurales y de Cohesión, como el FEDER (Fondo Europeo de Desarrollo Regional), el Fondo Social Europeo Plus (FSE+) y el Fondo de Cohesión. La UE cofinancia proyectos de desarrollo regional (como la construcción de un parque tecnológico o la modernización de pymes) o de transporte y medio ambiente (como una nueva línea de alta velocidad o una planta de gestión de residuos), con la condición de que el Estado o la comunidad autónoma también aporten un porcentaje del coste. La cantidad que recibe la entidad receptora aumenta a medida que aumenta su propio gasto en el proyecto, hasta un tope de cofinanciación (en el Fondo de Cohesión, el 85% del coste).</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-22_Albi2017" class="csl-entry" role="listitem">
+Albi, Emilio, José Manuel González-Páramo, y Ignacio Zubiri. 2017. <em><span>Econom<span>í</span>a P<span>ú</span>blica I: Fundamentos. Presupuesto y Gastos</span></em>. Ariel.
+</div>
+<div id="ref-22_Bastida2009" class="csl-entry" role="listitem">
+Bastida, Francisco, Bernardino Benito, y Marı́a-Dolores Guillamón. 2009. <span>«<span>An Empirical Assessment of the Municipal Financial Situation in Spain</span>»</span>. <em>International Public Management Journal</em> 12 (4): 484-99. <a href="https://doi.org/10.1080/10967490903328139">https://doi.org/10.1080/10967490903328139</a>.
+</div>
+<div id="ref-22_BesleyCase1995" class="csl-entry" role="listitem">
+Besley, Timothy, y Anne Case. 1995. <span>«<span>Incumbent Behavior: Vote-Seeking, Tax-Setting, and Yardstick Competition</span>»</span>. <em>American Economic Review</em> 85 (1): 25-45.
+</div>
+<div id="ref-22_BoadwayShah2009" class="csl-entry" role="listitem">
+Boadway, Robin, y Anwar Shah. 2009. <em><span>Fiscal Federalism: Principles and Practice of Multiorder Governance</span></em>. Cambridge University Press.
+</div>
+<div id="ref-22_BrennanBuchanan1980" class="csl-entry" role="listitem">
+Brennan, Geoffrey, y James M. Buchanan. 1980. <em><span>The Power to Tax: Analytical Foundations of a Fiscal Constitution</span></em>. Cambridge University Press.
+</div>
+<div id="ref-22_Breton1996" class="csl-entry" role="listitem">
+Breton, Albert. 1996. <em><span>Competitive Governments: An Economic Theory of Politics and Public Finance</span></em>. Cambridge University Press.
+</div>
+<div id="ref-22_Buchanan1965" class="csl-entry" role="listitem">
+Buchanan, James M. 1965. <span>«<span>An Economic Theory of Clubs</span>»</span>. <em>Economica</em> 32 (125): 1-14. <a href="http://www.jstor.org/stable/2552442">http://www.jstor.org/stable/2552442</a>.
+</div>
+<div id="ref-22_Fuente2024" class="csl-entry" role="listitem">
+Fuente, Ángel de la. 2024. <em><span>Financiaci<span>ó</span>n auton<span>ó</span>mica y local</span></em>. Apuntes 2024/04. FEDEA. <a href="https://documentos.fedea.net/pubs/ap/2024/ap2024-04.pdf">https://documentos.fedea.net/pubs/ap/2024/ap2024-04.pdf</a>.
+</div>
+<div id="ref-22_Gramlich" class="csl-entry" role="listitem">
+Gramlich, E. 1977. <span>«<span>Intergovernmental Grants: A Review of the Empirical Literature</span>»</span>. En <em><span>The Political Economy of Fiscal Federalism</span></em>, editado por Wallace E. Oates. Lexington Books.
+</div>
+<div id="ref-22_Hooghe2016" class="csl-entry" role="listitem">
+Hooghe, Liesbet, Gary Marks, Arjan H. Schakel, Sandra Chapman Osterkatz, Sara Niedzwiecki, y Sarah Shair-Rosenfield. 2016. <em><span>Measuring Regional Authority: A Postfunctionalist Theory of Governance, Volume I</span></em>. Oxford University Press.
+</div>
+<div id="ref-22_HutherShah1998" class="csl-entry" role="listitem">
+Huther, Jeff, y Anwar Shah. 1998. <em><span>Applying a Simple Measure of Good Governance to the Debate on Fiscal Decentralization</span></em>. Policy Research Working Paper No. 1894. World Bank.
+</div>
+<div id="ref-22_Musgrave1959" class="csl-entry" role="listitem">
+Musgrave, Richard A. 1959. <em><span>The Theory of Public Finance: A Study in Public Economy</span></em>. McGraw-Hill.
+</div>
+<div id="ref-22_Niskanen1971" class="csl-entry" role="listitem">
+Niskanen, William A. 1971. <em><span>Bureaucracy and Representative Government</span></em>. Aldine-Atherton.
+</div>
+<div id="ref-22_Oates1972" class="csl-entry" role="listitem">
+Oates, Wallace E. 1972. <em><span>Fiscal Federalism</span></em>. Harcourt Brace Jovanovich.
+</div>
+<div id="ref-22_Panizza1999" class="csl-entry" role="listitem">
+Panizza, Ugo. 1999. <span>«<span>On the Determinants of Fiscal Centralization: Theory and Evidence</span>»</span>. <em>Journal of Public Economics</em> 74 (1): 97-139.
+</div>
+<div id="ref-22_Pauly1973" class="csl-entry" role="listitem">
+Pauly, Mark V. 1973. <span>«<span>Income Redistribution as a Local Public Good</span>»</span>. <em>Journal of Public Economics</em> 2 (1): 35-58.
+</div>
+<div id="ref-22_Rodden2003" class="csl-entry" role="listitem">
+Rodden, Jonathan. 2003. <span>«<span>Reviving Leviathan: Fiscal Federalism and the Growth of Government</span>»</span>. <em>International Organization</em> 57 (4): 695-729.
+</div>
+<div id="ref-22_RosenGayer2010" class="csl-entry" role="listitem">
+Rosen, Harvey S., y Ted Gayer. 2010. <em><span>Public Finance</span></em>. 9.ª ed. McGraw-Hill/Irwin.
+</div>
+<div id="ref-22_Salmon1987" class="csl-entry" role="listitem">
+Salmon, Pierre. 1987. <span>«<span>Decentralisation as an Incentive Scheme</span>»</span>. <em>Oxford Review of Economic Policy</em> 3 (2): 24-43.
+</div>
+<div id="ref-22_ShairRosenfield2021" class="csl-entry" role="listitem">
+Shair-Rosenfield, Sarah, Arjan H. Schakel, Sara Niedzwiecki, Gary Marks, Liesbet Hooghe, y Sandra Chapman-Osterkatz. 2021. <span>«<span>Language Difference and Regional Authority</span>»</span>. <em>Regional &amp; Federal Studies</em> 31 (1): 73-97.
+</div>
+<div id="ref-22_Stiglitz2015" class="csl-entry" role="listitem">
+Stiglitz, Joseph E., y Jay K. Rosengard. 2015. <em><span>Economics of the Public Sector</span></em>. 4.ª ed. W. W. Norton &amp; Company.
+</div>
+<div id="ref-22_Tanzi1996" class="csl-entry" role="listitem">
+Tanzi, Vito. 1996. <span>«<span>Fiscal Federalism and Decentralization: A Review of Some Efficiency and Macroeconomic Aspects</span>»</span>. En <em><span>Annual World Bank Conference on Development Economics 1995</span></em>, editado por Michael Bruno y Boris Pleskovic. World Bank.
+</div>
+<div id="ref-22_Tiebout1956" class="csl-entry" role="listitem">
+Tiebout, Charles M. 1956. <span>«<span>A Pure Theory of Local Expenditures</span>»</span>. <em>Journal of Political Economy</em> 64 (5): 416-24. <a href="http://www.jstor.org/stable/1826343">http://www.jstor.org/stable/1826343</a>.
+</div>
+<div id="ref-22_DeLaTorre2025" class="csl-entry" role="listitem">
+Torre, Francisco de la, y Jesús Fernández-Villaverde. 2025. <em><span>La factura del cupo catal<span>á</span>n: privilegios territoriales frente a ciudadan<span>í</span>a</span></em>. La Esfera de los Libros.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Ver 22.A.5 (Índice de Autoridad Regional).<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>En el modelo básico NOEM de Galí y Monacelli (para una pequeña economía abierta), la función estabilizadora de la economía doméstica es también la que maximiza el BE (ambas funciones se cumplen simultáneamente).<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>En sentido amplio, el federalismo fiscal aplica el mismo análisis a servicios que prestan los gobiernos territoriales, como la sanidad o la educación, aunque son bienes privados provistos públicamente, porque son rivales y se puede excluir de ellos <span class="citation" data-cites="22_Stiglitz2015">(<a href="01-tema-a1.html#ref-22_Stiglitz2015" role="doc-biblioref">Stiglitz y Rosengard 2015</a>)</span>.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Nótese que estamos planteando la condición de Samuelson como <span class="math inline">\(\sum UMg_{i}=CMg_{S}\)</span> porque lo vamos a ilustrar en un contexto de equilibrio parcial (como hace Bowen). Formulada en un contexto de equilibrio general, la condición de Samuelson sería <span class="math inline">\(\sum RMS^{G,X}_{i}=RMT^{G,X}\)</span> (es decir, las valoraciones del bien público G en términos del bien privado X).<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Por ejemplo, la emigración de una jurisdicción A a otra B genera, por un lado, un aumento de las bases fiscales en la localidad de destino, pero también puede ocasionar una mayor congestión en los bienes y servicios públicos (y al contrario ocurrirá en la localidad de origen). Como, en general, será difícil internalizar los efectos externos causados por los movimientos migratorios, el resultado final puede ser ineficiente. Por otra parte, las decisiones de los gobiernos subcentrales en ocasiones afectan a otros gobiernos como, por ejemplo, en la instalación de una industria contaminante en un área limítrofe, y en tanto esos efectos no se manifiesten en el mecanismo de precios, habrá ineficiencia.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Solo con diez bienes públicos locales y tres niveles de provisión (alto-medio-bajo), serían necesarias <span class="math inline">\(3^{10}\)</span> jurisdicciones para cubrir todo el abanico de posibles preferencias por la provisión pública. Obviamente, en la realidad, tanto el número de jurisdicciones como la diferenciación de ofertas públicas locales es mucho menor.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Ver 22.A.1 (otros desarrollos de la teoría del federalismo fiscal) y 22.A.2 (hechos estilizados sobre la descentralización).<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Ver 22.A.4 (ordinalidad y nivelación).<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Cuando el gasto público de una jurisdicción afecta al bienestar de los residentes en otras regiones, se dice que existe un efecto externo interjurisdiccional.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Ver 22.A.3 (retos de la financiación autonómica y local en España).<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>En rigor, se trata de un impuesto según el beneficio que cada individuo obtiene del bien público, que equivale a un impuesto de capitación porque todos los individuos son idénticos <span class="citation" data-cites="22_Albi2017">(<a href="01-tema-a1.html#ref-22_Albi2017" role="doc-biblioref">Albi et&nbsp;al. 2017</a>)</span>.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>La intuición es que, mientras el bien está infrautilizado, cada nuevo residente cuesta menos de lo que paga, que es el coste medio, y su entrada rebaja el impuesto de los demás. Cuando la congestión hace que cueste más de lo que paga, conviene dejar de ampliar la jurisdicción.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>El impuesto de suma fija será: <span class="math display">\[\tau=\dfrac{CF}{N}+\dfrac{P_{G}\cdot G}{N}\]</span><a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>De esta forma, el diseño de una descentralización óptima plantea un intercambio o trade-off entre las ganancias de eficiencia de crear múltiples niveles de gobierno local y los costes de gestión a que esto da lugar. El punto de equilibrio de este trade-off no se puede determinar en términos teóricos solamente, aunque es claro que elementos como la superficie del país y las diferencias económicas y culturales entre las diferentes zonas jugarán un papel importante a la hora de diseñar el grado “óptimo” de descentralización.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Esta clasificación es didáctica. En la terminología de la LOFCA, todos estos impuestos son tributos cedidos, total o parcialmente, con o sin capacidad normativa autonómica: el IRPF se cede al 50 % con capacidad normativa sobre la tarifa, y el IVA y los impuestos especiales se ceden parcialmente sin ella.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>El IVA: genera distorsiones si la imposición es:</p>
+<ul>
+<li><p>En destino: los consumidores se desplazan al lugar con menor gravamen.</p></li>
+<li><p>En origen: distorsiona las decisiones de producción/localización.</p></li>
+</ul>
+<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn17"><p>Ver 22.A.1 (la restricción presupuestaria blanda).<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Ver 22.A.6 (ejemplos de transferencias en España y en la UE).<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>Esta función de utilidad se puede interpretar bien como que los individuos son idénticos y es la del agente representativo, bien como las preferencias del votante mediano o bien como una función de bienestar social<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>No obstante, existen 2 casos en los que la transferencia se traduce íntegramente en gasto público:</p>
+<ol type="1">
+<li><p>Bien privado neutro. Si el bien privado es neutro (por contraposición a “bien” y “mal”), entonces los individuos no lo valoran nada, y la curva de indiferencia será vertical. El equilibrio será una solución de esquina.</p></li>
+<li><p>Bien privado independiente de la renta. Si el bien privado es independiente de la renta (por contraposición a “bien normal” y “bien inferior”), entonces la demanda de dicho bien no depende de su renta.</p></li>
+</ol>
+<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn21"><p>Por ejemplo, un gobierno que realiza una transferencia para mejorar las escuelas públicas difícilmente sabrá cuánto se habría gastado de sus recursos propios el gobierno beneficiario de no haberse realizado la transferencia.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Como se acaba de señalar, el nuevo equilibrio tras la transferencia condicional no compensatoria dependerá de cómo sean las preferencias comunitarias por la provisión pública, aunque, al igual que en el caso de la transferencia incondicional, el aumento del gasto será inferior al importe de la transferencia. Si la elasticidad renta del consumo privado es muy alta y la elasticidad renta de consumo de bienes públicos es muy baja, entonces el aumento del gasto es mayor que si la transferencia fuese incondicional: con una incondicional se situaría a la izquierda de <span class="math inline">\(E_{3}\)</span>, pero con una condicional debe situarse al menos en <span class="math inline">\(E_{3}\)</span>. Por el contrario, si las elasticidades renta del bien público y del bien privado son parecidas, el efecto será equivalente al de una transferencia incondicional, situándose en los dos casos en un punto como <span class="math inline">\(E_{1}\)</span>, a la derecha de <span class="math inline">\(E_{3}\)</span>.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>En el punto <span class="math inline">\(E_{2}\)</span> la renta privada se vería reducida y el aumento del bien público estaría por encima de la transferencia. Esto dependerá de la elasticidad-precio de la demanda del bien público: si es menor a 1 entonces el equilibrio será <span class="math inline">\(E_{1}\)</span> (el gasto público aumenta menos que la transferencia) pero si es mayor a 1 entonces el equilibrio será <span class="math inline">\(E_{2}\)</span> (aumenta más).</p>
+<p>No obstante, pese a que ambos resultados son factibles la evidencia empírica señala que el equilibrio <span class="math inline">\(E_{1}\)</span> es el más factible, siendo la elasticidad inferior a 1.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>La intuición es que el dinero que llega al ayuntamiento tiende a quedarse en el presupuesto en lugar de volver a los vecinos en forma de rebajas de impuestos. Según las estimaciones que recogen <span class="citation" data-cites="22_RosenGayer2010">Rosen y Gayer (<a href="01-tema-a1.html#ref-22_RosenGayer2010" role="doc-biblioref">2010</a>)</span>, cada unidad monetaria de transferencia genera unos 40 céntimos de gasto público, mientras que una unidad adicional de renta privada solo genera unos 10.</p>
+<p><span class="citation" data-cites="22_Albi2017">Albi et&nbsp;al. (<a href="01-tema-a1.html#ref-22_Albi2017" role="doc-biblioref">2017</a>)</span> señalan los trabajos de <span class="citation" data-cites="22_Gramlich">Gramlich (<a href="01-tema-a1.html#ref-22_Gramlich" role="doc-biblioref">1977</a>)</span> y <span class="citation" data-cites="22_Bastida2009">Bastida et&nbsp;al. (<a href="01-tema-a1.html#ref-22_Bastida2009" role="doc-biblioref">2009</a>)</span>, los cuales recogen evidencia empírica del efecto para el conjunto de los municipios españoles.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>Este “efecto pegamento” ha sido considerado por el Gobierno español a la hora de diseñar algunos fondos de apoyo a la financiación autonómica. Así, por ejemplo, el Fondo para la Financiación de los Pagos a Proveedores, puesto en marcha por el Gobierno central en 2012, que tiene como objetivo liquidar las deudas comerciales de las administraciones territoriales. Para ello, el Gobierno central paga directamente a la empresa a la que adeuda la hacienda territorial, por lo que se asegura que los recursos movilizados (unos 41.800 M€ entre comunidades autónomas y entidades locales) llegan en su integridad al tejido empresarial. La administración territorial devuelve después esos recursos mediante un préstamo sujeto a un plan de ajuste.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Concretamente, en España durante la crisis inmobiliaria se vio cómo la deuda autonómica fue un determinante fundamental del déficit del país.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>Ver 22.A.1 (la restricción presupuestaria blanda).<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>También en España se dio dicha situación, donde durante el boom inmobiliario ayuntamientos y CCAA se endeudaron en exceso aprovechándose del bajo riesgo país. Sin embargo, tras el estallido de la crisis en 2008 los mercados de deuda se fragmentaron y las primas de riesgo se dispararon, obligando al Estado Central a un “rescate” encubierto a través del Fondo de Liquidez Autonómica, FLA, sentando un precedente que puede acentuar en el futuro los problemas de riesgo moral.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>El término procede de la literatura de <em>yardstick competition</em>, formalizada por <span class="citation" data-cites="22_Salmon1987">Salmon (<a href="01-tema-a1.html#ref-22_Salmon1987" role="doc-biblioref">1987</a>)</span> y <span class="citation" data-cites="22_BesleyCase1995">Besley y Case (<a href="01-tema-a1.html#ref-22_BesleyCase1995" role="doc-biblioref">1995</a>)</span>.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>El principio figura en el artículo 206.5 del Estatuto de Autonomía de Cataluña de 2006, según el cual el Estado debe garantizar que los mecanismos de nivelación no alteren la posición de Cataluña en la ordenación de rentas per cápita anterior a la nivelación. La STC 31/2010 lo interpretó en el sentido de que la garantía solo opera si la alteración se debe exclusivamente a esos mecanismos.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>Datos de RAI-Country y RAI-Region, versión 3.1 (abril de 2021), disponibles en la web de Gary Marks (UNC).<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./21-tema-a21.html" class="pagination-link" aria-label="Imposición y oferta.">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./glosario.html" class="pagination-link" aria-label="Glosario">
+        <span class="nav-page-text">Glosario</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

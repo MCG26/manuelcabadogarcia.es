@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Qué combinaciones técnicamente eficientes minimizan además los costes: la función de costes, su dualidad con la producción, el análisis a corto y largo plazo y las críticas a la teoría tradicional.">
+
+<title>Tema A6. Teoría de los costes | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./07-tema-a7.html" rel="next">
+<link href="./05-tema-a5.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A6. Teoría de los costes | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Qué combinaciones técnicamente eficientes minimizan además los costes: la función de costes, su dualidad con la producción, el análisis a corto y largo plazo y las críticas a la teoría tradicional.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A6. Teoría de los costes | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Qué combinaciones técnicamente eficientes minimizan además los costes: la función de costes, su dualidad con la producción, el análisis a corto y largo plazo y las críticas a la teoría tradicional.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A6. Teoría de los costes. Análisis de la dualidad en el ámbito de la empresa. Análisis temporal. Otros desarrollos.",
+ "alternateName": "Teoría de los costes",
+ "description": "Qué combinaciones técnicamente eficientes minimizan además los costes: la función de costes, su dualidad con la producción, el análisis a corto y largo plazo y las críticas a la teoría tradicional.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/06-tema-a6.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./06-tema-a6.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">6.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#teoría-neoclásica-de-los-costes" id="toc-teoría-neoclásica-de-los-costes" class="nav-link" data-scroll-target="#teoría-neoclásica-de-los-costes"><span class="header-section-number">6.2</span> Teoría neoclásica de los costes <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="12 minutos">12'</span></a>
+  <ul class="collapse">
+  <li><a href="#construcción-de-la-función-de-costes" id="toc-construcción-de-la-función-de-costes" class="nav-link" data-scroll-target="#construcción-de-la-función-de-costes">Construcción de la función de costes</a></li>
+  <li><a href="#variaciones-en-los-precios-de-los-factores" id="toc-variaciones-en-los-precios-de-los-factores" class="nav-link" data-scroll-target="#variaciones-en-los-precios-de-los-factores">Variaciones en los precios de los factores</a></li>
+  <li><a href="#análisis-temporal-de-la-función-de-costes" id="toc-análisis-temporal-de-la-función-de-costes" class="nav-link" data-scroll-target="#análisis-temporal-de-la-función-de-costes">Análisis temporal de la función de costes</a></li>
+  <li><a href="#economías-de-escala" id="toc-economías-de-escala" class="nav-link" data-scroll-target="#economías-de-escala">Economías de escala</a></li>
+  </ul></li>
+  <li><a href="#críticas-a-la-teoría-tradicional" id="toc-críticas-a-la-teoría-tradicional" class="nav-link" data-scroll-target="#críticas-a-la-teoría-tradicional"><span class="header-section-number">6.3</span> Críticas a la teoría tradicional <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></a>
+  <ul class="collapse">
+  <li><a href="#curvas-de-costes-sin-rendimientos-mixtos" id="toc-curvas-de-costes-sin-rendimientos-mixtos" class="nav-link" data-scroll-target="#curvas-de-costes-sin-rendimientos-mixtos">Curvas de costes sin rendimientos mixtos</a></li>
+  <li><a href="#la-teoría-de-los-costes-de-stigler" id="toc-la-teoría-de-los-costes-de-stigler" class="nav-link" data-scroll-target="#la-teoría-de-los-costes-de-stigler">La teoría de los costes de Stigler</a></li>
+  <li><a href="#la-ineficiencia-x-de-leibenstein" id="toc-la-ineficiencia-x-de-leibenstein" class="nav-link" data-scroll-target="#la-ineficiencia-x-de-leibenstein">La ineficiencia X de Leibenstein</a></li>
+  </ul></li>
+  <li><a href="#otros-desarrollos" id="toc-otros-desarrollos" class="nav-link" data-scroll-target="#otros-desarrollos"><span class="header-section-number">6.4</span> Otros desarrollos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos 30 segundos">2'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#producción-multiproductos-economías-de-alcance" id="toc-producción-multiproductos-economías-de-alcance" class="nav-link" data-scroll-target="#producción-multiproductos-economías-de-alcance">Producción multiproductos, economías de alcance</a></li>
+  <li><a href="#subaditividad-de-costes" id="toc-subaditividad-de-costes" class="nav-link" data-scroll-target="#subaditividad-de-costes">Subaditividad de costes</a></li>
+  <li><a href="#economías-de-aprendizaje" id="toc-economías-de-aprendizaje" class="nav-link" data-scroll-target="#economías-de-aprendizaje">Economías de aprendizaje</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">6.5</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-rendimientos-crecientes-a-escala-vs.-economías-de-escala" id="toc-a.1.-rendimientos-crecientes-a-escala-vs.-economías-de-escala" class="nav-link" data-scroll-target="#a.1.-rendimientos-crecientes-a-escala-vs.-economías-de-escala">6.A.1.&nbsp;&nbsp;Rendimientos crecientes a escala vs.&nbsp;economías de escala</a></li>
+  <li><a href="#a.2.-funciones-de-costes-resultantes-de-otras-funciones-de-producción" id="toc-a.2.-funciones-de-costes-resultantes-de-otras-funciones-de-producción" class="nav-link" data-scroll-target="#a.2.-funciones-de-costes-resultantes-de-otras-funciones-de-producción">6.A.2.&nbsp;&nbsp;Funciones de costes resultantes de otras funciones de producción</a></li>
+  <li><a href="#a.3.-economías-de-aglomeración" id="toc-a.3.-economías-de-aglomeración" class="nav-link" data-scroll-target="#a.3.-economías-de-aglomeración">6.A.3.&nbsp;&nbsp;Economías de aglomeración</a></li>
+  <li><a href="#a.4.-costes-hundidos" id="toc-a.4.-costes-hundidos" class="nav-link" data-scroll-target="#a.4.-costes-hundidos">6.A.4.&nbsp;&nbsp;Costes hundidos</a></li>
+  <li><a href="#a.5.-tipos-de-economía-de-escala" id="toc-a.5.-tipos-de-economía-de-escala" class="nav-link" data-scroll-target="#a.5.-tipos-de-economía-de-escala">6.A.5.&nbsp;&nbsp;Tipos de economía de escala</a></li>
+  <li><a href="#a.6.-aplicaciones-empíricas-el-análisis-envolvente-de-datos-dea-y-la-frontera-estocástica" id="toc-a.6.-aplicaciones-empíricas-el-análisis-envolvente-de-datos-dea-y-la-frontera-estocástica" class="nav-link" data-scroll-target="#a.6.-aplicaciones-empíricas-el-análisis-envolvente-de-datos-dea-y-la-frontera-estocástica">6.A.6.&nbsp;&nbsp;Aplicaciones empíricas: el análisis envolvente de datos (DEA) y la frontera estocástica</a></li>
+  <li><a href="#a.7.-la-función-de-costes-translogarítmica" id="toc-a.7.-la-función-de-costes-translogarítmica" class="nav-link" data-scroll-target="#a.7.-la-función-de-costes-translogarítmica">6.A.7.&nbsp;&nbsp;La función de costes translogarítmica</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes. Análisis de la dualidad en el ámbito de la empresa. Análisis temporal. Otros desarrollos.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">6.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>El Estrecho de Ormuz bloqueado en 2026, el gas disparado por la guerra de Ucrania, los aranceles de EE.UU. encareciendo cadenas de suministro enteras: la última década no deja de recordar que conocer bien la estructura de costes de una empresa no es un mero ejercicio contable, sino una condición para seguir operando.</p>
+<p>Por ello, este tema se centra en la teoría de costes<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, que busca identificar, de entre todas las combinaciones técnicamente eficientes, aquellas que lo son económicamente, es decir, que minimizan los costes de producción.</p>
+<p>Por consiguiente, el objetivo de la presente exposición será el estudio de los costes económicos<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Teoría neoclásica de los costes, donde se construirá la función de costes y se realizará un análisis temporal.</p></li>
+<li><p>Críticas a la teoría de costes tradicional, desde el ángulo empírico y organizativo.</p></li>
+<li><p>Otros desarrollos, que amplían el análisis a supuestos más realistas de la empresa.</p></li>
+</ol>
+</section>
+<section id="teoría-neoclásica-de-los-costes" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="teoría-neoclásica-de-los-costes"><span class="header-section-number">6.2</span> Teoría neoclásica de los costes <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="12 minutos">12'</span></h2>
+<p>La teoría neoclásica parte de los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Racionalidad,</p></li>
+<li><p>Certidumbre,</p></li>
+<li><p>Ausencia de rigideces, se opera en situación de competencia perfecta.</p></li>
+<li><p>Los precios son indicadores de la escasez relativa</p></li>
+</ol>
+<section id="construcción-de-la-función-de-costes" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="construcción-de-la-función-de-costes">Construcción de la función de costes</h3>
+<p>A partir de la Teoría Neoclásica de la Producción, obtenemos una Función de Producción representativa de una determinada tecnología.</p>
+<section id="isocuantas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="isocuantas">Isocuantas</h5>
+<ul>
+<li><p>De la Función de Producción podemos obtener las isocuantas, que son las curvas de nivel de la Función de Producción y muestran las combinaciones técnicamente eficientes de factores productivos que producen la misma cantidad de output.</p></li>
+<li><p>Gráficamente, en un plano de capital, <span class="math inline">\(K\)</span>, y trabajo, <span class="math inline">\(L\)</span>, como el de la <a href="#fig-6-curvas-isocuantas-y-rectos-isocostes" class="quarto-xref">Figura&nbsp;<span>6.1</span></a> se representan las curvas isocuantas <span class="math inline">\(q_{0}\)</span> y <span class="math inline">\(q_{1}\)</span>.</p></li>
+</ul>
+<p>Sin embargo, el concepto de eficiencia técnica no es suficiente para caracterizar la decisión de la empresa, ya que este análisis no nos muestra en qué punto de la isocuanta se situará la empresa (algo que resuelve la teoría de costes), ni en qué isocuanta de situará (algo que resuelve la teoría de los mercados)<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p>Para ello, necesitaremos información económica (es decir, los precios de los factores productivos): dentro de un conjunto de combinaciones técnicamente eficientes (es decir, puntos de la isocuanta), resultarán más atractivos para el productor aquellas combinaciones más intensivas en el factor comparativamente más barato.</p>
+</section>
+<section id="problema-de-la-empresa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problema-de-la-empresa">Problema de la empresa</h5>
+<p>Por tanto, el problema al que se va a enfrentar la empresa es el de elegir aquella combinación de factores productivos que le suponga un menor coste para producir un output dado, o, inversamente, elegir aquella combinación que, dado un coste, proporcione el mayor nivel posible de producto.</p>
+</section>
+<section id="análisis-de-dualidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-de-dualidad">Análisis de dualidad</h5>
+<p>Considerando el doble enfoque que presenta el análisis de dualidad en el problema del productor, en ambos casos el problema de la empresa es el de maximizar su beneficio: en el primero, se trata de maximizar el beneficio con un coste dado (por lo que hay que maximizar la producción), mientras que en el segundo se trata de maximizar el beneficio con una producción dada –por ejemplo, un puente, cuyo tamaño viene fijado de antemano por el proyecto y no es una decisión de la empresa– (por lo que hay que minimizar el coste).<br>
+Así, el problema del productor se puede plantear como:</p>
+<ul>
+<li><p>La maximización de la producción dada una restricción de costes. Es decir, tratará de encontrar aquellas combinaciones de factores productivos que le otorguen la máxima producción posible dada una restricción económica.</p></li>
+<li><p>La minimización de costes para una determinada producción. Es decir, tratará de encontrar aquellas combinaciones de factores productivos que le produzcan una determinada producción al mínimo coste.</p></li>
+</ul>
+<p>Dicho paralelismo se muestra formalmente a través del análisis de la dualidad que refleja cómo, bajo ciertas condiciones, la combinación de factores productivos será la misma (de la misma manera que en la teoría de demanda neoclásica del consumidor).</p>
+</section>
+<section id="supuestos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="supuestos">Supuestos</h5>
+<p>Para plantear los problemas primal y dual del productor, partimos de los siguientes supuestos:</p>
+<ul>
+<li><p>Contexto de competencia perfecta (es precio-aceptante respecto a los factores productivos).</p></li>
+<li><p>Tecnología caracterizada por varios inputs que dan lugar a un solo output, representada a partir de una Función neoclásica <span class="math inline">\(Q=f(X)\)</span>.<br>
+Esta función de producción neoclásica es continua y dos veces diferenciable, cardinal, homogénea y estrictamente no negativa, monótona creciente, con <span class="math inline">\(PMg\)</span> de los factores productivos positiva pero decreciente y estrictamente cuasi-cóncava.</p></li>
+</ul>
+<div id="fig-6-curvas-isocuantas-y-rectos-isocostes" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curvas isocuantas y rectas isocostes">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-curvas-isocuantas-y-rectos-isocostes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.1: Curvas isocuantas y rectas isocostes
+</figcaption>
+<div aria-describedby="fig-6-curvas-isocuantas-y-rectos-isocostes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-isocuantas-e-isocostes.svg" class="img-fluid figure-img" alt="Curvas isocuantas y rectas isocostes">
+</div>
+</figure>
+</div>
+</section>
+<section id="problema-primal" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="problema-primal">Problema primal</h4>
+<p>El problema primal consiste en elegir la combinación de factores productivos que maximiza la producción <span id="eq-a-06-1"><span class="math display">\[\max\quad Q=f\left(X\right) \tag{6.1}\]</span></span></p>
+<p>sujeta a un coste dado <span id="eq-a-06-2"><span class="math display">\[\bar{C}=\sum\limits_{i=1}^{n}w_{i}\cdot x_{i} \tag{6.2}\]</span></span> donde <span class="math inline">\(w_{i}\)</span> es el precio de los factores y <span class="math inline">\(x_{i}\)</span> la cantidad de factores empleados.</p>
+<p>La condición de eficiencia económica indica que, en el equilibrio, la tasa a la que la empresa puede intercambiar internamente los factores productivos, es decir, la Relación Marginal de Sustitución Técnica, <span class="math inline">\(RMST\)</span>, es igual a la tasa a la que puede hacerlo en el mercado, es decir, la ratio de precios de los factores.</p>
+<p>Así, el productor demanda factores productivos hasta el punto donde el cociente de las&nbsp;<span class="math inline">\(PMg\)</span> de cada par de factores se iguale a su precio relativo: <span id="eq-a-06-3"><span class="math display">\[RMST_{i,j}=\dfrac{PMg_{x_{i}}}{PMg_{x_{j}}}=\dfrac{w_{i}}{w_{j}} \tag{6.3}\]</span></span></p>
+<p>Gráficamente, como se observa en la <a href="#fig-6-curvas-isocuantas-y-rectos-isocostes" class="quarto-xref">Figura&nbsp;<span>6.1</span></a> se representan por orden:</p>
+<ol type="1">
+<li><p>Primero representamos la restricción. La curva isocoste, que representa las combinaciones de factores que, dados los precios de los mismos, tienen el mismo coste total. La pendiente de la curva isocoste es igual al cociente de los precios de los factores cambiado de signo <span class="math inline">\((\text{–}      w_{i}/w_{j})\)</span>.</p></li>
+<li><p>En segundo lugar, representamos las curvas isocuantas, antes definidas, cuya pendiente, en valor absoluto, es la&nbsp;<span class="math inline">\(RMST\)</span> y muestra la relación a la que puede intercambiarse un factor por otro para mantener el nivel de producción constante.</p></li>
+<li><p>En tercer lugar, el equilibrio se encuentra en el punto de tangencia de la recta isocoste con la isocuanta más alejada del origen (porque estamos maximizando). En este punto, <span class="math inline">\(RMST=w_{i}/w_{j}\)</span>. Por lo tanto, se cumple la condición de eficiencia económica.</p></li>
+</ol>
+<p>A su vez, de la condición de primer orden se obtienen las funciones de demanda ordinarias (marshallianas) de factores productivos, es decir, la demanda de factores productivos en función del precio de los factores y del coste: <span id="eq-a-06-4"><span class="math display">\[x_{i}\left(W,C\right) \tag{6.4}\]</span></span></p>
+<p>Características de las demandas marshallianas:</p>
+<ul>
+<li><p>Continuas</p></li>
+<li><p>Su respuesta a los precios de los factores no tiene signo determinado a priori, pues combina un efecto sustitución y un efecto renta.</p></li>
+<li><p>Crecientes en&nbsp;<span class="math inline">\(C\)</span> si el factor es normal y decrecientes si es inferior.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p></li>
+<li><p>Homogéneas de grado 0 en&nbsp;<span class="math inline">\(w_{i}\)</span>, <span class="math inline">\(w_{j}\)</span> y <span class="math inline">\(C\)</span>.</p></li>
+</ul>
+<p>Finalmente, sustituyendo las funciones de demanda ordinarias en la función objetivo obtenemos la función indirecta de producción, que refleja la producción máxima alcanzable para cada nivel de precios y coste: <span class="math inline">\(Y{\left(w_{i},w_{j},C\right)}\)</span></p>
+</section>
+<section id="problema-dual" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="problema-dual">Problema dual</h4>
+<p>Por otro lado, el problema dual consiste en elegir la combinación de factores productivos que minimiza el coste <span id="eq-a-06-5"><span class="math display">\[\min\quad C=\sum\limits_{i=1}^{n}w_{i}\cdot x_{i} \tag{6.5}\]</span></span></p>
+<p>sujeto a una producción dada <span id="eq-a-06-6"><span class="math display">\[\bar{Q}=f\left(X\right) \tag{6.6}\]</span></span></p>
+<p>La solución es idéntica a la del problema primal, obteniéndose de la condición de primer orden las funciones de demanda condicionadas –o hicksianas– de factores productivos, es decir, la demanda de factores productivos en función del precio de factores y de la producción. <span id="eq-a-06-7"><span class="math display">\[h_{i}\left(W,Q\right) \tag{6.7}\]</span></span></p>
+<p>Gráficamente, como se observa en la <a href="#fig-6-curvas-isocuantas-y-rectos-isocostes" class="quarto-xref">Figura&nbsp;<span>6.1</span></a>, para el caso de 2 inputs, se invierten los papeles con respecto al problema primal: primero se dibuja la isocuanta que representa el nivel de producción dado (restricción), y después se halla la recta isocoste más cercana al origen (porque estamos minimizando) que es tangente a dicha isocuanta.</p>
+<section id="teorema-de-la-dualidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="teorema-de-la-dualidad">Teorema de la dualidad</h5>
+<p>De esta forma, el Teorema de la Dualidad nos indica que los problemas primal y dual tendrán la misma solución siempre que:</p>
+<ul>
+<li><p>El coste que actúa como restricción en el primal sea el mínimo a alcanzar en el dual, y</p></li>
+<li><p>La producción que actúa como restricción en el dual sea la máxima a alcanzar en el primal.</p></li>
+</ul>
+<p>Por consiguiente, el teorema de la dualidad garantiza la existencia (la existencia de la solución primal si existe la solución dual) y la identidad (de ambas soluciones).</p>
+</section>
+</section>
+<section id="senda-de-expansión" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="senda-de-expansión">Senda de expansión</h4>
+<p>Recogiendo gráficamente todo lo anterior, como se observa en la <a href="#fig-6-senda-de-expansion" class="quarto-xref">Figura&nbsp;<span>6.2</span></a>, los puntos de tangencia entre isocuantas e isocostes se recogen en la senda de expansión, <span class="math inline">\(SE\)</span>, que es el lugar geométrico de las combinaciones técnica y económicamente eficientes de factores productivos para cada nivel de producción.</p>
+<p>De este modo, expresa el mínimo coste para cada nivel de producción (dual) o, dicho de otra forma, el máximo nivel de producción para cada nivel de costes (primal)<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a><a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>.</p>
+<div id="fig-6-senda-de-expansion" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Senda de expansión">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-senda-de-expansion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.2: Senda de expansión
+</figcaption>
+<div aria-describedby="fig-6-senda-de-expansion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-senda-de-expansion.svg" class="img-fluid figure-img" alt="Senda de expansión">
+</div>
+</figure>
+</div>
+</section>
+<section id="función-de-costes" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="función-de-costes">Función de costes</h4>
+<p>Finalmente, de la resolución del problema dual podemos obtener la función de costes (sustituyendo las funciones de demanda condicionadas en la función objetivo), que nos indica el coste mínimo dados unos precios de los factores y un volumen de producción: <span class="math display">\[C\left(W,Q\right)\]</span></p>
+<p>Posee las siguientes propiedades</p>
+<ol type="1">
+<li><p>Continua (para precios y niveles de producción positivos) y estrictamente positiva.</p></li>
+<li><p>No decreciente en precios de los factores, estrictamente creciente en producción<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>. <span class="math display">\[\dfrac{\partial C}{\partial w_{i}}\geq0\text{ con }       \dfrac{\partial C}{\partial Q}&gt;0\]</span></p></li>
+<li><p>Homogénea de grado 1 en los precios de los factores, pues si todos los precios aumentan en la misma proporción, para seguir produciendo la misma cantidad de producto el coste debe aumentar en la misma proporción: <span class="math inline">\(t\cdot w_{1}\cdot x_{1}+t\cdot w_{2}\cdot x_{2}=t\cdot C\)</span>.</p></li>
+<li><p>Cóncava en el precio de los factores, es decir, si el precio de un factor aumenta, el coste mínimo aumenta menos de lo que lo haría si la empresa mantuviera la combinación de factores inicial, puesto que el factor que se ha encarecido será parcialmente sustituido<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>. <span class="math display">\[\dfrac{\partial^{2}C\left(w,X\right)}{\partial w^{2}}\leq0\]</span></p></li>
+<li><p>Diferenciable.</p></li>
+<li><p>Se aplica el Lema de Shephard, es decir, la derivada de la función de costes respecto a los precios de los factores será igual a la demanda condicionada de los factores <span id="eq-a-06-8"><span class="math display">\[\dfrac{\partial C}{\partial w_{i}}=h_{i}\left(W,Q\right) \tag{6.8}\]</span></span></p></li>
+<li><p>Resuelve el problema de la integrabilidad, es decir, es posible asegurar que la función de costes proviene de la optimización de una función de producción. Por consiguiente, la función de costes contiene esencialmente la misma información que la función de producción.</p></li>
+</ol>
+<p>Adicionalmente, si la función es homotética, se cumplirá que la función de costes será multiplicativamente separable, por lo que la función de costes puede ser escrita como: <span class="math inline">\(C(W,Q)=F(Q)\cdot C(W,1)\)</span>. Es decir, como el resultado de multiplicar una función estrictamente creciente en el output por el coste unitario de producir una unidad.</p>
+</section>
+</section>
+<section id="variaciones-en-los-precios-de-los-factores" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="variaciones-en-los-precios-de-los-factores">Variaciones en los precios de los factores</h3>
+<p>Antes de analizar el efecto del horizonte temporal, cabe preguntarse cómo responde el coste ante variaciones en los precios de los factores. Un incremento en el precio de un factor nunca puede reducir el coste total: si la sustitución de factores que provoca el encarecimiento redujese el coste, la empresa no estaría minimizando costes de partida. El impacto exacto depende de dos elementos: la elasticidad de sustitución entre factores –cuanto mayor sea, más fácil resulta sustituir el factor encarecido por otro más barato–, y el peso del factor en el coste total, medido por la elasticidad coste-precio propio, que aplicando el lema de Shephard resulta ser la proporción del gasto total destinada a dicho factor:</p>
+<p><span class="math display">\[\varepsilon_{C,w_{i}}\equiv\dfrac{\partial C}{\partial w_{i}}\cdot\dfrac{w_{i}}{C}=\dfrac{x^{*}_{i}\cdot w_{i}}{C}\]</span></p>
+<p>Así, si el trabajo representa el 10 % del coste total y su precio sube un 1 %, el coste total sube aproximadamente un 0,1 %. Además, por el teorema de la dualidad, en el óptimo las demandas condicionadas del problema dual coinciden con las demandas ordinarias evaluadas en el coste mínimo; derivando esta identidad respecto al precio de otro factor y aplicando de nuevo el lema de Shephard se obtiene una descomposición formalmente idéntica a la ecuación de Slutsky del consumidor:</p>
+<p><span class="math display">\[\underbrace{\dfrac{\partial x_{i}\left(w,\bar{C}\right)}{\partial w_{j}}}_{\text{Efecto total}}=\underbrace{\dfrac{\partial h_{i}\left(w,\bar{Q}\right)}{\partial w_{j}}}_{\text{Efecto sustituci{ó}n}}-\underbrace{h_{j}\cdot\dfrac{\partial x_{i}\left(w,\bar{C}\right)}{\partial\bar{C}}}_{\text{Efecto renta}}\]</span></p>
+<p>Esta descomposición permite clasificar cada factor como normal o inferior según el signo de la derivada de su demanda ordinaria respecto al coste, exactamente igual que en la teoría de la demanda del consumidor.</p>
+</section>
+<section id="análisis-temporal-de-la-función-de-costes" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="análisis-temporal-de-la-función-de-costes">Análisis temporal de la función de costes</h3>
+<p>Una vez analizado el efecto de los precios, la teoría económica distingue además entre coste a corto plazo y a largo plazo, por lo que ahora se realizará un análisis temporal de la función de costes, en el cual sí vamos a considerar constantes los precios relativos de los factores.</p>
+<section id="análisis-de-corto-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="análisis-de-corto-plazo">Análisis de corto plazo</h4>
+<p>Comenzando por el corto plazo, este se define como el horizonte temporal en el que al menos un factor es fijo –normalmente es el capital– y el tamaño de planta se toma como dado. Además en el corto plazo existen:</p>
+<ul>
+<li><p>Costes fijos, independientes del volumen de producción. Si los costes, además de ser fijos, son irrecuperables, entonces hablamos de costes hundidos.</p></li>
+<li><p>Costes variables, aquellos que varían al modificar el volumen de producción.</p></li>
+</ul>
+<section id="análisis-gráfico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de costes y cantidad producida como el de la <a href="#fig-6-curvas-coste-a-cp" class="quarto-xref">Figura&nbsp;<span>6.3</span></a> se representan las diferentes curvas de costes:</p>
+<ul>
+<li><p>Costes variables<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>, <span class="math inline">\(CV\)</span>,se representan a través de una S invertida<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a> que refleja la ley de rendimientos decrecientes o proporciones variables<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>.</p></li>
+<li><p>Costes fijos<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>, <span class="math inline">\(CF\)</span>,son constantes al no depender de la producción, es decir, una línea horizontal.</p></li>
+<li><p>Costes totales, <span class="math inline">\(CT\)</span>,la suma vertical de los 2 anteriores. <span id="eq-a-06-9"><span class="math display">\[CT=CV+CF \tag{6.9}\]</span></span></p></li>
+</ul>
+<p>En el gráfico adyacente:</p>
+<ul>
+<li><p>Coste marginal, <span class="math inline">\(CMg\)</span>, es el aumento del coste total que provoca producir una unidad adicional, y se obtiene en un plano adyacente trazando las tangentes a cada uno de los puntos de la función de costes total<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>. El coste marginal es el cociente entre el precio del factor variable y su productividad marginal,&nbsp;<span class="math inline">\(CMg=w/PMg\)</span>, de forma que el coste marginal es decreciente mientras los rendimientos marginales sean crecientes (mientras la curva de <span class="math inline">\(PMg\)</span> tenga pendiente positiva), y el coste marginal se vuelve creciente cuando los rendimientos marginales se vuelven decrecientes (cuando la curva de <span class="math inline">\(PMg\)</span> pase a tener pendiente negativa).</p></li>
+<li><p>Coste fijo medio, <span class="math inline">\(CFMe\)</span>, decrece a medida que aumenta la producción pues se va diluyendo en esta.</p></li>
+<li><p>Coste variable medio, <span class="math inline">\(CVMe\)</span>, decreciente hasta que es intersecado por el coste marginal, es decir, cada unidad de producto adicional tiene a partir de entonces un coste superior a la media, por lo que aumenta ésta. Otra manera de verlo es que el coste variable medio mínimo es el nivel de producción en el que el rayo vector del gráfico superior es tangente a la curva de coste variable<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>.</p></li>
+<li><p>Coste total medio, es la suma vertical del coste variable y fijo medios. Cortado en su mínimo por <span class="math inline">\(CMg\)</span>, punto en el que coinciden las pendientes de la curva de <span class="math inline">\(CT\)</span> y de la secante desde el origen.<br>
+Nótese cómo el coste variable medio y el coste total medio convergen a medida que aumenta la producción, porque se van diluyendo los <span class="math inline">\(CF\)</span><a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>.<br>
+Además, vemos cómo la curva de costes totales medios tiene forma de U. Esto se debe a la ley antes enunciada de las proporciones variables, pues tras los rendimientos marginales crecientes iniciales, los rendimientos marginales se tornarán decrecientes, y llegará un punto en el que el aumento del producto debido a una unidad adicional de factor será tan pequeña, que el coste adicional de ese factor hará crecer el coste medio.</p></li>
+</ul>
+<div id="fig-6-curvas-coste-a-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curvas de costes de una empresa a corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-curvas-coste-a-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.3: Curvas de costes de una empresa a corto plazo
+</figcaption>
+<div aria-describedby="fig-6-curvas-coste-a-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-curvas-de-costes-de-una-empresa-a-corto-plazo.svg" class="img-fluid figure-img" alt="Curvas de costes de una empresa a corto plazo">
+</div>
+</figure>
+</div>
+<p>El conocimiento de los costes a corto plazo es especialmente importante para las empresas que producen en un entorno en el que las condiciones de demanda fluctúan constantemente.</p>
+</section>
+</section>
+<section id="análisis-de-largo-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="análisis-de-largo-plazo">Análisis de largo plazo</h4>
+<p>A diferencia del corto plazo, en el largo plazo se va a suponer que todos los factores son variables –excepto la tecnología que varía en el muy largo plazo– y que las empresas pueden elegir el tamaño de planta. En el largo plazo la función de costes es considerada una función de planificación, ya que para elegir el tamaño de planta se distinguen 2 fases</p>
+<ul>
+<li><p>Primera fase, las empresas deberán estimar la demanda de producto futura y adaptar en consecuencia su capacidad de producción.</p></li>
+<li><p>Segunda fase, decidirán sobre el tamaño de planta instalado.</p></li>
+</ul>
+<p>Por lo tanto, el empresario es libre para decidir la dimensión óptima de la empresa que le permite minimizar los costes.</p>
+<section id="análisis-gráfico-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-1">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de costes y cantidad producida como el de la <a href="#fig-6-costes-a-lp" class="quarto-xref">Figura&nbsp;<span>6.4</span></a>, se representan las curvas de costes:</p>
+<ul>
+<li><p>Costes a largo plazo, <span class="math inline">\(C_{l/p}\)</span>, envuelve las curvas de costes a corto plazo, ya que los costes a largo plazo siempre estarán por debajo (o serán iguales) de los costes a corto plazo.</p></li>
+<li><p>Curva de coste medio a largo plazo, <span class="math inline">\(CMe_{l/p}\)</span>, (ya no hablamos de total y variable al no haber costes fijos) se deduce de las curvas de costes medios a corto plazo.<br>
+Este punto de tangencia se produce en la parte decreciente de las curvas de <span class="math inline">\(CMe_{c/p}\)</span> en los puntos a la izquierda del mínimo de la curva de <span class="math inline">\(CMe_{l/p}\)</span>, y en la parte creciente de las curvas de <span class="math inline">\(CMe_{c/p}\)</span> en los puntos a la derecha del mínimo de la curva de <span class="math inline">\(CMe_{l/p}\)</span>.<br>
+La razón económica es que en la parte izquierda la planta no trabaja a plena capacidad y a la derecha opera con sobrecarga (es decir, se trabajan horas extraordinarias que se pagan más caras, la maquinaria trabaja a velocidad antieconómica y se producen más averías, etc.). Únicamente en el punto mínimo del coste medio a largo plazo, la planta opera óptimamente en el corto plazo.<br>
+Sin embargo, la empresa únicamente observa la curva a corto plazo. La curva de coste a largo plazo es un concepto estratégico, no observable por la empresa. No corresponde con un tamaño físico de planta ni tiene correspondencia con la realidad<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>.</p></li>
+<li><p>Las curvas de <span class="math inline">\(CMg_{c/p}\)</span> cortan a la curva de <span class="math inline">\(CMg_{l/p}\)</span> en el nivel de producción para el cual sus respectivas curvas de <span class="math inline">\(CMe_{c/p}\)</span> son tangentes a la curva de <span class="math inline">\(CMe_{l/p}\)</span>.</p></li>
+</ul>
+<div id="fig-6-costes-a-lp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curvas de costes de una empresa a largo plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-costes-a-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.4: Curvas de costes de una empresa a largo plazo
+</figcaption>
+<div aria-describedby="fig-6-costes-a-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-curvas-de-costes-de-una-empresa-a-largo-plazo.svg" class="img-fluid figure-img" alt="Curvas de costes de una empresa a largo plazo">
+</div>
+</figure>
+</div>
+<p>Como vemos, la curva de coste medio a largo plazo también tiene forma de&nbsp;<span class="math inline">\(U\)</span>, pero por una razón distinta a la del corto plazo: la empresa disfruta primero de economías de escala y, a partir de cierto tamaño, sufre deseconomías de escala, principalmente de gestión.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p>
+<p>Una explicación es que el tamaño de planta está diseñado para producir de manera óptima un determinado nivel de producción, de forma que cualquier desviación de este supuesto implica mayores costes unitarios. La planta es, pues, completamente inflexible, pues no existe ninguna capacidad de reserva.</p>
+<p>Así, en el punto mínimo de los costes medios a largo plazo, éste es igual al <span class="math inline">\(CMg_{l/p}\)</span>, <span class="math inline">\(CMg_{c/p}\)</span> y <span class="math inline">\(CMe_{c/p}\)</span>: <span id="eq-a-06-10"><span class="math display">\[CMe_{c/p}=CMe_{l/p}=CMg_{c/p}=CMg_{l/p} \tag{6.10}\]</span></span></p>
+</section>
+</section>
+<section id="relación-entre-el-corto-y-el-largo-plazo-teorema-de-le-chatelier-samuelson" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="relación-entre-el-corto-y-el-largo-plazo-teorema-de-le-chatelier-samuelson">Relación entre el corto y el largo plazo: teorema de Le Chatelier-Samuelson</h4>
+<p>Otra cuestión que observamos a partir del gráfico es que el tramo creciente de las curvas de coste marginal (el único que hemos representado) es más rígido en el caso de los costes a corto plazo que en el largo plazo. Esto es relevante porque en competencia perfecta, el tramo creciente de la curva de coste marginal a partir del umbral de producción es precisamente la curva de oferta.</p>
+<p>Este resultado lo recoge el teorema de Le Chatelier-Samuelson <span class="citation" data-cites="6_Samuelson1947">(<a href="01-tema-a1.html#ref-6_Samuelson1947" role="doc-biblioref">Samuelson 1947</a>)</span>, que establece que las funciones de oferta de la empresa competitiva a corto plazo son más rígidas que la de largo plazo y tanto más rígida cuanto mayor es el número de factores considerados fijos<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>.</p>
+<p>Gráficamente, como se observa en la <a href="#fig-6-relacion-entre-el-largo-y-el-corto-plazo" class="quarto-xref">Figura&nbsp;<span>6.5</span></a>, partiendo de una asignación como <span class="math inline">\(A\)</span>, si la empresa en el corto plazo busca aumentar la producción de <span class="math inline">\(Q_{0}\)</span> hasta <span class="math inline">\(Q_{1}\)</span> la empresa deberá aumentar el factor variable, trabajo, hasta una asignación <span class="math inline">\(C\)</span>, con un nivel de costes superior al alcanzado si aumenta la producción a lo largo de su senda de expansión, alcanzando la asignación <span class="math inline">\(B\)</span>, con una curva isocoste asociada más cercana al origen y que supone un menor nivel de costes respecto al largo plazo.</p>
+<div id="fig-6-relacion-entre-el-largo-y-el-corto-plazo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Relación entre el largo plazo y el corto plazo: Teorema de Le Châtelier-Samuelson">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-relacion-entre-el-largo-y-el-corto-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.5: Relación entre el largo plazo y el corto plazo: Teorema de Le Châtelier-Samuelson
+</figcaption>
+<div aria-describedby="fig-6-relacion-entre-el-largo-y-el-corto-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-relacion-entre-el-largo-y-el-corto-plazo.svg" class="img-fluid figure-img" alt="Relación entre el largo plazo y el corto plazo: Teorema de Le Châtelier-Samuelson">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="economías-de-escala" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="economías-de-escala">Economías de escala</h3>
+<p>Además del horizonte temporal, otro elemento clave para explicar la respuesta de los costes ante cambios en la producción son las economías de escala, que existen cuando el coste medio a largo plazo disminuye al aumentar la producción.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></p>
+<p>Su medición se lleva a cabo a través de la elasticidad del coste total, <span class="math inline">\(\varepsilon_{c,q}\)</span>, que mide la variación porcentual del coste total ante la variación porcentual de la producción:</p>
+<p><span id="eq-a-06-11"><span class="math display">\[\varepsilon_{c,q}=\dfrac{\partial C}{\partial q}\cdot\dfrac{q}{C}=\dfrac{CMg}{CMe} \tag{6.11}\]</span></span> donde, dependiendo de su valor</p>
+<ul>
+<li><p>Si <span class="math inline">\(\varepsilon_{c,q}=1\)</span> da lugar a economías de escala constantes –<span class="math inline">\(CMg=CMe\)</span>–, donde el coste total varía en la misma proporción que la producción, es decir, el <span class="math inline">\(CMe\)</span> es constante.</p></li>
+<li><p>Si <span class="math inline">\(\varepsilon_{c,q}&lt;1\)</span> da lugar a economías de escala –<span class="math inline">\(CMg&lt;CMe\)</span>–, donde el coste total varía en menor proporción que la producción, es decir, el <span class="math inline">\(CMe\)</span> es decreciente.</p></li>
+<li><p>Si <span class="math inline">\(\varepsilon_{c,q}&gt;1\)</span> da lugar a deseconomías de escala –<span class="math inline">\(CMg&gt;CMe\)</span>–, donde el coste total varía en mayor proporción que la producción, es decir, el <span class="math inline">\(CMe\)</span> es creciente.</p></li>
+</ul>
+<section id="rendimientos-crecientes-a-escala-vs.-economías-de-escala." class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="rendimientos-crecientes-a-escala-vs.-economías-de-escala.">Rendimientos crecientes a escala vs.&nbsp;economías de escala.</h5>
+<p>Ambos conceptos guardan una estrecha relación, probablemente porque la justificación económica de unos y otros es similar (es decir, las indivisibilidades y la especialización en el proceso productivo). Sin embargo, son dos conceptos diferentes ya que los rendimientos crecientes a escala es un concepto de la teoría de la producción y las economías de escala es un concepto de la teoría de los costes.</p>
+<p>No obstante, ambos conceptos coinciden en el caso en que la función de producción sea homotética (pues en este caso, los costes y la producción tienen una relación imagen-espejo). En este tipo de funciones, la relación entre rendimientos a escala y economías de escala es inversa<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a>: <span id="eq-a-06-12"><span class="math display">\[e=\dfrac{1}{\varepsilon_{c,q}}=\dfrac{CMe}{CMg} \tag{6.12}\]</span></span> donde <span class="math inline">\(e\)</span> es la elasticidad de escala.</p>
+<p>Fuera del caso homotético, la senda de expansión deja de ser una recta desde el origen: la empresa que crece cambia las proporciones en que usa los factores, mientras que los rendimientos a escala se definen aumentando todos los factores en la misma proporción. Ambos conceptos describen entonces movimientos distintos, aunque en cada punto de la senda de expansión la elasticidad de escala sigue siendo igual al cociente&nbsp;<span class="math inline">\(CMe/CMg\)</span>&nbsp;<span class="citation" data-cites="6_Varian1992">(<a href="01-tema-a1.html#ref-6_Varian1992" role="doc-biblioref">Varian 1992</a>)</span>.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></p>
+</section>
+<section id="economías-de-escala-internas-y-externas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="economías-de-escala-internas-y-externas">Economías de escala internas y externas</h5>
+<p>Conviene además distinguir las economías de escala internas, que resultan de la propia acción de la empresa al expandir su producción y quedan recogidas en la forma de su curva de costes, de las economías de escala externas (Alfred Marshall), que se producen a nivel de toda la industria –no de la tecnología o los costes de cada empresa individual– cuando el crecimiento del tamaño agregado del sector reduce el coste medio de todas las empresas que lo componen, por ejemplo a través de clústeres industriales, un mercado de trabajo más especializado o&nbsp;<em>spillovers</em> de conocimiento entre empresas próximas.</p>
+</section>
+</section>
+</section>
+<section id="críticas-a-la-teoría-tradicional" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="críticas-a-la-teoría-tradicional"><span class="header-section-number">6.3</span> Críticas a la teoría tradicional <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="4 minutos">4'</span></h2>
+<p>La teoría tradicional ha sido cuestionada tanto por sus fundamentos teóricos como por sus implicaciones empíricas, sobre todo desde los autores de la teoría de la organización industrial. Antes de entrar en esas críticas, conviene explorar qué formas alternativas podría adoptar la curva de costes al margen de la U tradicional, y qué implicaciones tendrían para el mercado.</p>
+<section id="curvas-de-costes-sin-rendimientos-mixtos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="curvas-de-costes-sin-rendimientos-mixtos">Curvas de costes sin rendimientos mixtos</h3>
+<p>Hasta aquí hemos analizado el caso tradicional de curvas en forma de U debido a la existencia de economías de escala primero y deseconomías después. A continuación, vamos a presentar en la <a href="#fig-6-curvas-de-coste-sin-rendimientos-mixtos" class="quarto-xref">Figura&nbsp;<span>6.6</span></a> otros casos en que hay economías de escala constantes, crecientes o decrecientes para cualquier nivel de producción:</p>
+<ul>
+<li><p>Economías de escala constantes: el coste marginal coincide con el coste medio, por lo que la curva de coste medio será una recta. En competencia perfecta, la oferta a largo plazo sería igual al coste marginal, que a su vez sería igual al coste medio.</p></li>
+<li><p>Economías de escala: el coste marginal va por debajo del coste medio. En competencia perfecta el precio será igual al coste marginal, pero éste estará por debajo del coste medio por la existencia de rendimientos crecientes. Por lo tanto, las empresas incurrirán en pérdidas, saldrán del mercado y no habrá producción. La única solución es la existencia de un monopolista natural que sea capaz de influir sobre el precio para elevarlo por encima del coste marginal.</p></li>
+<li><p>Deseconomías de escala: el coste marginal va por encima del coste medio. En competencia perfecta, el precio será igual al coste marginal, pero éste estará por encima del coste medio por la existencia de rendimientos decrecientes. Por lo tanto, las empresas obtendrán beneficios, entrarán masivamente en el mercado y en el equilibrio habrá infinitas empresas, produciendo cada una cantidad infinitesimalmente pequeña.</p></li>
+</ul>
+<div id="fig-6-curvas-de-coste-sin-rendimientos-mixtos" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curvas de coste sin rendimientos mixtos">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-curvas-de-coste-sin-rendimientos-mixtos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.6: Curvas de coste sin rendimientos mixtos
+</figcaption>
+<div aria-describedby="fig-6-curvas-de-coste-sin-rendimientos-mixtos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-economias-de-escala.svg" class="img-fluid figure-img" alt="Curvas de coste sin rendimientos mixtos">
+</div>
+</figure>
+</div>
+</section>
+<section id="la-teoría-de-los-costes-de-stigler" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-teoría-de-los-costes-de-stigler">La teoría de los costes de Stigler</h3>
+<p><span class="citation" data-cites="6_Stigler1939">Stigler (<a href="01-tema-a1.html#ref-6_Stigler1939" role="doc-biblioref">1939</a>)</span> cuestiona la forma de U del coste medio ya que empíricamente se encuentra que el coste medio a largo plazo no es creciente y que el coste medio variable a corto plazo es constante para los niveles de producción usuales de la empresa y creciente cuando existe sobrecarga de trabajo. Así:</p>
+<ul>
+<li><p>A corto plazo la curva de coste medio presenta un tramo horizontal.</p></li>
+<li><p>A largo plazo la curva de costes medios no es creciente.</p></li>
+</ul>
+<section id="análisis-de-corto-plazo-1" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="análisis-de-corto-plazo-1">Análisis de corto plazo</h4>
+<p>En el corto plazo, Stigler señala que el empresario implementa un tamaño de planta que le otorgue flexibilidad debido a</p>
+<ul>
+<li><p>Razones económicas, relacionadas con la demanda coyuntural y las fluctuaciones cíclicas como las reparaciones de maquinaria o la anticipación a cambios en los gustos de los consumidores.</p></li>
+<li><p>Razones técnicas, relacionadas con la indivisibilidad del factor capital y la instalación de una reserva de capacidad que permita a la empresa hacer frente a una posible expansión futura<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a>.</p></li>
+</ul>
+<p>Gráficamente, en un plano de costes y cantidad producida como el de la <a href="#fig-6-stigler-cp" class="quarto-xref">Figura&nbsp;<span>6.7</span></a> se representan los diferentes costes:</p>
+<ul>
+<li><p>En la curva de costes en forma de U se consideraba que el factor fijo no era divisible y, por lo tanto, se utilizaba desde el principio en la producción todo el factor fijo disponible. Así, la relación factor fijo / factor variable iba cambiando, y solamente existía una relación eficiente entre ambos, que era la óptima (mínimo del coste medio).</p></li>
+<li><p>En la curva de costes con tramo horizontal se considera que el factor fijo es divisible, de tal forma que hasta que alcanza la capacidad total, se está utilizando una cantidad del factor fijo menor a la disponible. Así, si aumenta o disminuye la producción, el factor fijo y el variable aumentan o disminuyen en la misma proporción, manteniéndose la proporción eficiente entre ambos, de forma que los rendimientos marginales decrecientes no entran en juego hasta que se agota esa reserva de capacidad.</p></li>
+</ul>
+<div id="fig-6-stigler-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Teoría de costes de Stigler a corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-stigler-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.7: Teoría de costes de Stigler a corto plazo
+</figcaption>
+<div aria-describedby="fig-6-stigler-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-stigler-a-corto-plazo.svg" class="img-fluid figure-img" alt="Teoría de costes de Stigler a corto plazo">
+</div>
+</figure>
+</div>
+</section>
+<section id="análisis-de-largo-plazo-1" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="análisis-de-largo-plazo-1">Análisis de largo plazo</h4>
+<p>En el largo plazo, la llamada teoría moderna de costes, sistematizada por Koutsoyiannis&nbsp;<span class="citation" data-cites="6_Koutsoyiannis1979">(<a href="01-tema-a1.html#ref-6_Koutsoyiannis1979" role="doc-biblioref">1979</a>)</span> a partir de trabajos empíricos como los de Stigler, sostiene que los costes medios a largo plazo tienen forma de L, pues se dividen en</p>
+<ul>
+<li><p>Costes de producción, que decrecen a medida que aumenta la producción. La escala óptima puede mejorar mediante innovaciones o produciendo varios productos diluyendo costes<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a>.</p></li>
+<li><p>Costes de administración, a escalas muy grandes serán ligeramente crecientes. No obstante, se argumenta que estas deseconomías de escala gerenciales son insignificantes debido a los métodos perfeccionados de la moderna ciencia de la administración de empresas<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a>.</p></li>
+</ul>
+<p>Gráficamente, en un plano de costes y cantidad producida como el de la <a href="#fig-6-stigler-lp" class="quarto-xref">Figura&nbsp;<span>6.8</span></a> se representan los diferentes costes.</p>
+<div id="fig-6-stigler-lp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Teoría de costes de Stigler a largo plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-stigler-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.8: Teoría de costes de Stigler a largo plazo
+</figcaption>
+<div aria-describedby="fig-6-stigler-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-stigler-a-largo-plazo.svg" class="img-fluid figure-img" alt="Teoría de costes de Stigler a largo plazo">
+</div>
+</figure>
+</div>
+<p>Así, el descenso de los costes de producción compensa con creces el probable aumento de los costes administrativos, de manera que la curva de <span class="math inline">\(CMe_{lp}\)</span> decrece suavemente –algunos autores argumentan así que existirán economías de escala incluso en el largo plazo– o permanece constante –forma de L– para escalas de producción muy grandes.</p>
+</section>
+</section>
+<section id="la-ineficiencia-x-de-leibenstein" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-ineficiencia-x-de-leibenstein">La ineficiencia X de Leibenstein</h3>
+<p>Más allá de cuestionar la forma de la curva de costes, <span class="citation" data-cites="6_Leibenstein">Leibenstein (<a href="01-tema-a1.html#ref-6_Leibenstein" role="doc-biblioref">1966</a>)</span> pone en duda la minimización del coste por parte de la empresa partiendo de los siguientes supuestos:</p>
+<ol type="1">
+<li><p>El esfuerzo es endógeno y es un mal para el trabajador.</p></li>
+<li><p>Inercia: los trabajadores eligen su grado de esfuerzo según la costumbre, y solo lo modifican ante una presión externa considerable.</p></li>
+<li><p>Los contratos son incompletos, es decir, no pueden prever todas las contingencias.</p></li>
+<li><p>Existe información asimétrica, es decir, el productor no puede observar el nivel de esfuerzo realizado por el trabajador.</p></li>
+</ol>
+<p>Por todo lo anterior, los trabajadores –que son los que deciden el nivel de esfuerzo a llevar a cabo–, escogerán por lo general un nivel de esfuerzo inferior al que minimizaría el coste medio. De esta manera, el comportamiento optimizador, es decir, la producción que minimiza el coste medio, es una excepción, produciéndose una ineficiencia X, es decir, la diferencia entre el coste en que realmente incurre la empresa y el mínimo que permitiría su tecnología, originada por ese menor esfuerzo.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></p>
+<p>El grado de competencia juega un papel fundamental en la teoría de Leibenstein:</p>
+<ul>
+<li><p>Con competencia alta, los trabajadores, en aras de asegurar la supervivencia de la empresa (y conservar, por tanto, su puesto de trabajo), se esforzarán y mejorarán su productividad marginal.</p></li>
+<li><p>Con competencia baja, los trabajadores tendrán incentivos a relajarse. Así, un aumento de los precios del producto no tiene por qué traducirse en un mayor beneficio, ya que si los trabajadores perciben que ese aumento del precio de venta se debe a un mark-up posibilitado por una menor competencia, entonces el beneficio podría disminuir al aumentar los costes por la ineficiencia X.</p></li>
+</ul>
+<p>Generalmente las empresas se mueven en un contexto de competencia imperfecta, por lo que la presión competitiva no motiva la diligencia en el trabajo.</p>
+<section id="implicaciones-de-la-teoría-de-la-ineficiencia-x" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-la-teoría-de-la-ineficiencia-x">Implicaciones de la teoría de la Ineficiencia X</h5>
+<p>Así, la aportación de Leibenstein tiene 2 implicaciones muy interesantes<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a>:</p>
+<ol type="1">
+<li><p>Un incremento de los precios de los factores no supone necesariamente un aumento del coste total: La dirección transmitirá a los trabajadores la urgencia de realizar un mayor esfuerzo para reducir costes, con lo que la ineficiencia X disminuye.</p></li>
+<li><p>No existe independencia entre el aumento de precios y el de costes: Si el aumento del precio viene posibilitado en un marco de menor competencia, entonces se producirá un aumento de costes vía una mayor ineficiencia X (a diferencia de la Teoría tradicional, que considera que el aumento del precio no tiene por qué implicar un aumento de los costes).</p></li>
+</ol>
+</section>
+</section>
+</section>
+<section id="otros-desarrollos" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="otros-desarrollos"><span class="header-section-number">6.4</span> Otros desarrollos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos 30 segundos">2'30"</span></h2>
+<p>Otros desarrollos de la teoría de costes serían las economías de alcance, la subaditividad de costes y las curvas de aprendizaje</p>
+<section id="producción-multiproductos-economías-de-alcance" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="producción-multiproductos-economías-de-alcance">Producción multiproductos, economías de alcance</h3>
+<p>En la práctica, es frecuente que una misma empresa produzca dos o más productos. Existen economías de alcance (también denominadas de gama o de variedad)<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a> cuando producir esos bienes en una sola empresa cuesta menos que producirlos por separado en varias <span id="eq-a-06-13"><span class="math display">\[C\left(q_{1},q_{2}\right)&lt;C\left(q_{1},0\right)+C\left(0,q_{2}\right) \tag{6.13}\]</span></span></p>
+<p>En muchas ocasiones esto se debe a que los productos son dependientes desde el punto de vista técnico –por ejemplo carne y cuero en el caso del vacuno–, o porque se pueden aprovechar estructuras organizativas o de comercialización comunes.</p>
+<p>Gráficamente en un plano de 2 bienes, <span class="math inline">\(q_{1}\)</span> y <span class="math inline">\(q_{2}\)</span>, como el de la <a href="#fig-6-economias-de-alcance" class="quarto-xref">Figura&nbsp;<span>6.9</span></a>, la restricción tecnológica (es decir, combinaciones técnicamente factibles) viene determinada por la Frontera de Posibilidades de Producción, <span class="math inline">\(FPP\)</span>, que expresa la máxima cantidad de un producto alcanzable, dada una cantidad producida del otro.</p>
+<p>La <span class="math inline">\(FPP\)</span> es cóncava ya que presenta economías de alcance, ya que si no las presentase sería una línea recta donde, por ejemplo, dada una cantidad de factores, produciendo <span class="math inline">\(q^{*}_{1}\)</span> la empresa sin economías de gama puede producir <span class="math inline">\(q^{*}_{2}\)</span>, mientras que con los mismos factores la empresa con economías de gama puede producir más en <span class="math inline">\(q^{**}_{2}\)</span>.</p>
+<div id="fig-6-economias-de-alcance" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Economías de alcance">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-economias-de-alcance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.9: Economías de alcance
+</figcaption>
+<div aria-describedby="fig-6-economias-de-alcance-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-economias-de-alcance.svg" class="img-fluid figure-img" alt="Economías de alcance">
+</div>
+</figure>
+</div>
+<p>Cabe subrayar que no existe una relación directa entre las economías de escala y las de gama.</p>
+<section id="relación-con-el-coste-de-producción-de-bienes" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="relación-con-el-coste-de-producción-de-bienes">Relación con el coste de producción de bienes</h5>
+<p>Otra forma de ver las economías de alcance es mediante la relación entre el coste total de producir un bien en términos del otro. Así, se daría una curva de pendiente negativa que en función de la forma mostraría la presencia de economías de alcance:</p>
+<ul>
+<li><p>Si la representación es cóncava, existen economías de alcance pues el coste de producir dos bienes conjuntamente es menor que el de producirlos por separado.</p></li>
+<li><p>Si es una línea recta demuestra la no existencia de economías de alcance.</p></li>
+<li><p>Si es convexa entonces muestra la presencia de deseconomías de alcance.</p></li>
+</ul>
+</section>
+<section id="grado-de-economías-de-alcance" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="grado-de-economías-de-alcance">Grado de economías de alcance</h5>
+<p>Para cuantificar el ahorro anterior, el grado de economías de alcance, <span class="math inline">\(EA\)</span>, permite medir el porcentaje de ahorro de costes que se obtiene cuando dos o más productos se producen conjuntamente en lugar de individualmente <span id="eq-a-06-14"><span class="math display">\[EA=\dfrac{C\left(q_{1}\right)+C\left(q_{2}\right)-C\left(q_{1},q_{2}\right)}{C\left(q_{1},q_{2}\right)} \tag{6.14}\]</span></span></p>
+<p>Cuando hay economías de alcance, el coste conjunto es menor que la suma de los costes individuales, por lo que <span class="math inline">\(EA\)</span> es mayor que 0. Cuando hay deseconomías de alcance, <span class="math inline">\(EA\)</span> es negativo. En general, cuanto mayor es el valor de <span class="math inline">\(EA\)</span>, mayores son las economías de alcance.</p>
+</section>
+</section>
+<section id="subaditividad-de-costes" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="subaditividad-de-costes">Subaditividad de costes</h3>
+<p>Cerrando los desarrollos sobre producción multiproducto, se dice que una tecnología presenta subaditividad estricta en costes si resulta menos costoso producir un output dado en una sola empresa que repartiéndolo entre varias <span id="eq-a-06-15"><span class="math display">\[C\left(\sum\limits_{i=1}^{n}q_{i}\right)&lt;\sum\limits_{i=1}^{n}C_{i}\left(q_{i}\right) \tag{6.15}\]</span></span> En esta situación, la subaditividad de costes genera lo que se conoce como monopolio natural<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a>, ya que cualquier cantidad ofrecida de equilibrio sería menos costosa producirla en una sola empresa, y solo una podría obtener beneficios.</p>
+<p>Gráficamente, en un plano de costes medios, <span class="math inline">\(CMe\)</span>, y cantidad producida, <span class="math inline">\(q\)</span>, como el de la <a href="#fig-6-subaditividad-de-costes" class="quarto-xref">Figura&nbsp;<span>6.10</span></a> se representa la curva de costes medios cuando toda la producción se concentra en una empresa,&nbsp;<span class="math inline">\(CMe_{1}\)</span>, y la de dos empresas que se reparten la producción a medias,&nbsp;<span class="math inline">\(CMe_{1+2}\)</span>. Pero la subaditividad se extiende hasta <span class="math inline">\(q_{1}\)</span> a pesar de que existe un tramo con deseconomías de escala. En efecto, aunque en el tramo que va desde <span class="math inline">\(q_{0}\)</span> hasta <span class="math inline">\(q_{1}\)</span> existen deseconomías de escala, el coste medio de concentrar la producción en una empresa es menor que el de repartirla en dos empresas. A partir de <span class="math inline">\(q_{1}\)</span> ya no existe subaditividad de costes y, por lo tanto, no hay monopolio natural.</p>
+<div id="fig-6-subaditividad-de-costes" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Subaditividad de costes">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-subaditividad-de-costes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.10: Subaditividad de costes
+</figcaption>
+<div aria-describedby="fig-6-subaditividad-de-costes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-subaditividad-de-costes.svg" class="img-fluid figure-img" alt="Subaditividad de costes">
+</div>
+</figure>
+</div>
+<p>Por consiguiente, la existencia de Economías de escala es condición suficiente pero no necesaria para la existencia de subaditividad de costes. De hecho, pueden existir deseconomías de escala, y que el coste medio de concentrar la producción en una empresa sea menor que el de repartirla en dos empresas (como sucede entre <span class="math inline">\(q_{0}\)</span> y <span class="math inline">\(q_{1}\)</span>). A partir de <span class="math inline">\(q_{1}\)</span> deja de existir subaditividad de costes.</p>
+<section id="monopolio-natural" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="monopolio-natural">Monopolio natural</h5>
+<p>La subaditividad de costes genera estructuras de mercado con la existencia de un monopolio natural.</p>
+</section>
+</section>
+<section id="economías-de-aprendizaje" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="economías-de-aprendizaje">Economías de aprendizaje</h3>
+<p>Por último, la empresa no solo es capaz de reducir los costes medios a largo plazo cuando aumenta el volumen de producción y se van explotando las economías de escala.</p>
+<p>De hecho, la empresa puede ir reduciendo costes gracias a las economías de aprendizaje o de escala dinámicas derivadas del aprendizaje del trabajador y de la gestión, fenómeno que se produce conforme crece la producción acumulada en el tiempo por</p>
+<ul>
+<li><p>Mayor rapidez y habilidad de los trabajadores, ya que a medida que son más expertos su velocidad aumenta.</p></li>
+<li><p>Mayor eficiencia en la gestión, donde los directivos aprenden a programar el proceso de producción más eficazmente, desde el flujo de materiales hasta la organización de la propia producción.</p></li>
+<li><p>Los ingenieros que al principio son muy cautos en el diseño de los productos pueden adquirir suficiente experiencia para poder introducir tolerancias en el diseño que ahorren costes sin aumentar los defectos. La mejora y el aumento de las herramientas especializadas y de la organización de la planta también pueden reducir el coste.</p></li>
+<li><p>Visión más integrada de la empresa, donde también los proveedores pueden aprender y contribuir a la reducción del coste de la empresa.</p></li>
+</ul>
+<p>Gráficamente, en un plano de trabajo necesario por unidad de producción, <span class="math inline">\(L/Q\)</span>, y de producción acumulada en el tiempo, <span class="math inline">\(Q_{AC}\)</span>, como el de la <a href="#fig-6-curva-de-aprendizaje" class="quarto-xref">Figura&nbsp;<span>6.11</span></a>, se representa la curva de aprendizaje, <span class="math inline">\(C_{AP}\)</span>, que muestra el grado en que disminuyen las horas necesarias de trabajo por unidad de producción a medida que aumenta la producción acumulada</p>
+<div id="fig-6-curva-de-aprendizaje" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curva de aprendizaje">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-curva-de-aprendizaje-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.11: Curva de aprendizaje
+</figcaption>
+<div aria-describedby="fig-6-curva-de-aprendizaje-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-curva-de-aprendizaje.svg" class="img-fluid figure-img" alt="Curva de aprendizaje">
+</div>
+</figure>
+</div>
+<p>A su vez, dentro de la Teoría del Comercio Internacional las economías de escala dinámicas han servido para justificar la protección temporal frente a la competencia exterior en lo que se conoce como el argumento de la industria naciente.</p>
+<section id="economías-de-escala-vs.-economías-de-aprendizaje" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="economías-de-escala-vs.-economías-de-aprendizaje">Economías de escala vs.&nbsp;economías de aprendizaje</h5>
+<p>Gráficamente, en un plano de costes medios y cantidad de producción como el de la <a href="#fig-6-escala-vs-aprendizaje" class="quarto-xref">Figura&nbsp;<span>6.12</span></a>, la diferencia es que las economías de escala se presentarían del punto inicial <span class="math inline">\(A\)</span> al punto <span class="math inline">\(B\)</span>, es decir, reducción de costes sobre la misma curva, mientras que las economías de aprendizaje se presentarían del punto <span class="math inline">\(A\)</span> al <span class="math inline">\(C\)</span>, es decir, el mismo nivel de producción pero con menor coste.</p>
+<div id="fig-6-escala-vs-aprendizaje" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Las economías de escala frente al aprendizaje">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-6-escala-vs-aprendizaje-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;6.12: Las economías de escala frente al aprendizaje
+</figcaption>
+<div aria-describedby="fig-6-escala-vs-aprendizaje-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-06-a-6-escala-vs-aprendizaje.svg" class="img-fluid figure-img" alt="Las economías de escala frente al aprendizaje">
+</div>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">6.5</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, la teoría de costes es un componente fundamental a la hora de entender el comportamiento de las empresas y los aspectos relevantes de la tecnología de producción. Del mismo modo, la teoría de costes también aporta información sobre cómo va a funcionar un mercado, sirviendo así como una guía para las políticas de competencia.</p>
+<p>Así, la estructura de costes de las empresas puede pre-configurar en gran medida la estructura del mercado; es el caso, por ejemplo, de la subaditividad de costes y el monopolio natural.</p>
+<p>Esta lectura neoclásica admite matices: Stigler cuestiona empíricamente la forma de U de la curva de costes, y la ineficiencia X de Leibenstein liga el coste mínimo a la presión competitiva; a ello se suman desarrollos como el alcance, la subaditividad y el aprendizaje, que acercan el análisis a la empresa real.</p>
+<p>No obstante, la teoría de los costes no termina de caracterizar las decisiones de oferta de producto y de demanda de factores de la empresa. Para ello es necesario acudir a la teoría de los mercados para ver cuál de todas las combinaciones técnica y económicamente eficientes (es decir, todas las combinaciones que se recogen en la senda de expansión) es la óptima.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-rendimientos-crecientes-a-escala-vs.-economías-de-escala" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-rendimientos-crecientes-a-escala-vs.-economías-de-escala">6.A.1.&nbsp;&nbsp;Rendimientos crecientes a escala vs.&nbsp;economías de escala</h3>
+<p>Ambos conceptos guardan una estrecha relación, probablemente porque la justificación económica de unos y otros es similar –es decir, las indivisibilidades y la especialización en el proceso productivo–. Sin embargo, son dos conceptos diferentes:</p>
+<ul>
+<li><p>Rendimientos crecientes a escala (concepto de la teoría de la producción): al aumentar la dotación de los factores en la misma proporción, la producción aumenta en una proporción mayor<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a>.</p></li>
+<li><p>Economías de escala (concepto de la teoría de los costes): al aumentar la producción, los costes totales aumentan menos que proporcionalmente. Efectivamente, para aumentar la producción se ha tenido que aumentar la dotación de factores, pero no necesariamente en la misma proporción.</p></li>
+</ul>
+<p>No obstante, ambos conceptos coinciden en el caso en que la función de producción sea homotética, pues en este caso los costes y la producción tienen una relación imagen-espejo. En este tipo de funciones, la relación entre rendimientos a escala y economías de escala es inversa: <span class="math display">\[e=\dfrac{1}{\varepsilon_{c,q}}=\dfrac{CMe}{CMg}\]</span></p>
+<section id="relación-entre-rendimientos-y-economías-de-escala-para-funciones-no-homotéticas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="relación-entre-rendimientos-y-economías-de-escala-para-funciones-no-homotéticas">Relación entre rendimientos y economías de escala para funciones NO homotéticas</h5>
+<p>Pero, fuera del caso homotético, la senda de expansión deja de ser un rayo desde el origen, de modo que crecer por ella y escalar todos los factores en la misma proporción son movimientos distintos. Aun así, en cada punto de la senda de expansión la elasticidad de escala coincide con el cociente&nbsp;<span class="math inline">\(CMe/CMg\)</span>, de modo que los rendimientos a escala medidos en la combinación que minimiza costes y las economías de escala siguen yendo de la mano<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a>. Para funciones homogéneas de grado&nbsp;<span class="math inline">\(HG\)</span>: <span class="math display">\[\begin{align*}
+HG=1\;\Leftrightarrow\;\text{Rendimientos constantes}\;\Leftrightarrow\;\text{CMe constante}\\
+HG&gt;1\;\Leftrightarrow\;\text{Rendimientos crecientes}\;\Leftrightarrow\;\text{Econom{í}as de escala}\\
+HG&lt;1\;\Leftrightarrow\;\text{Rendimientos decrecientes}\;\Leftrightarrow\;\text{Deseconom{í}as de escala}
+\end{align*}\]</span></p>
+</section>
+</section>
+<section id="a.2.-funciones-de-costes-resultantes-de-otras-funciones-de-producción" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-funciones-de-costes-resultantes-de-otras-funciones-de-producción">6.A.2.&nbsp;&nbsp;Funciones de costes resultantes de otras funciones de producción</h3>
+<p>A continuación se presentan las funciones típicas de coste en el caso de que prevalezcan en el largo plazo rendimientos constantes, crecientes o decrecientes, suponiendo constantes los precios de los factores productivos, ilustrando cada caso con una tecnología distinta.</p>
+<ul>
+<li><p>Rendimientos constantes de escala a largo plazo —tecnología Leontief,&nbsp;<span class="math inline">\(Q=\min\{aX_{1},bX_{2}\}\)</span>, homogénea de grado 1 por construcción—: la curva de&nbsp;<span class="math inline">\(C_{lp}\)</span> es una línea recta que pasa por el origen:&nbsp;<span class="math inline">\(C_{lp}=Q\left(\dfrac{w_{1}}{a}+\dfrac{w_{2}}{b}\right)\)</span>. Así, el&nbsp;<span class="math inline">\(CMe_{lp}\)</span> al igual que el&nbsp;<span class="math inline">\(CMg_{lp}\)</span> equivalen al coste unitario&nbsp;<span class="math inline">\(\left(\dfrac{w_{1}}{a}+\dfrac{w_{2}}{b}\right)\)</span>, ambas horizontales e iguales entre sí.</p></li>
+<li><p>Rendimientos crecientes de escala a largo plazo —tecnología de sustitutos perfectos elevada a una potencia&nbsp;<span class="math inline">\(k&gt;1\)</span>,&nbsp;<span class="math inline">\(Q=(aX_{1}+bX_{2})^{k}\)</span>, homogénea de grado&nbsp;<span class="math inline">\(k\)</span> y, por tanto, homotética&nbsp;<span class="citation" data-cites="6_Varian1992">(<a href="01-tema-a1.html#ref-6_Varian1992" role="doc-biblioref">Varian 1992</a>)</span>—: el núcleo&nbsp;<span class="math inline">\(Z=aX_{1}+bX_{2}\)</span> sigue siendo de sustitutos perfectos, así que el coste de conseguir&nbsp;<span class="math inline">\(Z\)</span> unidades es&nbsp;<span class="math inline">\(Z\cdot\min\{w_{1}/a,\,w_{2}/b\}\)</span>. Sustituyendo&nbsp;<span class="math inline">\(Z=Q^{1/k}\)</span> se obtiene&nbsp;<span class="math inline">\(C_{lp}=Q^{1/k}\min\{w_{1}/a,\,w_{2}/b\}\)</span>, con exponente&nbsp;<span class="math inline">\(1/k&lt;1\)</span>: el&nbsp;<span class="math inline">\(CT_{lp}\)</span> crece a una tasa decreciente y el&nbsp;<span class="math inline">\(CMe_{lp}\)</span> tiene pendiente negativa. Por ello, el mínimo de los&nbsp;<span class="math inline">\(CMe_{cp}\)</span> nunca coincide con el mínimo del&nbsp;<span class="math inline">\(CMe_{lp}\)</span>, y en mercados competitivos las plantas operan a largo plazo en un nivel de producción inferior a aquel en el que su&nbsp;<span class="math inline">\(CMe_{cp}\)</span> es mínimo.</p></li>
+<li><p>Rendimientos decrecientes de escala a largo plazo —tecnología Cobb-Douglas,&nbsp;<span class="math inline">\(Q=AX^{a}_{1}X^{b}_{2}\)</span> con&nbsp;<span class="math inline">\(a+b&lt;1\)</span>—: la función de costes asociada es&nbsp;<span class="math inline">\(C_{lp}=Ky^{1/(a+b)}\)</span>, con exponente&nbsp;<span class="math inline">\(1/(a+b)&gt;1\)</span>, por lo que el&nbsp;<span class="math inline">\(CT_{lp}\)</span> aumenta más que proporcionalmente respecto al nivel de producción. En este caso a la empresa le conviene arrendar una planta con capacidad menor, pues el mínimo a corto plazo se encuentra por debajo del punto de tangencia entre los&nbsp;<span class="math inline">\(CMe_{cp}\)</span> y los&nbsp;<span class="math inline">\(CMe_{lp}\)</span>.</p></li>
+</ul>
+<p>En definitiva, cada tecnología deja una huella distinta en la curva de&nbsp;<span class="math inline">\(CMe_{lp}\)</span> y en la de&nbsp;<span class="math inline">\(C_{lp}\)</span>&nbsp;<span class="citation" data-cites="6_Varian1992 6_Koutsoyiannis1979">(<a href="01-tema-a1.html#ref-6_Varian1992" role="doc-biblioref">Varian 1992</a>; <a href="01-tema-a1.html#ref-6_Koutsoyiannis1979" role="doc-biblioref">Koutsoyiannis 1979</a>)</span>:</p>
+<ul>
+<li><p>Leontief (rendimientos constantes):&nbsp;<span class="math inline">\(CMe_{lp}\)</span> constante —recta horizontal—;&nbsp;<span class="math inline">\(C_{lp}\)</span> recta que pasa por el origen.</p></li>
+<li><p>Sustitutos perfectos elevados a&nbsp;<span class="math inline">\(k&gt;1\)</span> (rendimientos crecientes):&nbsp;<span class="math inline">\(CMe_{lp}\)</span> decreciente;&nbsp;<span class="math inline">\(C_{lp}\)</span> cóncava —crece a tasa decreciente—.</p></li>
+<li><p>Cobb-Douglas con&nbsp;<span class="math inline">\(a+b&lt;1\)</span> (rendimientos decrecientes):&nbsp;<span class="math inline">\(CMe_{lp}\)</span> creciente;&nbsp;<span class="math inline">\(C_{lp}\)</span> convexa —crece a tasa creciente—.</p></li>
+</ul>
+<p>Nótese que las tres funciones comparten una misma lógica: el grado de homogeneidad de la tecnología (1,&nbsp;<span class="math inline">\(k\)</span> o&nbsp;<span class="math inline">\(a+b\)</span>, según el caso) determina directamente si&nbsp;<span class="math inline">\(C_{lp}\)</span> crece proporcionalmente, a tasa decreciente o a tasa creciente respecto a&nbsp;<span class="math inline">\(Q\)</span>—y con ello la pendiente de&nbsp;<span class="math inline">\(CMe_{lp}\)</span>. Sin embargo, ninguna de ellas genera por sí sola los rendimientos mixtos —economías de escala primero, deseconomías después— que dan lugar a la forma de U de la teoría tradicional (véase&nbsp;“Análisis de largo plazo”): al tener una elasticidad de escala constante en todo punto, solo pueden dar una curva monótona o plana. Los rendimientos mixtos surgen, bien como envolvente de curvas de corto plazo con economías de escala primero y deseconomías de gestión después&nbsp;<span class="citation" data-cites="6_Koutsoyiannis1979">(<a href="01-tema-a1.html#ref-6_Koutsoyiannis1979" role="doc-biblioref">Koutsoyiannis 1979</a>)</span>, bien de formas funcionales más flexibles —como la función de costes translogarítmica— capaces de representar una elasticidad de escala que varía con el nivel de producción.</p>
+</section>
+<section id="a.3.-economías-de-aglomeración" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-economías-de-aglomeración">6.A.3.&nbsp;&nbsp;Economías de aglomeración</h3>
+<p>Las economías de aglomeración son los beneficios o reducciones de costes que las empresas y las personas obtienen al concentrarse geográficamente. Este concepto se enmarca dentro de la teoría de costes al explicar por qué la producción es más barata en áreas urbanas o "clusters" industriales, a pesar de los altos precios del suelo y la congestión.</p>
+<section id="tipos-de-economías-de-aglomeración" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="tipos-de-economías-de-aglomeración">Tipos de economías de aglomeración</h5>
+<p>Existen dos tipos principales que contribuyen a la reducción de costes:</p>
+<ul>
+<li><p>Economías de localización: Se producen cuando empresas de un mismo sector se concentran en una misma zona. Los beneficios incluyen un mercado laboral especializado, acceso a proveedores específicos y la facilidad para compartir conocimiento e innovación (efectos de derrame tecnológico).</p></li>
+<li><p>Economías de urbanización: Ocurren cuando una gran variedad de industrias se concentran en un área metropolitana. Los beneficios provienen del acceso a una infraestructura compartida (carreteras, telecomunicaciones), una gran diversidad de servicios y un mercado laboral amplio y variado.</p></li>
+</ul>
+</section>
+<section id="costes-de-transporte-y-aglomeración" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="costes-de-transporte-y-aglomeración">Costes de transporte y aglomeración</h5>
+<p>La teoría de costes explica que las empresas se localizan en una aglomeración para minimizar los costes de transporte. Al ubicarse cerca de proveedores de materias primas y de un gran mercado de consumidores, las empresas reducen los gastos asociados al traslado de materias primas y productos finales.</p>
+<p>La reducción o el bajo nivel de los costes de transporte es un factor clave que impulsa la concentración de la actividad económica. Sin embargo, la aglomeración también puede generar deseconomías de aglomeración, como la congestión del tráfico o la competencia por los recursos, que a su vez limitan el crecimiento de las ciudades.</p>
+</section>
+</section>
+<section id="a.4.-costes-hundidos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-costes-hundidos">6.A.4.&nbsp;&nbsp;Costes hundidos</h3>
+<p>Los costes hundidos (del inglés, sunk costs) son gastos que ya se han realizado y que no se pueden recuperar de ninguna manera. Son costes retrospectivos e irreversibles<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a>.</p>
+<section id="relación-con-la-teoría-de-costes" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="relación-con-la-teoría-de-costes">Relación con la teoría de costes</h5>
+<p>La teoría económica de la decisión racional establece que los costes hundidos son completamente irrelevantes para la toma de decisiones futuras. Una decisión solo debe basarse en los costes y beneficios marginales futuros.</p>
+<p>El problema surge con la falacia del coste hundido, un sesgo cognitivo que lleva a los individuos o a las empresas a continuar invirtiendo en un proyecto o actividad que no es viable, simplemente porque ya han gastado una cantidad significativa de dinero en él. Por ejemplo, una empresa que invierte millones en una nueva fábrica y, a mitad de la construcción, se da cuenta de que la demanda del producto ha desaparecido, debe abandonar el proyecto. El coste de la construcción ya realizada es un coste hundido y no debe influir en la decisión de continuar o no.</p>
+<p>En la teoría de costes, la distinción clave es entre los costes hundidos y los costes de oportunidad. Los costes de oportunidad representan los beneficios perdidos por elegir una alternativa en lugar de otra y son esenciales para una decisión racional, mientras que los costes hundidos, al ser irrecuperables, no lo son.</p>
+</section>
+<section id="implicaciones-de-política-económica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica">Implicaciones de política económica</h5>
+<p>El concepto de costes hundidos tiene varias implicaciones importantes para la política y la economía:</p>
+<ul>
+<li><p>Barreras de entrada: Los grandes costes hundidos pueden actuar como una barrera de entrada al mercado. Si la inversión inicial requerida para entrar en una industria es muy alta y no es recuperable (por ejemplo, la inversión en publicidad de una marca conocida o en I+D), desanimará a los nuevos competidores, lo que puede llevar a una estructura de mercado de monopolio u oligopolio.</p></li>
+<li><p>Proyectos públicos y la falacia del coste hundido: La falacia del coste hundido es particularmente relevante en el sector público. Los gobiernos a menudo se sienten presionados a continuar financiando proyectos de infraestructura (como aeropuertos o trenes de alta velocidad) que ya han costado miles de millones, incluso cuando los análisis de coste-beneficio sugieren que el proyecto es un fracaso y que la mejor opción sería abandonarlo. La política económica racional dicta que, si los beneficios futuros esperados de un proyecto son inferiores a los costes futuros esperados, el proyecto debe ser detenido, independientemente de la inversión ya realizada.</p></li>
+<li><p>Regulación: Las autoridades de competencia y los reguladores tienen en cuenta los costes hundidos al evaluar la dinámica de un mercado. Por ejemplo, al considerar la concesión de licencias o la asignación de espectro radioeléctrico, se puede buscar que el coste hundido sea el adecuado para atraer a competidores sin que sea un freno para la entrada de nuevas empresas.</p></li>
+</ul>
+</section>
+</section>
+<section id="a.5.-tipos-de-economía-de-escala" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-tipos-de-economía-de-escala">6.A.5.&nbsp;&nbsp;Tipos de economía de escala</h3>
+<p>Las economías de escala son ventajas que obtiene una empresa al aumentar su volumen de producción, lo que permite reducir el coste medio por unidad. Estas ventajas pueden surgir tanto de factores internos como externos, y se clasifican en varios tipos según su origen y naturaleza.</p>
+<section id="economías-de-escala-internas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="economías-de-escala-internas">Economías de escala internas</h5>
+<p>Son aquellas que se generan dentro de la empresa como resultado de su crecimiento:</p>
+<ul>
+<li><p>Técnicas: Al aumentar la producción, se pueden utilizar máquinas más eficientes o automatizar procesos. Por ejemplo, una fábrica que produce más unidades puede justificar la inversión en tecnología avanzada que reduce el coste por unidad.</p></li>
+<li><p>Gerenciales: La especialización de funciones permite una gestión más eficiente. A medida que la empresa crece, puede contratar personal especializado en áreas como logística, finanzas o recursos humanos, lo que mejora la productividad.</p></li>
+<li><p>Financieras: Las empresas grandes suelen tener acceso a mejores condiciones de financiación, como tipos de interés más bajos o mayor capacidad de negociación con inversores.</p></li>
+<li><p>Comerciales: Al comprar en grandes volúmenes, las empresas pueden obtener descuentos por parte de proveedores. Además, pueden negociar mejores condiciones de distribución o publicidad.</p></li>
+<li><p>Administrativas: Algunos costes fijos, como los de oficina o software, se reparten entre más unidades producidas, reduciendo el coste por unidad.</p></li>
+</ul>
+</section>
+<section id="economías-de-escala-externas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="economías-de-escala-externas">Economías de escala externas</h5>
+<p>Estas provienen del entorno o del crecimiento del sector en el que opera la empresa:</p>
+<ul>
+<li><p>De concentración geográfica: Cuando varias empresas del mismo sector se agrupan en una región, se benefician de infraestructura compartida, proveedores especializados y un mercado laboral adaptado. Ejemplo: el distrito tecnológico de Silicon Valley.</p></li>
+<li><p>Del mercado laboral: En zonas con alta concentración de una industria, es más fácil encontrar trabajadores cualificados, lo que reduce costes de formación y mejora la eficiencia.</p></li>
+</ul>
+<p>Conviene no confundirlas con los efectos de red, en los que el valor de un producto para cada usuario aumenta con el número de usuarios (redes sociales o plataformas de comercio electrónico). Se trata de economías del lado de la demanda, no de reducciones de costes.</p>
+</section>
+<section id="otras-clasificaciones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="otras-clasificaciones">Otras clasificaciones</h5>
+<ul>
+<li><p>Reales vs.&nbsp;pecuniarias:</p>
+<ul>
+<li><p>Reales: Reducción de costes físicos, como el uso más eficiente de maquinaria.</p></li>
+<li><p>Pecuniarias: Reducción de costes por obtener mejores precios en materias primas o servicios.</p></li>
+</ul></li>
+<li><p>Estáticas vs.&nbsp;dinámicas:</p>
+<ul>
+<li><p>Estáticas: Derivan del tamaño actual de la empresa.</p></li>
+<li><p>Dinámicas: Surgen del aprendizaje acumulado y la mejora continua en procesos.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="ejemplos-prácticos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ejemplos-prácticos">Ejemplos prácticos</h5>
+<ul>
+<li><p>Una empresa automovilística que produce 100.000 vehículos al año puede negociar precios más bajos por neumáticos que una que produce solo 5.000.</p></li>
+<li><p>Una cadena de supermercados puede distribuir sus costes de publicidad entre cientos de tiendas, mientras que una tienda independiente debe asumirlos sola.</p></li>
+<li><p>En el sector tecnológico, plataformas como Amazon o Google se benefician de economías de red, donde cada nuevo usuario aporta valor adicional al sistema.</p></li>
+</ul>
+</section>
+</section>
+<section id="a.6.-aplicaciones-empíricas-el-análisis-envolvente-de-datos-dea-y-la-frontera-estocástica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-aplicaciones-empíricas-el-análisis-envolvente-de-datos-dea-y-la-frontera-estocástica">6.A.6.&nbsp;&nbsp;Aplicaciones empíricas: el análisis envolvente de datos (DEA) y la frontera estocástica</h3>
+<p>Todo lo anterior se ha desarrollado en términos puramente teóricos, a partir de una función de producción supuesta de antemano. Cabe preguntarse cómo se traslada este aparato a la práctica: ¿cómo puede un regulador o un investigador medir, con datos reales, si una empresa concreta está siendo eficiente, sin necesidad de conocer directamente su función de producción o de costes? La literatura utiliza esencialmente dos estrategias:</p>
+<ul>
+<li><p>El análisis de frontera estocástica (<em>Stochastic Frontier Analysis</em>, SFA): estima los parámetros de una función de costes de forma paramétrica –eligiendo previamente una forma funcional concreta– y descompone, mediante técnicas econométricas, la distancia de cada empresa a la frontera eficiente en un componente aleatorio y un componente de ineficiencia.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a> Requiere una notable disponibilidad de datos.</p></li>
+<li><p>El Análisis Envolvente de Datos (<em>Data Envelopment Analysis</em>, DEA): una estrategia no paramétrica y más flexible, que consiste en "envolver" las observaciones disponibles mediante la resolución de un problema de optimización lineal, sin necesidad de imponer a priori ninguna forma funcional a la tecnología <span class="citation" data-cites="6_Coelli1996">(<a href="01-tema-a1.html#ref-6_Coelli1996" role="doc-biblioref">Coelli 1996</a>)</span>.</p></li>
+</ul>
+<p>Dada su mayor flexibilidad y menor exigencia de información, el DEA es el método más utilizado en la práctica. Considérese, por simplicidad, un caso con dos factores <span class="math inline">\((x_{1},x_{2})\)</span> y un único output <span class="math inline">\(Y\)</span>, de modo que cada punto de un plano <span class="math inline">\((x_{1}/Y,x_{2}/Y)\)</span> representa a una empresa observada. El DEA plantea un problema de optimización lineal para trazar una frontera eficiente que maximice la eficiencia de cada empresa observada y delimite un conjunto convexo que contenga a todas las observaciones.</p>
+<p>Las empresas que no se sitúan sobre la frontera son, por definición, técnicamente ineficientes. Considérese una empresa <span class="math inline">\(A\)</span> situada fuera de la frontera: trazando una recta desde el origen hasta <span class="math inline">\(A\)</span>, su intersección con la frontera eficiente define un punto <span class="math inline">\(b\)</span>, y la intersección de esa misma recta con la curva de isocoste define un punto <span class="math inline">\(c\)</span>. A partir de estas distancias se obtienen tres indicadores, acotados entre 0 (máxima ineficiencia) y 1 (máxima eficiencia):</p>
+<ul>
+<li><p>Eficiencia técnica<span class="math inline">\(=Ob/OA\)</span>: en qué medida la empresa podría reducir sus inputs manteniendo el mismo output.</p></li>
+<li><p>Eficiencia asignativa<span class="math inline">\(=Oc/Ob\)</span>: si, conocidos los precios de los factores, la combinación empleada es la óptima.</p></li>
+<li><p>Eficiencia económica<span class="math inline">\(=\)</span> eficiencia técnica <span class="math inline">\(\times\)</span> eficiencia asignativa.</p></li>
+</ul>
+<p>El DEA admite además opciones metodológicas relevantes: puede orientarse a minimizar inputs dado el output, o a maximizar el output dados los inputs (equivalentes solo bajo rendimientos constantes a escala); puede suponer rendimientos constantes o variables a escala; y, con datos de panel, puede calcularse un índice de Malmquist de productividad total de los factores para el análisis dinámico<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a>.</p>
+<p>En aplicaciones reales, el DEA se ha utilizado extensamente para medir la eficiencia de operadores de transporte en autobús: <span class="citation" data-cites="6_VenkateshKushwaha2018">Venkatesh y Kushwaha (<a href="01-tema-a1.html#ref-6_VenkateshKushwaha2018" role="doc-biblioref">2018</a>)</span> estudian la eficiencia económica de empresas de autobuses en la India, encontrando ineficiencias significativas; <span class="citation" data-cites="6_Odeck2006">Odeck (<a href="01-tema-a1.html#ref-6_Odeck2006" role="doc-biblioref">2006</a>)</span> estima el impacto de la congestión, el tipo de propiedad, la escala y la localización sobre la eficiencia de operadores noruegos; y <span class="citation" data-cites="6_Karlaftis2004">Karlaftis (<a href="01-tema-a1.html#ref-6_Karlaftis2004" role="doc-biblioref">2004</a>)</span> evalúa operadores urbanos en Estados Unidos, encontrando que la mayoría opera bajo rendimientos decrecientes a escala.</p>
+</section>
+<section id="a.7.-la-función-de-costes-translogarítmica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-la-función-de-costes-translogarítmica">6.A.7.&nbsp;&nbsp;La función de costes translogarítmica</h3>
+<p>Como ya se ha señalado, las funciones de coste vistas hasta ahora —Leontief, sustitutos perfectos, Cobb-Douglas— imponen de antemano una elasticidad de sustitución fija entre factores y una elasticidad de escala constante en todo punto. La función de costes translogarítmica (<em>transcendental logarithmic</em>), propuesta por&nbsp;<span class="citation" data-cites="6_ChristensenJorgensonLau1973">(<a href="01-tema-a1.html#ref-6_ChristensenJorgensonLau1973" role="doc-biblioref">Christensen et&nbsp;al. 1973</a>)</span>, es una forma funcional flexible que no impone ninguna de las dos restricciones a priori: es una aproximación de segundo orden al logaritmo de la función de costes,</p>
+<p><span class="math display">\[\ln C(w,y)=\alpha_{0}+\sum_{i}\alpha_{i}\ln w_{i}+\alpha_{y}\ln y+\frac{1}{2}\beta_{yy}(\ln y)^{2}+\sum_{i}\beta_{iy}\ln w_{i}\ln y+\frac{1}{2}\sum_{i}\sum_{j}\beta_{ij}\ln w_{i}\ln w_{j}\]</span></p>
+<p>sujeta a las restricciones de simetría&nbsp;<span class="math inline">\(\beta_{ij}=\beta_{ji}\)</span> y de homogeneidad de grado 1 en precios,&nbsp;<span class="math inline">\(\sum_{i}\alpha_{i}=1\)</span>,&nbsp;<span class="math inline">\(\sum_{j}\beta_{ij}=0\,\forall i\)</span>,&nbsp;<span class="math inline">\(\sum_{i}\beta_{iy}=0\)</span>&nbsp;<span class="citation" data-cites="6_Varian1992">(<a href="01-tema-a1.html#ref-6_Varian1992" role="doc-biblioref">Varian 1992</a>)</span>.</p>
+<p>Por el Lema de Shephard, las participaciones de cada factor en el coste total son lineales en los parámetros,</p>
+<p><span class="math display">\[s_{i}(w,y)=\alpha_{i}+\sum_{j}\beta_{ij}\ln w_{j}+\beta_{iy}\ln y,\]</span></p>
+<p>lo que permite estimar el sistema completo (función de costes + ecuaciones de participación) econométricamente sin imponer la forma de la tecnología subyacente.</p>
+<section id="caso-particular" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="caso-particular">Caso particular</h5>
+<p>Si&nbsp;<span class="math inline">\(\beta_{ij}=0\)</span> para todo&nbsp;<span class="math inline">\(i,j\)</span>,&nbsp;<span class="math inline">\(\beta_{iy}=0\)</span> y&nbsp;<span class="math inline">\(\beta_{yy}=0\)</span>, la translog se reduce exactamente a una Cobb-Douglas —es la única de las tecnologías vistas en 6.A.2 que queda anidada de forma exacta—. Leontief y sustitutos perfectos no lo están: por su carácter de aproximación local de segundo orden a una tecnología arbitraria, la translog puede aproximar su comportamiento en el entorno de un punto dado, pero no los reproduce de forma exacta y global (para eso existe una forma funcional flexible distinta, la Leontief generalizada de Diewert).</p>
+</section>
+<section id="por-qué-sí-genera-rendimientos-mixtos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="por-qué-sí-genera-rendimientos-mixtos">Por qué sí genera rendimientos mixtos</h5>
+<p>A diferencia del caso restringido anterior, cuando&nbsp;<span class="math inline">\(\beta_{yy}\)</span> y&nbsp;<span class="math inline">\(\beta_{iy}\)</span> son distintos de cero la elasticidad de escala deja de ser constante y pasa a depender del nivel de producción —precisamente la propiedad que Leontief, Cobb-Douglas y sustitutos perfectos no podían ofrecer en 6.A.2—, permitiendo generar de forma nativa una curva de&nbsp;<span class="math inline">\(CMe_{lp}\)</span> en U sin necesidad de recurrir a la envolvente de curvas de corto plazo.</p>
+</section>
+<section id="aplicación-empírica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="aplicación-empírica">Aplicación empírica</h5>
+<p><span class="citation" data-cites="6_CavesChristensenTretheway1984">Caves et&nbsp;al. (<a href="01-tema-a1.html#ref-6_CavesChristensenTretheway1984" role="doc-biblioref">1984</a>)</span> la emplean para separar economías de densidad de economías de escala en el sector aéreo estadounidense, encontrando economías de densidad sustanciales —clave para explicar la eficiencia de las redes en estrella (<em>hub-and-spoke</em>)— frente a economías de escala mucho más limitadas a nivel de red completa.</p>
+</section>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-6_CavesChristensenTretheway1984" class="csl-entry" role="listitem">
+Caves, Douglas W., Laurits R. Christensen, y Michael W. Tretheway. 1984. <span>«Economies of Density versus Economies of Scale: Why Trunk and Local Service Airline Costs Differ»</span>. <em>The RAND Journal of Economics</em> 15 (4): 471-89.
+</div>
+<div id="ref-6_ChristensenJorgensonLau1973" class="csl-entry" role="listitem">
+Christensen, Laurits R., Dale W. Jorgenson, y Lawrence J. Lau. 1973. <span>«Transcendental Logarithmic Production Frontiers»</span>. <em>The Review of Economics and Statistics</em> 55 (1): 28-45.
+</div>
+<div id="ref-6_Coelli1996" class="csl-entry" role="listitem">
+Coelli, Timothy J. 1996. <em>A Guide to <span>DEAP</span> Version 2.1: <span>A</span> Data Envelopment Analysis (Computer) Program</em>. CEPA Working Paper 96/08. Centre for Efficiency; Productivity Analysis (CEPA), University of New England.
+</div>
+<div id="ref-6_Karlaftis2004" class="csl-entry" role="listitem">
+Karlaftis, Matthew G. 2004. <span>«A <span>DEA</span> Approach for Evaluating the Efficiency and Effectiveness of Urban Transit Systems»</span>. <em>European Journal of Operational Research</em> 152: 354-64.
+</div>
+<div id="ref-6_Koutsoyiannis1979" class="csl-entry" role="listitem">
+Koutsoyiannis, A. 1979. <em>Modern Microeconomics</em>. 2nd ed. Macmillan.
+</div>
+<div id="ref-6_Leibenstein" class="csl-entry" role="listitem">
+Leibenstein, Harvey. 1966. <span>«<span>Allocative Efficiency vs. “X-Efficiency”</span>»</span>. <em>The American Economic Review</em> 56 (3): 392-415. <a href="http://www.jstor.org/stable/1823775">http://www.jstor.org/stable/1823775</a>.
+</div>
+<div id="ref-6_Nicholson2005" class="csl-entry" role="listitem">
+Nicholson, Walter. 2005. <em>Teor<span>ı́</span>a microecon<span>ó</span>mica. Principios b<span>á</span>sicos y ampliaciones: principios b<span>á</span>sicos y ampliaciones</em>. Editorial Paraninfo.
+</div>
+<div id="ref-6_Odeck2006" class="csl-entry" role="listitem">
+Odeck, James. 2006. <span>«Congestion, Ownership, Region of Operation, and Scale: <span>T</span>heir Impact on Bus Operator Performance in <span>N</span>orway»</span>. <em>Socio-Economic Planning Sciences</em> 40 (1): 52-69.
+</div>
+<div id="ref-6_Pindyck2013" class="csl-entry" role="listitem">
+Pindyck, Robert, Daniel Rubinfeld, y Esther Rabasco. 2013. <em>Microeconomia</em>. Pearson Italia.
+</div>
+<div id="ref-6_Samuelson1947" class="csl-entry" role="listitem">
+Samuelson, Paul Anthony. 1947. <em><span>Foundations of Economic Analysis</span></em>. Harvard University Press.
+</div>
+<div id="ref-6_Stigler1939" class="csl-entry" role="listitem">
+Stigler, George. 1939. <span>«<span>Production and Distribution in the Short Run</span>»</span>. <em>Journal of Political Economy</em> 47 (3): 305-27. <a href="http://www.jstor.org/stable/1825652">http://www.jstor.org/stable/1825652</a>.
+</div>
+<div id="ref-6_Stigler1976" class="csl-entry" role="listitem">
+Stigler, George J. 1976. <span>«The <span>X</span>istence of <span>X</span>-Efficiency»</span>. <em>American Economic Review</em> 66 (1): 213-16.
+</div>
+<div id="ref-6_Varian1992" class="csl-entry" role="listitem">
+Varian, Hal R. 1992. <em>Microeconomic Analysis</em>. 3rd ed. W. W. Norton <span>&amp;</span> Company.
+</div>
+<div id="ref-6_Varian2010" class="csl-entry" role="listitem">
+Varian, Hal R. 2010. <em>Microeconom<span>ı́</span>a intermedia: un enfoque actual</em>.
+</div>
+<div id="ref-6_VenkateshKushwaha2018" class="csl-entry" role="listitem">
+Venkatesh, Anand, y Shivam Kushwaha. 2018. <span>«Short and Long-Run Cost Efficiency in <span>I</span>ndian Public Bus Companies Using Data Envelopment Analysis»</span>. <em>Socio-Economic Planning Sciences</em> 61: 29-36.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>La empresa se enfrenta a tres tipos de restricciones: técnicas, estudiadas por la teoría de la producción; económicas, estudiadas por la teoría de costes; y de mercado, estudiadas por la teoría de la organización industrial.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Los costes, definidos como el gasto realizado para la adquisición o producción de un bien o servicio, se distinguen entre los</p>
+<ul>
+<li><p>Costes contables, aquellos obtenidos de la aplicación de convenciones que permiten la obtención de los estados de resultados de la empresa válidos para cuestiones fiscales y de contabilidad de la empresa.</p></li>
+<li><p>Costes económicos, ligados al uso de recursos económicos para la producción, que incluyen el coste de oportunidad, es decir, el valor de la mejor alternativa a la que la empresa renuncia al destinar sus recursos a un uso concreto.</p></li>
+</ul>
+<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn3"><p>En este tema nos vamos a centrar en la teoría de los costes (es decir, en las restricciones económicas a las que se enfrenta la empresa), muy importante para:</p>
+<ul>
+<li><p>Completar las decisiones de producción de la empresa, pues el concepto de eficiencia técnica analizado en la teoría de la producción no es suficiente para caracterizar la decisión de la empresa.</p></li>
+<li><p>Determinar la estructura de mercado, pues la estructura de costes es uno de los factores determinantes de la estructura de mercado.</p></li>
+</ul>
+<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn4"><p>La intuición es que, si una empresa con más presupuesto pasa de una técnica artesanal a otra automatizada, puede acabar usando menos trabajo poco cualificado aunque su coste total haya aumentado. Ese factor se comporta como inferior.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>No obstante, el punto exacto de la senda de expansión en el que se sitúe la empresa nos lo mostrará la teoría de los mercados.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>La senda de expansión puede ser una curva o una recta (en las funciones homotéticas –por ejemplo, Cobb-Douglas– es siempre una recta), pero siempre será una isoclina (pues une puntos con la misma pendiente, concretamente con pendiente <span class="math inline">\(\text{–}      w_{i}/w_{j}\)</span>).<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>No decreciente en “<span class="math inline">\(w_{i}\)</span>, <span class="math inline">\(w_{j}\)</span>” y estrictamente creciente en “Q” (ya que, si con el mismo coste pudiésemos conseguir más producción, no estaríamos maximizando beneficios).<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>El incremento del coste será mayor cuanto menor sea la sustituibilidad de los factores (es decir, cuanto menor sea la elasticidad de sustitución de los factores, <span class="math inline">\(\sigma\)</span>). Una alta elasticidad de sustitución implica, pues, una mayor concavidad (y por ende menor será el efecto de los cambios en el precio de un factor sobre el coste total).<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Los costes variables incluyen los costes de materias primas, de mano de obra directa y los gastos de funcionamiento, tales como combustibles, reparaciones ordinarias y mantenimiento rutinario.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Ello se debe a que inicialmente el factor variable genera rendimientos marginales (es decir, <span class="math inline">\(PMg\)</span>) crecientes (es decir, coste marginal decreciente), pero llegado un punto el factor variable genera rendimientos marginales decrecientes (es decir, coste marginal creciente).<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>La ley de las proporciones variables, enunciada por Turgot en 1767 como respuesta teórica a un ensayo fisiócrata sobre la agricultura francesa. De acuerdo con esta ley, dado un factor fijo (digamos, tierra), las primeras unidades del factor variable (trabajo) aumentan la producción cada vez más, por lo que el coste marginal es inicialmente decreciente (y la curva de costes, cóncava), pero llegará un punto en que cada unidad adicional añadirá menos producción que la anterior, y el coste marginal pasará a ser creciente (la curva de costes se vuelve convexa).<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Los costes fijos incluyen los sueldos de personal fijo –generalmente personal administrativo–, depreciación de maquinaria, gastos de amortización de edificios y reparaciones y gastos de mantenimiento y reparación de los terrenos –si estos existen–. Además, otro elemento que puede ser tratado como un coste fijo es el beneficio normal, que retribuye tanto el capital aportado como la asunción de riesgos.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>Como se trata de una derivada, gráficamente se obtiene trazando las tangentes a cada uno de los puntos de la función de coste variable o de coste total (ya que ésta se obtiene desplazando paralelamente el coste variable por el coste fijo); los ángulos van disminuyendo hasta el punto de inflexión y a partir de ahí empiezan a crecer pasando por el mínimo del coste medio variable y del coste medio total, ya que para esos niveles de producción la tangente (que, como veíamos, determina el coste marginal) coincide con la secante (es decir, con el rayo vector, que determina el coste medio).<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Si, aprovechando el gráfico, vamos más allá de la teoría de los costes y nos adentramos en la teoría de los mercados, podemos añadir que el mínimo del coste variable medio se denomina mínimo de explotación, pues si suponemos competencia perfecta, en ese punto los ingresos cubren los costes variables, por lo que la empresa estará indiferente entre producir y cerrar ya que en ambos casos pierde los costes fijos. El mínimo de explotación se corresponde con el margen extensivo u óptimo técnico de la teoría de la producción.</p>
+<p>Es importante no hablar en el presente tema de “mínimo de explotación”, “competencia perfecta”, “beneficios”, “pérdidas”, “oferta”, “precios del producto”, etc., pues suponen ir un paso más allá ya que todos ellos son términos propios de la teoría de los mercados (y, si se utilizan para aprovechar el gráfico y extender la explicación, dejar claro que eso no es teoría de costes, sino un siguiente nivel de análisis: la teoría de los mercados)<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Aprovechando de nuevo el gráfico para adentrarnos en la teoría de los mercados, podemos añadir que el mínimo del coste total medio se denomina óptimo de explotación o umbral de beneficio, pues si suponemos competencia perfecta, en ese punto los ingresos cubren todos los costes, por lo que a partir de ahí se generarán beneficios positivos. A diferencia del mínimo de explotación, el óptimo de explotación no puede asociarse a un punto concreto de la función de producción, pues el mínimo del coste total medio depende también de los costes fijos. Se sitúa siempre dentro de la fase II.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Cuestiones sobre el largo plazo: Es un horizonte de planificación. La empresa hace su planificación de demanda esperada y elige el tamaño de planta y factores productivos óptimos que va a necesitar para maximizar beneficio. No obstante, una vez tomada la decisión y adquirido el capital, este se vuelve fijo y la actividad se produce en el corto plazo. Es decir, el largo plazo se compone de situaciones del corto plazo que la empresa puede elegir. Supone que la función de producción es continua, implica que los factores productivos son perfectamente divisibles, por consiguiente, hay infinitos tamaños de planta, aunque en realidad se dan solamente unos pocos procesos tecnológicos.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>La intuición es que a largo plazo no queda ningún factor fijo con el que “saturar” al factor variable. Lo que encarece la producción de una planta gigantesca no es la falta de espacio, sino la dificultad creciente de coordinarla.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>La intuición es que en el corto plazo, al ser al menos uno de los factores productivos fijo, la capacidad de adaptación de la empresa a la nueva estructura de precios es menor ya que el cambio de la cantidad ofertada solo puede realizarse variando alguno de los factores que sí son variables.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>La intuición es que imprimir diez mil ejemplares de un libro cuesta mucho menos por ejemplar que imprimir cien, porque la preparación de la imprenta se reparte entre más unidades.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>ver más en el anexo<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>La intuición es que una empresa que minimiza costes ya ha elegido la mejor combinación de factores, así que, a partir de ella, crecer escalando todos los factores o hacerlo por la senda óptima tiene, en el margen, el mismo coste.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>No se debe confundir la reserva de capacidad con el exceso de capacidad de la teoría tradicional. La reserva de capacidad está planificada por el empresario, y el exceso de capacidad lo puede determinar el mercado, pero no está planificado. En la teoría tradicional, se diseña la empresa para producir de forma optima en el mínimo de los costes medios variables y si se produce antes del mínimo, aparece el exceso de capacidad. Sin embargo, la reserva de capacidad se planifica y supone costes constantes.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>El hecho de que las <span class="math inline">\(CMe\)</span> disminuyan de forma continua implica la existencia de economías de escala técnicas, pero que se agotan a partir de un punto que llamamos escala mínima eficiente (o escala óptima mínima). Pese a todo, aún podrían disminuir más los costes con nuevas tecnologías, una mejora de la productividad, mayor especialización…<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>Son decrecientes hasta alcanzar un cierto tamaño de planta pero pueden crecer lentamente para escalas muy grandes. No obstante, aunque existan deseconomías gerenciales pueden compensarse con las economías de escala técnicas.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>La intuición es que dos fábricas con las mismas máquinas y los mismos salarios pueden tener costes distintos simplemente porque en una se trabaja con más diligencia que en la otra.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p><span class="citation" data-cites="6_Stigler1976">Stigler (<a href="01-tema-a1.html#ref-6_Stigler1976" role="doc-biblioref">1976</a>)</span> argumenta que la teoría de la ineficiencia X está infundada, porque es eficiente hacer respetar los contratos, hasta que el valor marginal del incremento en la eficiencia se iguale con el coste marginal de supervisión. Sólo recientemente, los economistas han intentado incorporar la ineficiencia X a los modelos de oligopolio.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>Entre los factores que explican la existencia de economías de alcance están: Existencia de inputs públicos, que son aquellos inputs que una vez producido un bien, pueden ser empleados en la producción de otro bien sin coste adicional, y la existencia de inputs que presentan indivisibilidades en la adquisición por parte de la empresa, ejemplo típico es el capital.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>El concepto de subaditividad de costes y su relación con el monopolio natural fue formalizado por Baumol, Panzar y Willig (1982) en su teoría de los mercados contestables, que muestra que la amenaza de entrada puede disciplinar a un monopolio natural incluso sin regulación directa.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>Los rendimientos a escala se miden a través de la elasticidad a escala, <span class="math inline">\(e\)</span>, que es tanto el grado de homogeneidad si la función es homogénea, como la suma de las elasticidades producto<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>Además, no hay que confundir rendimientos a escala con los rendimientos marginales de los que hemos estado hablando en el corto plazo: rendimientos marginales = productividad marginal.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>Tirole (1988) precisa que la distinción entre coste fijo y coste hundido es de grado, no de naturaleza: un coste fijo es hundido solo durante el periodo de compromiso (por ejemplo, la duración de un contrato de alquiler), lo que conecta directamente con la barrera de entrada que generan los costes hundidos en la teoría de la contestabilidad.<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>La intuición es que un mal año puede deberse a una helada y no a una mala gestión. El método intenta separar la mala suerte de la ineficiencia.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p>El índice de Malmquist compara la eficiencia de una misma empresa entre dos periodos calculando la distancia de cada observación a las fronteras eficientes estimadas en ambos momentos. Su valor se descompone en dos factores: el cambio técnico (desplazamiento de la propia frontera eficiente, por ejemplo, por innovación tecnológica) y el cambio en la eficiencia relativa de la empresa (su acercamiento o alejamiento de la frontera vigente en cada periodo), que a su vez puede subdividirse en cambio en la eficiencia técnica pura y cambio en la eficiencia de escala. Un valor superior a 1 indica ganancia de productividad total de los factores entre ambos periodos.<a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./05-tema-a5.html" class="pagination-link" aria-label="Teoría de la producción">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./07-tema-a7.html" class="pagination-link" aria-label="El modelo de competencia perfecta">
+        <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

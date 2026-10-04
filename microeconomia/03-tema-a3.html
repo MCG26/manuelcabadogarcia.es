@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Cómo elige el consumidor racional: las preferencias y sus axiomas, la función de utilidad, el problema de maximización y la obtención de la demanda marshalliana.">
+
+<title>Tema A3. Teoría de la demanda del consumidor | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./04-tema-a4.html" rel="next">
+<link href="./02-tema-a2.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A3. Teoría de la demanda del consumidor | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Cómo elige el consumidor racional: las preferencias y sus axiomas, la función de utilidad, el problema de maximización y la obtención de la demanda marshalliana.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A3. Teoría de la demanda del consumidor | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Cómo elige el consumidor racional: las preferencias y sus axiomas, la función de utilidad, el problema de maximización y la obtención de la demanda marshalliana.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A3. Teoría de la demanda del consumidor. Axiomas sobre las preferencias, función de utilidad y función de demanda marshalliana. Otros desarrollos.",
+ "alternateName": "Teoría de la demanda del consumidor",
+ "description": "Cómo elige el consumidor racional: las preferencias y sus axiomas, la función de utilidad, el problema de maximización y la obtención de la demanda marshalliana.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/03-tema-a3.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./03-tema-a3.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">3.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#enfoque-cardinal-de-la-teoría-neoclásica" id="toc-enfoque-cardinal-de-la-teoría-neoclásica" class="nav-link" data-scroll-target="#enfoque-cardinal-de-la-teoría-neoclásica"><span class="header-section-number">3.2</span> Enfoque cardinal de la teoría neoclásica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#enfoque-ordinal-de-la-teoría-neoclásica" id="toc-enfoque-ordinal-de-la-teoría-neoclásica" class="nav-link" data-scroll-target="#enfoque-ordinal-de-la-teoría-neoclásica"><span class="header-section-number">3.3</span> Enfoque ordinal de la teoría neoclásica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></a>
+  <ul class="collapse">
+  <li><a href="#conjunto-de-elección" id="toc-conjunto-de-elección" class="nav-link" data-scroll-target="#conjunto-de-elección">Conjunto de elección</a></li>
+  <li><a href="#preferencias" id="toc-preferencias" class="nav-link" data-scroll-target="#preferencias">Preferencias</a></li>
+  <li><a href="#la-función-de-utilidad" id="toc-la-función-de-utilidad" class="nav-link" data-scroll-target="#la-función-de-utilidad">La función de utilidad</a></li>
+  <li><a href="#curvas-de-indiferencia" id="toc-curvas-de-indiferencia" class="nav-link" data-scroll-target="#curvas-de-indiferencia">Curvas de indiferencia</a></li>
+  <li><a href="#restricción-presupuestaria" id="toc-restricción-presupuestaria" class="nav-link" data-scroll-target="#restricción-presupuestaria">Restricción presupuestaria</a></li>
+  <li><a href="#equilibrio-del-consumidor" id="toc-equilibrio-del-consumidor" class="nav-link" data-scroll-target="#equilibrio-del-consumidor">Equilibrio del consumidor</a></li>
+  </ul></li>
+  <li><a href="#estática-comparativa" id="toc-estática-comparativa" class="nav-link" data-scroll-target="#estática-comparativa"><span class="header-section-number">3.4</span> Estática comparativa <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></a>
+  <ul class="collapse">
+  <li><a href="#variaciones-en-los-precios" id="toc-variaciones-en-los-precios" class="nav-link" data-scroll-target="#variaciones-en-los-precios">Variaciones en los precios</a></li>
+  <li><a href="#variaciones-de-la-renta-monetaria" id="toc-variaciones-de-la-renta-monetaria" class="nav-link" data-scroll-target="#variaciones-de-la-renta-monetaria">Variaciones de la renta monetaria</a></li>
+  </ul></li>
+  <li><a href="#condiciones-de-un-sistema-de-demanda-completo" id="toc-condiciones-de-un-sistema-de-demanda-completo" class="nav-link" data-scroll-target="#condiciones-de-un-sistema-de-demanda-completo"><span class="header-section-number">3.5</span> Condiciones de un sistema de demanda completo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto 30 segundos">1'30"</span></a></li>
+  <li><a href="#demanda-de-mercado" id="toc-demanda-de-mercado" class="nav-link" data-scroll-target="#demanda-de-mercado"><span class="header-section-number">3.6</span> Demanda de mercado <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">3.7</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-enfoque-cardinal-de-la-teoría-neoclásica" id="toc-a.1.-enfoque-cardinal-de-la-teoría-neoclásica" class="nav-link" data-scroll-target="#a.1.-enfoque-cardinal-de-la-teoría-neoclásica">3.A.1.&nbsp;&nbsp;Enfoque cardinal de la teoría neoclásica</a></li>
+  <li><a href="#a.2.-tipos-de-función-de-utilidad" id="toc-a.2.-tipos-de-función-de-utilidad" class="nav-link" data-scroll-target="#a.2.-tipos-de-función-de-utilidad">3.A.2.&nbsp;&nbsp;Tipos de función de utilidad</a></li>
+  <li><a href="#a.3.-preferencias-lexicográficas" id="toc-a.3.-preferencias-lexicográficas" class="nav-link" data-scroll-target="#a.3.-preferencias-lexicográficas">3.A.3.&nbsp;&nbsp;Preferencias lexicográficas</a></li>
+  <li><a href="#a.4.-teoría-de-la-preferencia-revelada" id="toc-a.4.-teoría-de-la-preferencia-revelada" class="nav-link" data-scroll-target="#a.4.-teoría-de-la-preferencia-revelada">3.A.4.&nbsp;&nbsp;Teoría de la preferencia revelada</a></li>
+  <li><a href="#a.5.-métodos-de-los-precios-hedónicos" id="toc-a.5.-métodos-de-los-precios-hedónicos" class="nav-link" data-scroll-target="#a.5.-métodos-de-los-precios-hedónicos">3.A.5.&nbsp;&nbsp;Métodos de los precios hedónicos</a></li>
+  <li><a href="#a.6.-la-función-de-producción-de-los-hogares-de-becker" id="toc-a.6.-la-función-de-producción-de-los-hogares-de-becker" class="nav-link" data-scroll-target="#a.6.-la-función-de-producción-de-los-hogares-de-becker">3.A.6.&nbsp;&nbsp;La función de producción de los hogares de Becker</a></li>
+  <li><a href="#a.7.-el-problema-de-maximización-de-la-utilidad-mediante-el-método-de-lagrange" id="toc-a.7.-el-problema-de-maximización-de-la-utilidad-mediante-el-método-de-lagrange" class="nav-link" data-scroll-target="#a.7.-el-problema-de-maximización-de-la-utilidad-mediante-el-método-de-lagrange">3.A.7.&nbsp;&nbsp;El problema de maximización de la utilidad mediante el método de Lagrange</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor. Axiomas sobre las preferencias, función de utilidad y función de demanda marshalliana. Otros desarrollos.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">3.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Todos elegimos qué comprar cada día, casi sin pensarlo. Pero, ¿por qué compramos lo que compramos? En este sentido, la Teoría de la Demanda del consumidor pretende explicar, a través de la función de demanda, el comportamiento del consumidor racional en el mercado, en un contexto competitivo y con información perfecta.</p>
+<p>Su objetivo es responder a dos preguntas principales:</p>
+<ol type="1">
+<li><p>¿Qué bienes y que cantidades adquieren los consumidores?</p></li>
+<li><p>¿Cómo se determinan sus preferencias y qué factores determinan las variaciones en las decisiones de los mismos cuando cambian los parámetros del problema?</p></li>
+</ol>
+<p>Esta teoría se encuadra dentro de la Microeconomía, que estudia el comportamiento de los distintos agentes (consumidores y empresas) cuya interacción en el mercado determina la asignación de los recursos escasos.</p>
+<p>Históricamente, la revolución marginalista y su continuación, la Economía Neoclásica, son las primeras escuelas de pensamiento que tratan de encontrar formas de demanda que resuman el concepto del consumidor aplicando el concepto de utilidad<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> –cuyo primer antecedente riguroso se remonta a Bernoulli<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>–, acuñado posteriormente por autores como Bentham y Gossen<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p>Las primeras aportaciones proceden del enfoque cardinal de Marshall que, por apoyarse en supuestos excesivamente restrictivos, dará paso al enfoque ordinal, donde la utilidad es medida ordinalmente mediante la introducción del concepto de preferencias a partir de las aportaciones de Pareto, Hicks, Slutsky y Fisher.</p>
+<p>Por consiguiente, el objetivo de esta exposición será el análisis de la teoría neoclásica de la demanda del consumidor<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> basada en el enfoque ordinal a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Enfoque cardinal de la teoría neoclásica.</p></li>
+<li><p>Enfoque ordinal de la teoría neoclásica.</p></li>
+<li><p>Estática comparativa, para analizar como varía la demanda al variar precios y renta</p></li>
+<li><p>Condiciones de un sistema de demanda completo.</p></li>
+<li><p>Demanda de mercado.</p></li>
+</ol>
+</section>
+<section id="enfoque-cardinal-de-la-teoría-neoclásica" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="enfoque-cardinal-de-la-teoría-neoclásica"><span class="header-section-number">3.2</span> Enfoque cardinal de la teoría neoclásica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Antes de que se impusiera el enfoque ordinal, Marshall desarrolló un enfoque cardinal de la demanda, asentado en una función de utilidad medible, aditiva, separable y cuasilineal respecto al dinero: <span id="eq-a-03-1"><span class="math display">\[U\left(x_{1},x_{2},M\right)=u\left(x_{1}\right)+u\left(x_{2}\right)+u\left(M\right) \tag{3.1}\]</span></span> donde la utilidad total del consumidor es simplemente la suma de la utilidad que reporta cada bien y la del dinero no gastado, sin que exista interacción alguna entre ellas –de ahí que se diga aditiva y separable–. Bajo el supuesto de que la utilidad marginal del dinero es constante, resolviendo el problema de maximización se obtiene que el consumidor iguala la utilidad marginal de cada bien a su precio,<span class="math inline">\(u'\left(x_{i}\right)=p_{i}\)</span>, de modo que la demanda de cada bien depende únicamente de su propio precio.</p>
+<p>Este enfoque fue superado por resultar excesivamente restrictivo:</p>
+<ol type="1">
+<li><p>Considera los bienes independientes entre sí, impidiendo ver su grado de complementariedad o sustituibilidad.</p></li>
+<li><p>La utilidad marginal del dinero constante es poco realista<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> y, además, elimina el efecto renta y el efecto sustitución cruzado.</p></li>
+<li><p>Exige un conocimiento excesivo por parte de los consumidores.</p></li>
+<li><p>Sobre todo, este enfoque utilitarista añade a la cardinalidad –que solo permite comparar diferencias de utilidad para un mismo individuo– el supuesto, distinto y adicional, de comparabilidad interpersonal de utilidades: no basta con que cada individuo pueda ordenar sus propias cestas, sino que haría falta poder afirmar que un mismo euro reporta la misma satisfacción a dos personas distintas, algo que no es observable ni verificable empíricamente y que introduce de matute juicios de valor en lo que debería ser un análisis positivo.</p></li>
+</ol>
+<p>El enfoque ordinal prescindirá por completo de esa exigencia: bastará con que cada individuo sea capaz de ordenar sus propias preferencias, sin necesidad de medir ni comparar la satisfacción entre distintos consumidores –es precisamente ese punto de partida, mucho menos restrictivo, el que se desarrolla a continuación–.</p>
+</section>
+<section id="enfoque-ordinal-de-la-teoría-neoclásica" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="enfoque-ordinal-de-la-teoría-neoclásica"><span class="header-section-number">3.3</span> Enfoque ordinal de la teoría neoclásica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></h2>
+<p>El problema ordinal de teoría de demanda del consumidor se divide en tres partes principalmente:</p>
+<ol type="1">
+<li><p>Determinar el conjunto de consumo.</p></li>
+<li><p>Determinación de un criterio para evaluar los planes de consumo: preferencias, para una posterior construcción de una Función de Utilidad que se analizará a partir de curvas de indiferencia.</p></li>
+<li><p>Determinar los planes de consumo a los que puede aspirar un consumidor dada su restricción presupuestaria, completando así el problema de demanda del consumidor. Dado un conjunto de cestas factibles y unos recursos, el consumidor elegirá aquella cesta que mejor se acomode a sus necesidades.</p></li>
+</ol>
+<p>Esta teoría parte de los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Racionalidad del consumidor ya que el consumidor maximiza su utilidad.</p></li>
+<li><p>Utilidad ordinal, el consumidor puede ordenar las cestas en función del beneficio que le reportan.</p></li>
+<li><p>Solo ordena las preferencias, nunca mide la utilidad.</p></li>
+<li><p>Su utilidad depende de la cantidad consumida de cada mercancía.</p></li>
+<li><p>Además de información perfecta, contexto estático, la decisión de consumo se toma de manera aislada de otras decisiones como ocio o trabajo, se consideran bienes de consumo final.</p></li>
+</ol>
+<section id="conjunto-de-elección" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="conjunto-de-elección">Conjunto de elección</h3>
+<p>El enfoque ordinal de la utilidad basa esa comparación en el concepto de preferencias. Solo se exige que los individuos puedan ordenar las distintas cestas de bienes de un conjunto de elección, <span class="math inline">\(X\)</span>, que se supone:</p>
+<ul>
+<li><p>No vacío: Tiene que consumir algo</p></li>
+<li><p>Acotado inferiormente: por la condición de no negatividad del consumo.</p></li>
+<li><p>Cerrado inferiormente: los límites pertenecen al conjunto (que el conjunto sea cerrado implica que los límites se incluyen en el mismo. El límite inferior se incluye en el conjunto, el superior hasta que no introduzcamos la restricción presupuestaria no se considera).</p></li>
+<li><p>Convexo<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>. Cualquier combinación lineal de cestas que se encuentren en el conjunto también pertenecerán al conjunto.</p></li>
+</ul>
+<p>Además, se supone que la utilidad total depende de las cantidades consumidas: <span id="eq-a-03-2"><span class="math display">\[u=f\left(x_{1},\ldots,x_{n}\right) \tag{3.2}\]</span></span></p>
+</section>
+<section id="preferencias" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="preferencias">Preferencias</h3>
+<p>Para poder establecer una adecuación dentro del conjunto de elección, se introduce la relación binaria “es al menos tan bueno como”, <span class="math inline">\(\succsim\)</span>. Para limitar la discrecionalidad de las preferencias<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> y construir una función de utilidad se introducen una serie de axiomas respecto al consumidor:</p>
+<ul>
+<li><p><strong>Axioma 1</strong> Completitud, el consumidor es capaz de comparar cualquier par de cestas:<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> para todo&nbsp;<span class="math inline">\(x,y\in X\)</span> se tiene que <span class="math inline">\(x\succsim y\)</span> o <span class="math inline">\(y\succsim x\)</span> o ambas.</p></li>
+<li><p><strong>Axioma 2</strong> Transitividad, para todo <span class="math inline">\(x,y,z\in X\)</span>, si <span class="math inline">\(x\succsim y\)</span> e <span class="math inline">\(y\succsim z\)</span> entonces <span class="math inline">\(x\succsim z\)</span> , es decir, las preferencias son consistentes</p></li>
+<li><p><strong>Axioma 3</strong> Reflexividad, una cesta es al menos tan buena como ella misma, <span class="math inline">\(x\succsim x\)</span> para todo <span class="math inline">\(x\in X\)</span>. Este axioma permite que ninguna cesta quede fuera del orden del consumidor</p></li>
+</ul>
+<p>Estos 3 axiomas conjuntamente aseguran que el comportamiento del consumidor es racional –son los axiomas de racionalidad– y garantizan un preorden completo, es decir, las diferentes cestas admiten relaciones de preferencia o indiferencia, aunque no garantiza la existencia de una función de utilidad. Esto es, son condición necesaria pero no suficiente para la representación mediante una función de utilidad como, por ejemplo, el orden lexicográfico<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>.</p>
+<p>Por ello será necesario incluir los siguientes axiomas de regularidad:</p>
+<ul>
+<li><strong>Axioma 4</strong> Continuidad, no existen saltos en las preferencias. Evita la posibilidad de comportamientos extremistas: garantiza, junto con el pre-orden completo, que las preferencias admitan alguna función de utilidad continua (Teorema de Debreu)<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>. Matemáticamente, si se prefiere <span class="math inline">\(x\)</span> a <span class="math inline">\(y\)</span> sobre una curva de preferencias, las cantidades similares a <span class="math inline">\(x\)</span> serán también preferidas sobre <span class="math inline">\(y\)</span>, lo que se expresa formalmente como sigue:<span class="math inline">\(\forall x,y,z\in X\)</span> si <span class="math inline">\(x\succsim y\succsim z\)</span> entonces <span class="math inline">\(\exists\lambda\in[0,1]\)</span> tal que <span class="math inline">\(y\sim\lambda\cdot x+\left(1-\lambda\right)z\)</span>.</li>
+</ul>
+<p>Además, los siguientes axiomas de deseabilidad limitarán la forma funcional (para darle una forma concreta, deseable a nuestra función)</p>
+<ul>
+<li><p><strong>Axioma 5</strong> Convexidad estricta, hace referencia a la preferencia por la variedad, por lo que los consumidores no se van a los extremos. A medida que disminuye el consumo de un bien va siendo más difícil sustituirlo.</p></li>
+<li><p><strong>Axioma 6</strong> Monotonía, los individuos prefieren más a menos (“cuanto más mejor”) en cualquier dirección y, como los individuos no se sacian, la función de utilidad será creciente<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>.</p></li>
+<li><p><strong>Axioma 7</strong> Diferenciabilidad, la pendiente de la curva de indiferencia es única en todos sus puntos. Las curvas de indiferencia no tienen puntos angulares o “picos” donde no se pueda derivar. Es decir, admite derivadas de primer orden en cualquier dirección, aportando así la suavidad que la mera continuidad no garantiza<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>.</p></li>
+</ul>
+<p>Estas preferencias son de buen comportamiento<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> y por lo tanto la función de utilidad también lo será.</p>
+<section id="teorema-de-debreu" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="teorema-de-debreu">Teorema de Debreu</h5>
+<p>Si las preferencias de un individuo cumplen los axiomas de completitud, transitividad, reflexividad y continuidad, existe una función de utilidad continua que representa las preferencias. La monotonía no es necesaria para esta existencia –es una propiedad adicional que garantiza que dicha función sea creciente–, pero sí lo es la continuidad, que descarta representaciones como la de las preferencias lexicográficas.</p>
+<p>Además, para evitar en el futuro soluciones de esquina, añadimos el supuesto de que la función (preferencias) sea asintótica a los ejes.</p>
+</section>
+</section>
+<section id="la-función-de-utilidad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-función-de-utilidad">La función de utilidad</h3>
+<p>Por consiguiente, los 7 axiomas anteriores garantizan la representación de las preferencias a través de una función de utilidad, <span class="math inline">\(u\left(x\right)\)</span>, que relaciona cestas de bienes con un índice de utilidad <span id="eq-a-03-3"><span class="math display">\[u:X\rightarrow\mathbb{R}/x\succsim y\Leftrightarrow u\left(x\right)\geq u\left(y\right) \tag{3.3}\]</span></span> <a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
+<section id="propiedades" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="propiedades">Propiedades</h5>
+<p>A su vez, esta función verifica las siguientes propiedades:</p>
+<ol type="1">
+<li><p>Ordenación<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>, de los vectores de consumo (Axiomas de pre-orden completo 1,2, y 3), mediante una representación numérica de la ordenación de preferencias individual de forma que las que se prefieran tengan un número más alto.</p></li>
+<li><p>Continua, por serlo las preferencias Axioma 4.</p></li>
+<li><p>Dos veces diferenciable –un supuesto adicional al Axioma 7, que por sí solo solo garantiza diferenciabilidad de primer orden–, lo que facilita la obtención de la cesta óptima de los agentes y permite aplicar las condiciones de segundo orden, realizar la estática comparativa de la demanda mediante el teorema de la función implícita (de donde se deriva la ecuación de Slutsky), comprobar formalmente la RMS decreciente y calcular elasticidades de sustitución.</p></li>
+<li><p>Monótona y creciente, por la monotonía de las preferencias (Axioma 6). La derivada de la función respecto a los bienes es positiva siempre, lo cual implica que no hay males.</p></li>
+<li><p>Estrictamente cuasicóncava<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>, por la convexidad de las preferencias Axioma 5. Garantiza el cumplimiento de las condiciones de segundo orden en el problema de maximización de utilidad.</p></li>
+</ol>
+</section>
+<section id="función-de-utilidad-en-un-plano-de-3-dimensiones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="función-de-utilidad-en-un-plano-de-3-dimensiones">Función de utilidad en un plano de 3 dimensiones</h5>
+<p>Gráficamente, en un plano de utilidad, <span class="math inline">\(u\)</span>, bien <span class="math inline">\(x\)</span> y bien <span class="math inline">\(y\)</span> como el de la <a href="#fig-3-funcion-de-utilidad-en-3-dimensiones" class="quarto-xref">Figura&nbsp;<span>3.1</span></a> se representan la función de utilidad para las combinaciones de consumo de ambos bienes lo que da lugar a la región de dicha función de utilidad.</p>
+<div id="fig-3-funcion-de-utilidad-en-3-dimensiones" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Función de utilidad en 3 dimensiones">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-funcion-de-utilidad-en-3-dimensiones-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.1: Función de utilidad en 3 dimensiones
+</figcaption>
+<div aria-describedby="fig-3-funcion-de-utilidad-en-3-dimensiones-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-funcion-de-utilidad-en-3d.svg" class="img-fluid figure-img" alt="Función de utilidad en 3 dimensiones">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="curvas-de-indiferencia" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="curvas-de-indiferencia">Curvas de indiferencia</h3>
+<p>Sin embargo, para simplificar la representación gráfica de la función de utilidad en el caso de cestas con dos bienes, se puede realizar en el plano cortes horizontales a la función de utilidad para obtener las curvas de nivel, como se observa en la <a href="#fig-3-mapa-de-curvas" class="quarto-xref">Figura&nbsp;<span>3.2</span></a>, en un plano de <span class="math inline">\(x\)</span> e <span class="math inline">\(y\)</span>. Estas curvas de nivel son las denominadas curvas de indiferencia, introducidas por <span class="citation" data-cites="3_Edgeworth">Edgeworth (<a href="01-tema-a1.html#ref-3_Edgeworth" role="doc-biblioref">1881</a>)</span> y desarrolladas por <span class="citation" data-cites="3_Pareto1906">Pareto (<a href="01-tema-a1.html#ref-3_Pareto1906" role="doc-biblioref">1906</a>)</span> y Hicks .</p>
+<div id="fig-3-mapa-de-curvas" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Mapa de curvas de indiferencia">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-mapa-de-curvas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.2: Mapa de curvas de indiferencia
+</figcaption>
+<div aria-describedby="fig-3-mapa-de-curvas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-mapa-curvas-de-indiferencia.svg" class="img-fluid figure-img" alt="Mapa de curvas de indiferencia">
+</div>
+</figure>
+</div>
+<section id="curvas-de-indiferencia-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curvas-de-indiferencia-1">Curvas de indiferencia</h5>
+<p>Las curvas de indiferencia se definen como el lugar geométrico de combinaciones de bienes –cestas– que proporcionan el mismo nivel de utilidad –son indiferentes entre sí–. Cada curva de indiferencia tiene un nivel de utilidad asociado: <span class="math inline">\(u\left(x,y\right)=\bar{u}\)</span>.</p>
+</section>
+<section id="propiedades-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="propiedades-1">Propiedades</h5>
+<p>A su vez, las curvas de indiferencia tienen las siguientes propiedades:</p>
+<ol type="1">
+<li><p>Ubicuidad: existen infinitas curvas de indiferencia, lo cual implica que por cualquier espacio del plano pasas una curva de indiferencia.</p></li>
+<li><p>Las curvas más alejadas del origen significan una mayor utilidad</p></li>
+<li><p>No intersección: Las curvas de un mismo individuo nunca se cruzan, por la transitividad de las preferencias.. Si lo hicieran, una misma cesta tendría 2 niveles de utilidad, lo cual sería incoherente.</p></li>
+<li><p>Continuidad, las curvas de indiferencia son continuas por la continuidad de la función de utilidad, reflejando que pequeñas variaciones en bienes no alteran bruscamente las preferencias.</p></li>
+<li><p>No existe saciedad local –versión más débil de la monotonía del Axioma 6–, es decir, alrededor de una combinación de bienes siempre hay otra combinación de bienes que reporta más satisfacción.</p></li>
+<li><p>Convexidad, son convexas respecto al origen<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>. La pendiente de la curva de indiferencia disminuye a medida que descendemos a lo largo de la curva. La forma viene determinado por la convexidad de las preferencias, y provoca que la función de utilidad sea cuasi-cóncava.<br>
+Implica el Equilibrio en el consumo y que las combinaciones lineales son preferidas; los agentes preferirán una cesta de mercado equilibrada a otra que contengan mucho de un bien y muy poco del otro.</p></li>
+<li><p>Pendiente negativa (por la propiedad de monotonía<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>) y decreciente viene representada por la relación marginal de sustitución, <span class="math inline">\(RMS_{x,y}\)</span>. Así, para que un consumidor se desprenda de una cantidad de un bien debe ser compensado con más cantidad del otro.</p></li>
+</ol>
+</section>
+<section id="relación-marginal-de-sustitución-rms" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="relación-marginal-de-sustitución-rms">Relación Marginal de Sustitución, <span class="math inline">\(RMS\)</span></h5>
+<p>indica la tasa a la que el consumidor está dispuesto a sustituir un bien por otro manteniendo constante su nivel de utilidad<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a> <span id="eq-a-03-4"><span class="math display">\[RMS_{x,y}=-\left.\dfrac{\partial y}{\partial x}\right|_{\bar{u}}=\dfrac{UMg_{x}}{UMg_{y}} \tag{3.4}\]</span></span> siendo el grado de convexidad de la curva de indiferencia un indicador de la sustituibilidad entre los bienes, que se mide con la elasticidad de sustitución,&nbsp;<span class="math inline">\(\sigma\)</span>, es decir, la variación porcentual de la proporción en que se consumen los dos bienes ante una variación porcentual de la RMS<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a> <span id="eq-3-elasticidad-de-sustitucion"><span class="math display">\[\sigma=\dfrac{\partial\left(y/x\right)}{\partial RMS_{x,y}}\cdot\dfrac{RMS_{x,y}}{y/x} \tag{3.5}\]</span></span> obteniendo diferentes curvas de indiferencia<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a> como se observa en la <a href="#fig-3-tipos-de-funciones-de-utilidad" class="quarto-xref">Figura&nbsp;<span>3.3</span></a>, de esta forma:</p>
+<ul>
+<li><p>Para bienes perfectamente sustitutivos la <span class="math inline">\(RMS\)</span> es constante. Matemáticamente, <span class="math inline">\(\sigma=\infty\)</span><a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a> y la curva de indiferencia sería líneal. Ejemplos de este tipo de bienes son pepsi y coca-cola, café y te o azúcar y sacarina.</p></li>
+<li><p>Para bienes complementarios perfectos –aquellos en los que el aumento en la cantidad consumida de un bien solo aumenta la utilidad si se acompaña del aumento en la cantidad consumida del otro– la RMS no está definida<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a>, dando lugar una función de utilidad tipo Leontief en forma de L con <span class="math inline">\(\sigma=0\)</span>. Ejemplos de bienes son zapatos del pie izquierdo y zapatos del pie derecho, brocas y taladros, raquetas y pelotas de tenis o tornillos y tacos.</p></li>
+<li><p>Entre estos dos casos extremos se encontrarían las curvas de indiferencia con <span class="math inline">\(RMS\)</span> decreciente, es decir, bienes con sustituibilidad limitada. Un ejemplo sería la función de utilidad tipo Cobb-Douglas, con <span class="math inline">\(\sigma=1\)</span>.</p></li>
+</ul>
+<div id="fig-3-tipos-de-funciones-de-utilidad" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Tipos de funciones de utilidad">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-tipos-de-funciones-de-utilidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.3: Tipos de funciones de utilidad
+</figcaption>
+<div aria-describedby="fig-3-tipos-de-funciones-de-utilidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-tipos-de-funciones-de-utilidad.svg" class="img-fluid figure-img" alt="Tipos de funciones de utilidad">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="restricción-presupuestaria" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="restricción-presupuestaria">Restricción presupuestaria</h3>
+<p>Por otro lado, el consumidor se enfrenta al problema de la escasez que se puede abordar desde 2 puntos de vista:</p>
+<ol type="1">
+<li><p>Restricción física del gasto de elección.</p></li>
+<li><p>Restricción económica de la renta.</p></li>
+</ol>
+<p>Se analizará la restricción de renta suponiendo mercados completos –los precios de los bienes son positivos y conocidos por todos los consumidores – y agentes precio aceptantes, por lo que la restricción presupuestaria para 2 bienes a una renta, <span class="math inline">\(m\)</span>, dada será <span id="eq-a-03-5"><span class="math display">\[p_{x}\cdot x+p_{y}\cdot y\leq m \tag{3.6}\]</span></span> donde <span class="math inline">\(p_{x}\)</span> y <span class="math inline">\(p_{y}\)</span> son los precios de los bienes <span class="math inline">\(x\)</span> e <span class="math inline">\(y\)</span> respectivamente.</p>
+<section id="propiedades-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="propiedades-2">Propiedades</h5>
+<p>A su vez, el conjunto presupuestario posee las siguientes propiedades:</p>
+<ol type="1">
+<li><p>Acotado, por arriba por la restricción presupuestaria y por abajo por la no negatividad del consumo de los bienes.</p></li>
+<li><p>Convexo, cualquier combinación linear de 2 puntos pertenecientes al conjunto pertenece también al mismo.</p></li>
+<li><p>Cerrado, cualquier combinación de bienes sobre la recta o sobre los ejes es asequible, incluye extremos.</p></li>
+<li><p>No vacío, con una renta positiva y al menos el precio de un bien finito, el consumidor podrá consumir una cantidad positiva de al menos un bien.</p></li>
+</ol>
+</section>
+<section id="recta-de-balance" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="recta-de-balance">Recta de balance</h5>
+<p>Gráficamente, en un plano bien <span class="math inline">\(x\)</span> y bien <span class="math inline">\(y\)</span> como el de la <a href="#fig-3-restriccion-presupuestaria" class="quarto-xref">Figura&nbsp;<span>3.4</span></a> se representa la recta de balance cuya pendiente viene determinada por la ratio de precios, <span class="math inline">\(-\frac{p_{x}}{p_{y}}\)</span>, y representa el coste de oportunidad de un bien en términos del otro<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a>, la cual refleja la tasa de cambio entre los dos bienes en el mercado, es decir, tasa objetiva<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a>.</p>
+<div id="fig-3-restriccion-presupuestaria" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Restricción presupuestaria">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-restriccion-presupuestaria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.4: Restricción presupuestaria
+</figcaption>
+<div aria-describedby="fig-3-restriccion-presupuestaria-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-restriccion-presupuestaria.svg" class="img-fluid figure-img" alt="Restricción presupuestaria">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="equilibrio-del-consumidor" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equilibrio-del-consumidor">Equilibrio del consumidor</h3>
+<p>Por consiguiente, el problema de maximización al que se enfrenta el consumidor es el siguiente <span id="eq-a-03-6"><span class="math display">\[\max\quad u\left(x,y\right) \tag{3.7}\]</span></span> sujeto a <span id="eq-a-03-7"><span class="math display">\[p_{x}\cdot x+p_{y}\cdot y\leq m \tag{3.8}\]</span></span></p>
+<p>El problema se puede resolver a través del método de Lagrange, obteniéndose la siguiente condición de primer orden, CPO<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a><a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a>: <span id="eq-a-03-8"><span class="math display">\[\dfrac{UMg_{x_{i}}}{p_{i}}=\lambda,\quad\forall i \tag{3.9}\]</span></span> o lo que es lo mismo</p>
+<p><span id="eq-a-03-9"><span class="math display">\[RMS_{x,y}=\dfrac{UMg_{x}}{UMg_{y}}=\dfrac{p_{x}}{p_{y}} \tag{3.10}\]</span></span> la cual implica que la relación marginal de sustitución se iguale a la ratio de precios, es decir, la tasa subjetiva a la que el consumidor está dispuesto a sustituir un bien por otro es igual a coste de oportunidad de un bien en términos de otro (tasa objetiva del mercado)<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a><a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a>.</p>
+<section id="equilibrio" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="equilibrio">Equilibrio</h5>
+<p>Gráficamente, en un plano de bien <span class="math inline">\(x\)</span> y bien <span class="math inline">\(y\)</span> como el de la <a href="#fig-3-equilibrio-del-consumidor" class="quarto-xref">Figura&nbsp;<span>3.5</span></a>, se determina así un punto de equilibrio que viene dado por el punto de tangencia entre la curva de indiferencia y la restricción presupuestaria, es decir, donde se igualan sus pendientes.</p>
+<div id="fig-3-equilibrio-del-consumidor" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio del consumidor">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-equilibrio-del-consumidor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.5: Equilibrio del consumidor
+</figcaption>
+<div aria-describedby="fig-3-equilibrio-del-consumidor-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-equilibrio-del-consumidor.svg" class="img-fluid figure-img" alt="Equilibrio del consumidor">
+</div>
+</figure>
+</div>
+</section>
+<section id="demanda-ordinaria-o-marshalliana" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="demanda-ordinaria-o-marshalliana">Demanda ordinaria o marshalliana</h5>
+<p>A partir de la condición de equilibrio es posible obtener las funciones de demanda del consumidor para cada uno de los bienes que dependen de los precios y de la renta: <span class="math inline">\(x=x\left(p,m\right)\)</span>. Estas funciones de demanda, obtenidas del problema de maximización de la utilidad, se denominan ordinarias o marshallianas, <span class="math inline">\(x\left(p,m\right)\)</span> y tienen las siguientes propiedades:</p>
+<ol type="1">
+<li><p>Es continua para todo vector de precios y renta positivos.</p></li>
+<li><p>Habitualmente decreciente respecto al precio propio y creciente respecto a la renta –para bienes normales sin efecto Giffen–, aunque esta propiedad no es universal: el apartado de Estática comparativa desarrolla las excepciones (bienes inferiores, bienes Giffen).</p></li>
+<li><p>Homogénea de grado cero en precios y renta (el consumidor se guía por los precios relativos. Implica ausencia de ilusión monetaria, lo que permite prescindir de la referencia del dinero)</p></li>
+<li><p>Cumple con la ley de Walras: gasta toda su renta.</p></li>
+<li><p>Diferenciable, con carácter general, lo que permite aplicar el análisis de estática comparativa que se desarrolla a continuación.</p></li>
+<li><p>Única si las curvas de indiferencia son estrictamente convexas.</p></li>
+</ol>
+<p>A partir de la agregación horizontal de las demandas individuales –sumando, a cada precio, la cantidad demandada por cada consumidor dada su renta– siempre es posible obtener la curva de demanda de mercado, sin más condición que la de que los agentes sean precio aceptantes y sus demandas no estén interrelacionadas. Ahora bien, esa demanda agregada dependerá en general de cómo esté repartida la renta entre los consumidores. Solo si, además, la demanda depende de la renta total y no de su distribución (condición de Gorman<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a>) podrá expresarse la demanda de mercado como función únicamente de la renta agregada, con independencia del reparto.</p>
+</section>
+</section>
+</section>
+<section id="estática-comparativa" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="estática-comparativa"><span class="header-section-number">3.4</span> Estática comparativa <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></h2>
+<p>Una vez que hemos identificado la demanda marshalliana, podemos preguntarnos cómo se ve afectada ésta por cambios en las variables que la determinan: renta, precio propio y precios de otros bienes. Es decir, un vez hemos respondido a la pregunta de ¿qué bienes y qué cantidades consumirá el consumidor?, tratamos de responder a la pregunta de ¿Cómo varía la decisión adoptada por el consumidor cuando varían los parámetros del problema?<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a></p>
+<section id="variaciones-en-los-precios" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="variaciones-en-los-precios">Variaciones en los precios</h3>
+<p>Comenzando con variaciones en los precios, gráficamente, en un plano de bien <span class="math inline">\(x\)</span> y bien <span class="math inline">\(y\)</span> como el de la <a href="#fig-3-construccion-de-la-curva-de-demanda" class="quarto-xref">Figura&nbsp;<span>3.6</span></a></p>
+<ul>
+<li><p>Se representa la restricción presupuestaria y la curva de indiferencia tangente a la misma dando lugar al equilibrio en A.</p></li>
+<li><p>Se supone una disminución del precio del bien <span class="math inline">\(x\)</span>, por lo que la recta presupuestaria pivota sobre el eje <span class="math inline">\(y\)</span> expandiendo el conjunto presupuestario y permitiendo al consumidor alcanzar una curva de indiferencia más alejada del origen que le reportará más utilidad.</p></li>
+<li><p>En el nuevo equilibrio <span class="math inline">\(B\)</span> el consumidor adquiere una mayor cantidad de ambos bienes. Esto implicaría que, en principio, parece que se cumple la condición de negatividad (que veremos más adelante), y en un plano adyacente de precio de bien <span class="math inline">\(x\)</span>, <span class="math inline">\(p_{x}\)</span>, y cantidad de <span class="math inline">\(x\)</span>, la demanda tiene pendiente negativa, es decir, al disminuir el precio de un bien, aumenta su consumo.</p></li>
+</ul>
+<div id="fig-3-construccion-de-la-curva-de-demanda" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Obtención de la curva de demanda">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-construccion-de-la-curva-de-demanda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.6: Obtención de la curva de demanda
+</figcaption>
+<div aria-describedby="fig-3-construccion-de-la-curva-de-demanda-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-curva-de-demanda.svg" class="img-fluid figure-img" alt="Obtención de la curva de demanda">
+</div>
+</figure>
+</div>
+<p>No obstante, es necesario analizar con detalle la variación del precio, ya que la variación de la cantidad demandada ante un cambio en los precios es el resultado de la interacción de dos efectos:</p>
+<ul>
+<li><p>Efecto sustitución: es el cambio en la cantidad demandada que se produce porque el bien se ha vuelto más barato o más caro en comparación con los demás, dejando al margen que el consumidor sea ahora más rico o más pobre, es decir, manteniendo constante su renta real.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a></p></li>
+<li><p>Efecto renta: es el cambio en la cantidad demandada que se produce porque, con la misma renta monetaria, el consumidor puede comprar más si el precio baja, o menos si sube, es decir, porque ha variado su renta real.<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a></p></li>
+</ul>
+<section id="es-y-er-visiones-de-slutsky-y-hicks" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="es-y-er-visiones-de-slutsky-y-hicks">ES y ER: visiones de Slutsky y Hicks</h5>
+<p>A su vez, para analizar el efecto sustitución es necesario definir el concepto de renta real constante, existiendo dos criterios de compensación que reparten el mismo efecto total en un punto intermedio distinto:</p>
+<ul>
+<li><p>Slutsky, ante una variación de precios, la renta real constante es aquella que permite adquirir la cesta anterior a nuevos precios, es decir, el consumidor se sitúa sobre la misma restricción presupuestaria.</p></li>
+<li><p>Hicks, ante una variación de precios, la renta real constante es aquella que permite alcanzar la misma utilidad anterior a nuevos precios, es decir, el consumidor se sitúa sobre la misma curva de indiferencia.</p></li>
+</ul>
+<p>Gráficamente, como se observa en la <a href="#fig-3-descomposicion-de-efecto" class="quarto-xref">Figura&nbsp;<span>3.7</span></a>, ante una reducción del precio de <span class="math inline">\(x\)</span> el efecto total es el paso de A a B en ambos casos, pero el punto intermedio difiere:</p>
+<ul>
+<li><p>Slutsky traslada paralelamente la nueva restricción presupuestaria hasta que roce la cesta inicial A, dando el punto S (<span class="math inline">\(\text{ES}_{\text{S}}=A\to S\)</span>,<span class="math inline">\(\text{ER}_{\text{S}}=S\to B\)</span>). Trasladando este punto –igual que se hizo antes con A y B para obtener la curva de demanda ordinaria– a un plano de precio y cantidad de <span class="math inline">\(x\)</span>, se obtiene la demanda compensada de Slutsky,<span class="math inline">\(D_{S}\)</span>.</p></li>
+<li><p>Hicks traslada la nueva restricción hasta que sea tangente a la curva de indiferencia inicial, dando el punto H (<span class="math inline">\(\text{ES}_{\text{H}}=A\to H\)</span>,<span class="math inline">\(\text{ER}_{\text{H}}=H\to B\)</span>). De la misma forma, trasladando H se obtiene la demanda compensada o hicksiana,<span class="math inline">\(D_{H}\)</span>.</p></li>
+</ul>
+<p>Para un cambio de precio discreto, S y H son en general distintos; solo coinciden en el límite de una variación infinitesimal, el caso que recoge la ecuación de Slutsky.</p>
+<p>Con el método de Hicks se descomponen los dos efectos: la demanda hicksiana recoge exclusivamente el efecto sustitución –no depende de la renta–, y el efecto renta se obtiene por diferencia respecto al efecto total.</p>
+<div id="fig-3-descomposicion-de-efecto" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Descomposición de efecto renta y sustitución">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-descomposicion-de-efecto-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.7: Descomposición de efecto renta y sustitución
+</figcaption>
+<div aria-describedby="fig-3-descomposicion-de-efecto-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-descomposicion-er-y-es.svg" class="img-fluid figure-img" alt="Descomposición de efecto renta y sustitución">
+</div>
+</figure>
+</div>
+</section>
+<section id="ecuación-de-slutsky" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ecuación-de-slutsky">Ecuación de Slutsky</h5>
+<p>Analíticamente, el efecto renta y el efecto sustitución se relacionan a través de la ecuación de Slutsky, que establece que la variación de la cantidad demanda al variar el precio, es decir el efecto total, es igual a la suma del efecto sustitución –dado por término que representa la variación de la demanda al variar el precio manteniendo constante la renta real– más el efecto renta –dado por el término que representa la variación de la demanda al variar la renta– <span id="eq-a-03-10"><span class="math display">\[\underbrace{\dfrac{\partial x\left(p,m\right)}{\partial p_{x}}}_{\text{Efecto total}}=\underbrace{\dfrac{\partial h_{x}\left(p,u\right)}{\partial p_{x}}}_{\text{Efecto sustituci{ó}n}}\underbrace{-\dfrac{\partial x\left(p,m\right)}{\partial m}\cdot x\left(p,m\right)}_{\text{Efecto renta}} \tag{3.11}\]</span></span></p>
+</section>
+<section id="tipos-de-bienes" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="tipos-de-bienes">Tipos de bienes</h5>
+<p>Además, a partir del signo y la magnitud del efecto renta y del efecto sustitución es posible caracterizar los bienes y la pendiente de la función de demanda. Concretamente, ante un aumento del precio de un bien:</p>
+<ul>
+<li><p>El efecto sustitución propio es negativo, por la convexidad de las preferencias<a href="#fn34" class="footnote-ref" id="fnref34" role="doc-noteref"><sup>34</sup></a>.</p></li>
+<li><p>El efecto renta puede ser:</p>
+<ul>
+<li><p>Negativo: se trata de un bien normal, al reducirse la renta se reduce el consumo. En este caso, la demanda tendrá pendiente negativa, puesto que el efecto sustitución y el efecto renta son negativos.</p></li>
+<li><p>Positivo: se trata de un bien inferior, al aumentar (reducirse) la renta, se reduce (aumenta) su consumo. Existe dos posibilidades, ante el cambio del precio:</p>
+<ul>
+<li><p>Si |<span class="math inline">\(ER\)</span> | &lt; |<span class="math inline">\(ES\)</span> |, el bien es inferior y al aumentar el precio se reduce su consumo.</p></li>
+<li><p>Si |<span class="math inline">\(ER\)</span> | &gt; |<span class="math inline">\(ES\)</span> |, el bien es inferior pero ahora al aumentar su precio se aumenta su consumo. Se trata de un bien Giffen, cuya función de demanda tiene pendiente positiva<a href="#fn35" class="footnote-ref" id="fnref35" role="doc-noteref"><sup>35</sup></a><a href="#fn36" class="footnote-ref" id="fnref36" role="doc-noteref"><sup>36</sup></a>.</p></li>
+</ul></li>
+</ul></li>
+</ul>
+</section>
+<section id="elasticidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="elasticidad">Elasticidad</h5>
+<p>Por otro lado, una medida para establecer la sensibilidad de la demanda es la de elasticidad, distinguiendo entre</p>
+<ul>
+<li><p>Elasticidad precio de la demanda de un bien, que es la variación porcentual de la cantidad demandada de un bien ante una variación porcentual de su precio <span id="eq-a-03-11"><span class="math display">\[\varepsilon_{P}=\dfrac{\partial x}{\partial p_{x}}\cdot\dfrac{p_{x}}{x} \tag{3.12}\]</span></span> y dependiendo de su valor</p>
+<ul>
+<li><p>Si <span class="math inline">\(\left|\varepsilon_{P}\right|&gt;1\)</span> la demanda es elástica, es decir, muy sensible al precio. Viajes aéreos, coches de lujo, comidas en restaurantes, y la mayoría de los productos de marca con sustitutos fáciles.</p></li>
+<li><p>Si <span class="math inline">\(\left|\varepsilon_{P}\right|=1\)</span> elasticidad unitaria, una variación porcentual del precio provoca una variación porcentual igual, y de signo contrario, en la cantidad demandada, de modo que el gasto en el bien no cambia.</p></li>
+<li><p>Si <span class="math inline">\(\left|\varepsilon_{P}\right|&lt;1\)</span> la demanda es inelástica, es decir, poco sensible al precio. Ejemplos: Medicamentos vitales (como la insulina), la gasolina a corto plazo, la sal, y los servicios de agua y electricidad.</p></li>
+</ul></li>
+<li><p>Elasticidad precio cruzada, que es la variación porcentual de la demanda de un bien ante cambios en el precio de otro bien <span id="eq-a-03-12"><span class="math display">\[\varepsilon_{C}=\dfrac{\partial y}{\partial p_{x}}\cdot\dfrac{p_{x}}{y} \tag{3.13}\]</span></span> y dependiendo de su valor</p>
+<ul>
+<li><p>Si <span class="math inline">\(\varepsilon_{C}&gt;0\)</span> los bienes son sustitutivos brutos. Ejemplos: Coca-Cola y Pepsi, mantequilla y margarina, el té y el café.</p></li>
+<li><p>Si <span class="math inline">\(\varepsilon_{C}=0\)</span> , los bienes son independientes. Ejemplos: El precio de una bicicleta no afecta la demanda de leche. Un ordenador y una caja de galletas.</p></li>
+<li><p>Si <span class="math inline">\(\varepsilon_{C}&lt;0\)</span> los bienes son complementarios. Ejemplos: Automóviles y gasolina, consolas de videojuegos y videojuegos, palomitas de maíz y entradas de cine.</p></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="variaciones-de-la-renta-monetaria" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="variaciones-de-la-renta-monetaria">Variaciones de la renta monetaria</h3>
+<p>Por otro lado, ante un aumento en la renta, gráficamente en un plano de bien <span class="math inline">\(x\)</span> e <span class="math inline">\(y\)</span> como el de la <a href="#fig-3-efecto-variaciones-en-la-renta" class="quarto-xref">Figura&nbsp;<span>3.8</span></a> la recta de balance se desplazará paralelamente, pues se mantiene constante la relación entre los precios. Las combinaciones de óptimas de bienes al variar la renta manteniendo los precios constantes representan la curva de renta-consumo, <span class="math inline">\(CRC\)</span>.</p>
+<section id="curva-de-engel" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-engel">Curva de Engel</h5>
+<p>Derivada de la curva de renta-consumo se obtiene la curva de Engel, que relaciona el nivel de renta con la cantidad comprada de un bien. Además, esta relación permite distinguir entre un bien normal y un bien inferior: <span id="eq-a-03-13"><span class="math display">\[\begin{aligned}
+\text{Si } &amp; {\dfrac{\partial x\left(p,m\right)}{\partial m}\geq0}                  \text{ es un bien normal}\\
+\text{Si } &amp; {{\dfrac{\partial x\left(p,m\right)}{\partial m}&lt;0}           }           \text{ es un bien inferior}
+\end{aligned} \tag{3.14}\]</span></span></p>
+<div id="fig-3-efecto-variaciones-en-la-renta" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efecto de las variaciones en la renta">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-efecto-variaciones-en-la-renta-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.8: Efecto de las variaciones en la renta
+</figcaption>
+<div aria-describedby="fig-3-efecto-variaciones-en-la-renta-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-efectos-de-las-variaciones-en-la-renta.svg" class="img-fluid figure-img" alt="Efecto de las variaciones en la renta">
+</div>
+</figure>
+</div>
+<p>Dentro de los bienes normales se encuentran:</p>
+<ul>
+<li><p>Los de primera necesidad, cuyo consumo aumenta en menor proporción que la renta, y</p></li>
+<li><p>Los de lujo, cuyo consumo aumenta en mayor proporción que las variaciones de renta.</p></li>
+</ul>
+<p>Bajo el supuesto de monotonicidad, no todos los bienes de una economía pueden ser inferiores. Además, un bien puede ser inferior a partir de un determinado nivel de renta.</p>
+<div id="fig-a-03-a-3-curvas-de-engel" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curvas de Engel">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-03-a-3-curvas-de-engel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.9: Curvas de Engel
+</figcaption>
+<div aria-describedby="fig-a-03-a-3-curvas-de-engel-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-curvas-de-engel.svg" class="img-fluid figure-img" alt="Curvas de Engel">
+</div>
+</figure>
+</div>
+<p>En términos porcentuales se puede expresar la relación entre un bien y la renta mediante el concepto de elasticidad-renta: <span id="eq-a-03-14"><span class="math display">\[\varepsilon_{x,M}=\dfrac{\partial x\left(p,m\right)}{\partial m}\cdot\dfrac{m}{x}=\begin{cases}
+\text{Bien normal} &amp; \text{si }\quad\varepsilon_{x,M}\geq0\\
+\text{Bien de primera necesidad} &amp; \text{si }\quad0&lt;\varepsilon_{x,M}&lt;1\\
+\text{Bien de lujo} &amp; \text{si }\quad\varepsilon_{x,M}&gt;1\\
+\text{Bien inferior} &amp; \text{si }\quad\varepsilon_{x,M}&lt;0
+\end{cases} \tag{3.15}\]</span></span></p>
+</section>
+<section id="preferencias-homotéticas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="preferencias-homotéticas">Preferencias homotéticas</h5>
+<p>Las preferencias son homotéticas cuando la RMS depende solo de la proporción en que se consumen los bienes y no de la cantidad total consumida.<a href="#fn37" class="footnote-ref" id="fnref37" role="doc-noteref"><sup>37</sup></a> En ese caso, todos los bienes tienen elasticidad renta igual a uno y la curva de renta-consumo es una recta que pasa por el origen.</p>
+</section>
+</section>
+</section>
+<section id="condiciones-de-un-sistema-de-demanda-completo" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="condiciones-de-un-sistema-de-demanda-completo"><span class="header-section-number">3.5</span> Condiciones de un sistema de demanda completo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto 30 segundos">1'30"</span></h2>
+<p>Con todo lo visto hasta el momento, un sistema completo de demanda debe cumplir:</p>
+<ol type="1">
+<li><p>Condición de agregación de Engel, establece que la suma de las elasticidades renta de todos los bienes, ponderadas por su participación en el gasto total, debe ser igual a uno: <span id="eq-a-03-15"><span class="math display">\[\sum\limits_{i=1}^{n}s_{i}\cdot\varepsilon_{i,m}=1 \tag{3.16}\]</span></span> Esto implica que no todos los bienes pueden ser ni inferiores ni neutros, es decir, el consumidor tiene que consumir algún bien normal. En consecuencia, si se incrementa la renta, el exceso de la misma deberá ser gastado de acuerdo con sus elasticidades renta, no pudiendo darse el caso en el que el consumidor comprase menos cantidad de todos los bienes, ya que no se cumpliría el axioma de monotonía.</p></li>
+<li><p>Condición de agregación de Cournot, que muestra cómo un cambio en el precio de un bien afecta a la demanda de todos los bienes. La suma de las elasticidades de todos los bienes respecto al precio de uno de ellos, incluida la del propio bien y ponderadas por su participación en el gasto, es igual a la participación de ese bien en el gasto cambiada de signo: <span id="eq-a-03-16"><span class="math display">\[\sum\limits_{i=1}^{n}s_{i}\cdot\varepsilon_{i,j}=-s_{j} \tag{3.17}\]</span></span> La principal implicación es que no todos los bienes pueden ser complementarios brutos. Si el precio de un bien disminuye y el consumidor lo consume más, el consumo de otros bienes debe ajustarse para que el gasto total siga siendo igual a la renta.</p></li>
+<li><p>Condición de simetría: los efectos sustitución cruzados son simétricos, es decir, el efecto sustitución que una variación del precio del bien&nbsp;<span class="math inline">\(j\)</span> tiene sobre la demanda del bien&nbsp;<span class="math inline">\(i\)</span> es igual al que una variación del precio de&nbsp;<span class="math inline">\(i\)</span> tiene sobre la demanda de&nbsp;<span class="math inline">\(j\)</span>:<a href="#fn38" class="footnote-ref" id="fnref38" role="doc-noteref"><sup>38</sup></a> <span id="eq-a-03-17"><span class="math display">\[S_{i,j}=S_{j,i} \tag{3.18}\]</span></span> Esta condición implica que las preferencias del consumidor son consistentes.</p></li>
+<li><p>Condición de homogeneidad, que se deriva de que la demanda marshalliana es homogénea de grado cero en precios y renta: la suma de todas las elasticidades precio de un bien, la propia y las cruzadas, es igual a su elasticidad renta cambiada de signo: <span id="eq-a-03-18"><span class="math display">\[\sum\limits_{j=1}^{n}\varepsilon_{i,j}=-\varepsilon_{i,m} \tag{3.19}\]</span></span> Esto implica que, ante variaciones de precios y renta en la misma proporción, la cantidad consumida no varía (no hay ilusión monetaria).</p></li>
+<li><p>Condición de negatividad, que establece que el efecto sustitución de la demanda de un bien sobre su propio precio es negativo o cero. <span id="eq-a-03-19"><span class="math display">\[S_{i,i}\leq0 \tag{3.20}\]</span></span> Esto implica que cuando el precio de un bien aumenta, el efecto sustitución siempre hará que la demanda de ese bien disminuya o se mantenga igual. Esta es la base de la ley de la demanda: las curvas de demanda marshalliana de bienes ordinarios tienen pendiente negativa.</p></li>
+</ol>
+</section>
+<section id="demanda-de-mercado" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="demanda-de-mercado"><span class="header-section-number">3.6</span> Demanda de mercado <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Por último, la demanda de mercado para un bien es la suma horizontal de las demandas de los consumidores individuales. Es decir, la cantidad demandada en el mercado para cada precio es la suma de las demandas individuales de todos los consumidores.</p>
+<p>Analíticamente, se suponen 2 bienes, <span class="math inline">\(x\)</span> e <span class="math inline">\(y\)</span>, y 2 consumidores con las siguientes funciones de demanda sobre el bien <span class="math inline">\(x\)</span>: <span id="eq-a-03-20"><span class="math display">\[\begin{aligned}
+x_{1} &amp; =x_{1}\left(p_{x},p_{y},m_{1}\right)\\
+x_{2} &amp; =x_{2}\left(p_{x},p_{y},m_{2}\right)
+\end{aligned} \tag{3.21}\]</span></span> siendo <span class="math inline">\(x_{1}\)</span> y <span class="math inline">\(x_{2}\)</span> las demandas respectivas del consumidor 1 y 2 sobre el bien <span class="math inline">\(x\)</span>.</p>
+<p>Suponiendo que ambos se enfrentan a los mismos precios y son precio-aceptantes, entonces la demanda total de <span class="math inline">\(X\)</span> es igual a la suma de las cantidades demandadas por los consumidores: <span id="eq-a-03-21"><span class="math display">\[X_{T}=x_{1}+x_{2}\Rightarrow X_{T}=D_{x}\left(p_{x},p_{y},m_{1},m_{2}\right) \tag{3.22}\]</span></span></p>
+<p>Gráficamente, en un plano de precios de <span class="math inline">\(x\)</span> y cantidad demanda de <span class="math inline">\(x\)</span> como el de la <a href="#fig-3-obtencion-de-la-curva-de-demanda-de-mercado" class="quarto-xref">Figura&nbsp;<span>3.10</span></a> se representa la curva de demanda de <span class="math inline">\(x\)</span> del consumidor 1, <span class="math inline">\(D_{x_{1}}\)</span>, y del consumidor 2, <span class="math inline">\(D_{x_{2}}\)</span>, obteniendo la curva de demanda de mercado, <span class="math inline">\(D_{x}\)</span>, mediante la agregación de las demandas individuales.</p>
+<div id="fig-3-obtencion-de-la-curva-de-demanda-de-mercado" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Obtención de la curva de demanda de mercado">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-3-obtencion-de-la-curva-de-demanda-de-mercado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.10: Obtención de la curva de demanda de mercado
+</figcaption>
+<div aria-describedby="fig-3-obtencion-de-la-curva-de-demanda-de-mercado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-curva-de-demanda-de-mercado.svg" class="img-fluid figure-img" alt="Obtención de la curva de demanda de mercado">
+</div>
+</figure>
+</div>
+</section>
+<section id="conclusiones" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">3.7</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Como conclusión, la teoría neoclásica ha construido una teoría de la demanda que constituye un punto de referencia para análisis posteriores.</p>
+<p>Sin embargo, este enfoque recibe algunas críticas, cada una de las cuales ha dado lugar a desarrollos posteriores que tratan de superarla:</p>
+<ol type="1">
+<li><p>No considera la existencia de incertidumbre, un problema abordado por el análisis del consumo en un contexto de incertidumbre.</p></li>
+<li><p>Se basa en una función de utilidad que es subjetiva y no observable, limitación que superan tanto la teoría de la preferencia revelada como la teoría de la dualidad, ambas con base empírica.</p></li>
+<li><p>Trata los bienes como bloques homogéneos, sin descomponerlos en sus características, lo que no explica fenómenos como la fidelidad de marca, el lanzamiento de nuevos productos o la publicidad. Esta limitación la aborda la demanda de características de <span class="citation" data-cites="3_Lancaster1966">Lancaster (<a href="01-tema-a1.html#ref-3_Lancaster1966" role="doc-biblioref">1966</a>)</span>.</p></li>
+<li><p>Trata el consumo como un acto instantáneo, sin coste de oportunidad del tiempo empleado en consumir. Esta limitación la aborda la función de producción de los hogares de <span class="citation" data-cites="3_Becker1965">Becker (<a href="01-tema-a1.html#ref-3_Becker1965" role="doc-biblioref">1965</a>)</span>.</p></li>
+</ol>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-enfoque-cardinal-de-la-teoría-neoclásica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-enfoque-cardinal-de-la-teoría-neoclásica">3.A.1.&nbsp;&nbsp;Enfoque cardinal de la teoría neoclásica</h3>
+<p>Los supuestos de este enfoque son que la utilidad es medible en unidades monetarias –y por tanto comparable entre individuos–, que es creciente, que la utilidad marginal de cada bien es decreciente (primera ley de Gossen) y que la utilidad marginal del dinero es constante, al tomarse como unidad de medida,<span class="math inline">\(u'\left(M\right)=1\)</span>. Resolviendo el lagrangiano <span class="math display">\[\mathcal{L}=u\left(x_{1}\right)+u\left(x_{2}\right)+u\left(M\right)-\lambda\cdot\left(p_{1}x_{1}+p_{2}x_{2}+M-Y\right)\]</span> se obtiene <span class="math display">\[\dfrac{u'\left(x_{1}\right)}{p_{1}}=\dfrac{u'\left(x_{2}\right)}{p_{2}}=\lambda=u'\left(M\right)=1\]</span> de donde<span class="math inline">\(u'\left(x_{i}\right)=p_{i}\)</span>: el consumidor demanda cada bien hasta que su utilidad marginal iguala el precio, con lo que la demanda depende únicamente de su propio precio,<span class="math inline">\(x_{i}=x\left(p_{i}\right)\)</span>.</p>
+<p>Este enfoque fue superado por desarrollos posteriores por varias razones. El supuesto de utilidad marginal del dinero constante es poco realista y, al implicar<span class="math inline">\(\lambda\)</span> constante, elimina todo efecto renta y todo efecto sustitución cruzado –salvo que la función sea aditiva y separable, no toda función aditiva y separable carece de efectos cruzados, como puede comprobarse con el contraejemplo <span class="math inline">\(U\left(x_{1},x_{2}\right)=\ln\left(x_{1}\right)+x_{2}\)</span>, que sigue siendo aditiva y separable pero genera<span class="math inline">\(x_{1}=p_{2}/p_{1}\)</span>, dependiente del precio del otro bien–. Además, sobre la cardinalidad –que solo garantiza comparar diferencias de utilidad dentro de un mismo individuo– este enfoque superpone el supuesto, adicional e independiente, de comparabilidad interpersonal de utilidades, que resulta excesivamente exigente. Por todo ello, Pareto rompe con la fusión entre marginalismo y utilitarismo bentamita –acuñando el término “ofelimidad” para distinguir la utilidad estrictamente individual y subjetiva de cualquier agregado social– y se impone el enfoque ordinal desarrollado en el cuerpo del tema.</p>
+</section>
+<section id="a.2.-tipos-de-función-de-utilidad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-tipos-de-función-de-utilidad">3.A.2.&nbsp;&nbsp;Tipos de función de utilidad</h3>
+<p>En cuanto a la forma de las curvas, esta estará en función de los diferentes tipos de utilidad que puedan darse, y nos dará información sobre los bienes:</p>
+<p>Función Cobb–Douglas: aquella que cumple con todas las características mencionadas previamente y las más típicas <span class="math display">\[U\left(X_{1},X_{2}\right)=A\cdot X^{\alpha}_{1}\cdot X^{\beta}_{2},\quad\alpha,\beta&gt;0\]</span> donde <span class="math inline">\(\alpha\)</span> y <span class="math inline">\(\beta\)</span> son constantes positivas y la RMS <span class="math display">\[\left|RMS\right|=\dfrac{\alpha\cdot X_{2}}{\beta\cdot X_{1}}\]</span></p>
+<p>Sustitutivos perfectos: Una persona con estas preferencias estará dispuesta a renunciar a la misma cantidad de Y para conseguir una unidad más de X independientemente de cuanto esté consumiendo de X <span class="math display">\[U\left(X_{1},X_{2}\right)=a\cdot X_{1}+b\cdot X_{2}\]</span> donde la RMS es constante <span class="math display">\[\left|RMS\right|=\dfrac{a}{b}\]</span></p>
+<p>Complementarios perfectos: Función de coeficientes fijos tipo Leontief: <span class="math display">\[U(X_{1},X_{2})=Min\left\{ \dfrac{X_{1}}{\alpha},\dfrac{X_{2}}{\beta}\right\}\]</span> donde la RMS no existe y la <span class="math inline">\(UMg\)</span> es constante.</p>
+<p>Funciones CES (Elasticidad de Sustitución Constante) <span class="math display">\[U=A\left(\alpha\cdot X^{\rho}_{1}+\beta X^{\rho}_{2}\right)^{\dfrac{\varepsilon}{\rho}}\]</span> donde <span class="math inline">\(\rho\leq1\)</span> es el parámetro de sustitución y <span class="math inline">\(\varepsilon\)</span> es el grado de homogeneidad y <span class="math inline">\(\alpha y\beta&gt;0\)</span> son los parámetros que representan las preferencias relativas que el individuo tiene por los bienes. <span class="math inline">\(1/1-\rho\)</span> es la elasticidad de sustitución, aunque dicho concepto tiene más sentido verlo en la teoría de la producción</p>
+<p>Respecto a la RMS: <span class="math display">\[RMS=\dfrac{\alpha}{\beta}\cdot\left(\dfrac{X_{2}}{X_{1}}\right)^{1-\rho}\]</span></p>
+</section>
+<section id="a.3.-preferencias-lexicográficas" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-preferencias-lexicográficas">3.A.3.&nbsp;&nbsp;Preferencias lexicográficas</h3>
+<p>El funcionamiento de las preferencias lexicográficas puede ilustrarse con la búsqueda de una palabra en un diccionario: se da prioridad absoluta a la primera letra, de modo que solo si dos palabras empiezan por "A" se atiende a la segunda letra, y solo si también coinciden se pasa a la tercera, y así sucesivamente. Ninguna palabra que empiece por "B" será nunca preferida a otra que empiece por "A", por muy larga o llamativa que sea la palabra con "B".</p>
+<p>Las preferencias lexicográficas en la teoría del consumidor funcionan exactamente igual: Un consumidor con preferencias lexicográficas sobre dos bienes (por ejemplo, Bien 1 y Bien 2) siempre priorizará absolutamente la cantidad del Bien 1. Solo si dos cestas de bienes tienen la misma cantidad del Bien 1, entonces el consumidor se fijará en la cantidad del Bien 2 para decidir cuál prefiere.</p>
+<p>Ejemplo intuitivo:</p>
+<ul>
+<li><p>Cesta A: (5 unidades de Bien 1, 10 unidades de Bien 2)</p></li>
+<li><p>Cesta B: (4 unidades de Bien 1, 1000 unidades de Bien 2)</p></li>
+</ul>
+<p>Un consumidor con preferencias lexicográficas siempre preferirá la Cesta A a la Cesta B, sin importar que la Cesta B tenga muchísimo más del Bien 2. La cantidad de Bien 1 (5 vs 4) decide la preferencia de inmediato. La enorme cantidad de Bien 2 en la Cesta B es completamente irrelevante una vez que el Bien 1 ha sido evaluado y es diferente.</p>
+<p>Únicamente si las cantidades del Bien 1 coincidieran, por ejemplo:</p>
+<ul>
+<li><p>Cesta C: (5 unidades de Bien 1, 1 unidad de Bien 2)</p></li>
+<li><p>Cesta D: (5 unidades de Bien 1, 2 unidades de Bien 2) Entonces el consumidor preferiría la Cesta D, porque las cantidades de Bien 1 son iguales, y la Cesta D tiene más del Bien 2.</p></li>
+</ul>
+<section id="su-papel-en-la-teoría-de-la-demanda-del-consumidor" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="su-papel-en-la-teoría-de-la-demanda-del-consumidor">Su papel en la teoría de la demanda del consumidor</h5>
+<p>El papel de las preferencias lexicográficas en la teoría de la demanda es principalmente ilustrativo y de contraste, más que de uso común para modelar el comportamiento real:</p>
+<ul>
+<li><p>Rompen la "continuidad": La principal razón por la que son problemáticas es que no son continuas. Esto significa que no es posible introducir cambios infinitesimales en la cantidad de un bien esperando una respuesta "suave" en las preferencias. Siempre hay un salto abrupto en la preferencia al cambiar la cantidad del bien más prioritario.</p></li>
+<li><p>No se pueden representar con una función de utilidad continua: Debido a esa falta de continuidad, no es posible construir una función de utilidad matemática "tradicional" y continua que represente estas preferencias. Esto es un gran problema para la teoría, ya que la mayor parte de las herramientas habituales (derivadas, optimización) requieren funciones continuas.</p></li>
+<li><p>No hay curvas de indiferencia "suaves": En un gráfico, las curvas de indiferencia de preferencias lexicográficas no son las curvas suaves habituales en el resto de la teoría. Serían puntos o líneas muy extrañas que no permiten la convexidad habitual.</p></li>
+<li><p>No es posible la optimización estándar: La teoría de la demanda del consumidor busca un punto óptimo donde la Tasa Marginal de Sustitución (TMS) sea igual a la relación de precios (el punto de tangencia de la curva de indiferencia con la recta presupuestaria). Con preferencias lexicográficas, no hay una TMS bien definida ni un punto de tangencia único y estable, lo que hace que los métodos de optimización estándar fallen.</p></li>
+<li><p>Excepción teórica: Aunque son una rareza matemática y no se usan para modelar el comportamiento de la mayoría de los bienes, se estudian para mostrar la importancia de los supuestos subyacentes a la teoría del consumidor, como la continuidad y la convexidad. Son un buen ejemplo de un tipo de preferencia "irracional" o "extrema" que no puede ser manejada por las herramientas estándar.</p></li>
+</ul>
+<p>El interés de las preferencias lexicográficas para la teoría de la demanda no reside en su realismo descriptivo, sino en delimitar con precisión qué axioma resulta realmente indispensable para garantizar la existencia de una función de utilidad: satisfacen completitud, transitividad y reflexividad –los axiomas del pre-orden completo– y, sin embargo, no admiten ninguna función de utilidad que las represente, precisamente porque fallan en continuidad. Aunque en la vida real las preferencias lexicográficas puras son raras (porque casi siempre existe disposición a sacrificar algo de una cosa por mucha de otra), pueden identificarse situaciones que se aproximan a este comportamiento, especialmente cuando existe una prioridad absoluta por un factor concreto<a href="#fn39" class="footnote-ref" id="fnref39" role="doc-noteref"><sup>39</sup></a>, y constituyen así el contraejemplo canónico que confirma, por la vía negativa, la necesidad del Axioma 4 dentro del Teorema de Debreu: sin continuidad, ni la racionalidad del consumidor ni la posibilidad de ordenar sus cestas bastan para construir el aparato analítico –derivadas, curvas de indiferencia, condiciones de tangencia– sobre el que se apoya el resto de la teoría de la demanda.</p>
+</section>
+</section>
+<section id="a.4.-teoría-de-la-preferencia-revelada" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-teoría-de-la-preferencia-revelada">3.A.4.&nbsp;&nbsp;Teoría de la preferencia revelada</h3>
+<p>La teoría de la preferencia revelada fue desarrollada por Samuelson&nbsp;<span class="citation" data-cites="3_Samuelson1938">(<a href="01-tema-a1.html#ref-3_Samuelson1938" role="doc-biblioref">1938</a>)</span>. Si bien la teoría neoclásica de la demanda tiene un enfoque completamente deductivo –partiendo de unos supuestos se construye una teoría que permite realizar predicciones sobre el comportamiento del consumidor–, la teoría de la preferencia revelada tendrá un enfoque completamente inductivo –partiendo de la observación del comportamiento del consumidor, deduzco la naturaleza de las preferencias–.</p>
+<p>El gran valor añadido que tiene esta teoría es que permite realizar las mismas predicciones acerca del comportamiento de los consumidores con unos supuestos muchos menos restrictivos.</p>
+<p>Concretamente, la teoría de la preferencia revelada se basa en los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Ante un vector de precios p y una dotación de renta m, el consumidor gasta toda su renta en la compra de bienes y servicios</p></li>
+<li><p>Solo una cesta de bienes x es escogida para cada nivel de renta y precios, es decir, solo hay una cesta óptima en cada ocasión.</p></li>
+<li><p>Solo existe un vector de precios p y una dotación monetaria m en donde cada cesta óptima es escogida, es decir, no puede haber una cesta óptima que sea escogida en distintas ocasiones.</p></li>
+<li><p>Las preferencias del consumidor son consistentes, quedando reflejado en los dos axiomas de la preferencia revelada.</p></li>
+</ol>
+<section id="axioma-débil-de-preferencia-revelada" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="axioma-débil-de-preferencia-revelada">Axioma débil de preferencia revelada</h4>
+<p>El axioma débil de preferencia revelada establece que si el nivel de precios <span class="math inline">\(p_{0}\)</span> un consumidor elige la cesta <span class="math inline">\(x_{0}\)</span> estando también disponible la cesta <span class="math inline">\(x_{1}\)</span>, entonces cuando el consumidor elige la cesta <span class="math inline">\(x_{1}\)</span> es porque se ha producido un cambio de precios y a este nuevo nivel, <span class="math inline">\(p_{1}\)</span>, <span class="math inline">\(x_{0}\)</span> ya no está disponible. Es decir, si <span class="math inline">\(x_{1}\)</span> era asequible a los precios <span class="math inline">\(p_{0}\)</span> y aun así se eligió <span class="math inline">\(x_{0}\)</span>, entonces <span class="math inline">\(x_{0}\)</span> no puede ser asequible a los precios <span class="math inline">\(p_{1}\)</span> cuando se elige <span class="math inline">\(x_{1}\)</span> <span id="eq-a-03-22"><span class="math display">\[p_{0}\cdot x_{1}\leq p_{0}\cdot x_{0}\Rightarrow p_{1}\cdot x_{0}&gt;p_{1}\cdot x_{1} \tag{3.23}\]</span></span></p>
+<div id="fig-a-03-a-3-preferencia-debil" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Axioma débil de preferencia revelada">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-03-a-3-preferencia-debil-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.11: Axioma débil de preferencia revelada
+</figcaption>
+<div aria-describedby="fig-a-03-a-3-preferencia-debil-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-preferencia-debil.svg" class="img-fluid figure-img" alt="Axioma débil de preferencia revelada">
+</div>
+</figure>
+</div>
+</section>
+<section id="axioma-fuerte-de-preferencia-revelada" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="axioma-fuerte-de-preferencia-revelada">Axioma fuerte de preferencia revelada</h4>
+<p>El axioma fuerte de preferencia revelada impone la transitividad de las preferencias. Por lo tanto, cambios consecutivos en los precios permite establecer un orden en la deseabilidad de las cestas en función de las cestas que estuvieran disponibles a cada nivel de precios y la cesta óptima finalmente elegida en cada uno de estos.</p>
+<p>Dadas tres cestas de bienes, <span class="math inline">\(x_{0}\)</span>, <span class="math inline">\(x_{1}\)</span> y <span class="math inline">\(x_{2}\)</span>, no comparables entre sí a un mismo nivel de precios, se puede establecer un orden de preferencia mediante la relación indirecta de preferencia revelada entre las distintas cestas.</p>
+<p>Si <span class="math inline">\(x_{0}\)</span> se revela preferida a <span class="math inline">\(x_{1}\)</span>, <span class="math inline">\(x_{1}\)</span> se revela preferida a <span class="math inline">\(x_{2}\)</span>, entonces el orden de preferencias es <span class="math inline">\(x_{0}&gt;x_{1}&gt;x_{2}\)</span>.</p>
+<p>Este no es más que una versión más fuerte del axioma previo, que refuerza la consistencia y la transitividad de las preferencias reveladas.</p>
+<div id="fig-a-03-a-3-preferencia-fuerte" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Axioma fuerte de preferencia revelada">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-03-a-3-preferencia-fuerte-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.12: Axioma fuerte de preferencia revelada
+</figcaption>
+<div aria-describedby="fig-a-03-a-3-preferencia-fuerte-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-preferencia-fuerte.svg" class="img-fluid figure-img" alt="Axioma fuerte de preferencia revelada">
+</div>
+</figure>
+</div>
+</section>
+<section id="aplicaciones-efecto-renta-y-efecto-sustitución" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="aplicaciones-efecto-renta-y-efecto-sustitución">Aplicaciones: efecto renta y efecto sustitución</h4>
+<p>Por otro lado, la teoría de la preferencia revelada puede ser utilizada para descomponer los efectos que produce una variación de precios sobre la demanda del consumidor.</p>
+<p>La teoría de la preferencia revelada no se podrá apoyar sobre las curvas de indiferencia para calcular la variación compensatoria y así hallar el efecto sustitución en términos de Hicks. En su lugar se servirá de la definición de Slutsky de renta real: la compensación de renta se calcula desplazando la recta presupuestaria, a los nuevos precios, hasta que la cesta inicial vuelva a estar disponible.</p>
+<div id="fig-a-03-a-3-preferencia-er-y-es" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Preferencia revelada: efecto renta y efecto sustitución">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-03-a-3-preferencia-er-y-es-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.13: Preferencia revelada: efecto renta y efecto sustitución
+</figcaption>
+<div aria-describedby="fig-a-03-a-3-preferencia-er-y-es-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-03-a-3-preferencia-er-y-es.svg" class="img-fluid figure-img" alt="Preferencia revelada: efecto renta y efecto sustitución">
+</div>
+</figure>
+</div>
+<p>A través de este cálculo se hallará la cesta inicial, <span class="math inline">\(x_{0}\)</span>, la cesta final, <span class="math inline">\(x_{1}\)</span>, y la cesta intermedia <span class="math inline">\(x^{*}\)</span>.</p>
+<p>Esta cesta intermedia podría ubicarse a la izquierda de la cesta inicial <span class="math inline">\(x_{0}\)</span>, a la derecha o ser exactamente igual que <span class="math inline">\(x_{0}\)</span>.</p>
+<p>No obstante, el axioma débil de preferencia revelada establece que a la izquierda no puede encontrarse ya que esa cesta ya estaba disponible al nivel de precios inicial y, sin embargo, no era elegida.</p>
+<p>Por su parte, <span class="math inline">\(x_{0}\)</span> tampoco puede ser la cesta intermedia, ya que una misma cesta no puede ser óptima para dos niveles de precios distintos. Por lo tanto, <span class="math inline">\(x^{*}\)</span> se encuentra necesariamente a la derecha de <span class="math inline">\(x_{0}\)</span>.</p>
+<p>Así, el efecto sustitución, al igual que en el modelo neoclásico, tiene un efecto opuesto a la dirección a la que se mueve el precio. Como el precio cae, se demanda más del bien que se ha abaratado.</p>
+<p>De esta forma, <span class="math inline">\(x^{*}-x_{0}\)</span> representa el efecto sustitución, <span class="math inline">\(x_{1}-x^{*}\)</span> representa el efecto renta y <span class="math inline">\(x_{1}-x_{0}\)</span> representa el efecto total.</p>
+</section>
+<section id="conclusión" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="conclusión">Conclusión</h4>
+<p>En conclusión, la teoría de la preferencia revelada de Samuelson es completamente equivalente a la teoría neoclásica de la demanda de consumo, ya que todas las predicciones realizadas por la segunda también son realizadas por la primera.</p>
+<p>Por lo tanto, un consumidor que satisfaga los supuestos relativamente poco restrictivos de la teoría de la preferencia revelada se comportará como si tuviera unas preferencias que satisfagan la teoría neoclásica del consumidor.</p>
+<p>En definitiva, esto otorga una mayor robustez a la teoría neoclásica, ya que sigue siendo válida con unos supuestos mucho más laxos.</p>
+</section>
+</section>
+<section id="a.5.-métodos-de-los-precios-hedónicos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-métodos-de-los-precios-hedónicos">3.A.5.&nbsp;&nbsp;Métodos de los precios hedónicos</h3>
+<p>Los precios hedónicos son un concepto y un método económico que se utiliza para estimar el valor de las diferentes características o atributos que componen un bien o servicio, especialmente aquellos que son heterogéneos y cuyas características no se venden por separado en el mercado.</p>
+<p>La idea fundamental es que el precio de un bien no es un todo monolítico, sino más bien la suma de los valores implícitos de sus características individuales. Se asume que los consumidores valoran las características de un bien más que el bien en sí mismo.</p>
+<p>Para entenderlo mejor, pensemos en una vivienda: el precio de una casa no se basa solo en "ser una casa". Influyen multitud de atributos:</p>
+<ul>
+<li><p>Características estructurales: número de habitaciones, baños, metros cuadrados construidos, antigüedad, tipo de construcción, calidad de los materiales.</p></li>
+<li><p>Características de ubicación: cercanía a servicios (escuelas, hospitales, transporte público), seguridad del barrio, calidad del vecindario.</p></li>
+<li><p>Características ambientales o de calidad de vida: cercanía a parques, vistas (al mar, a la montaña), nivel de ruido, calidad del aire.</p></li>
+</ul>
+<p>El método de precios hedónicos busca descomponer el precio total del bien para asignar un "precio implícito" a cada una de estas características. Para calcularlo se utilizan modelos econométricos, generalmente regresiones multivariables. La idea es establecer una relación matemática entre el precio del bien (variable dependiente) y sus múltiples características (variables independientes).</p>
+<p>De esta forma, los precios hedónicos tienen diversas aplicaciones, entre las más importantes:</p>
+<ol type="1">
+<li><p>Valoración de bienes y servicios no comercializables directamente en el mercado: Es especialmente útil para estimar el valor de bienes ambientales (calidad del aire, acceso a espacios verdes, paisajes) o servicios públicos, que no tienen un precio de mercado explícito, pero influyen en el precio de otros bienes (como la vivienda).</p></li>
+<li><p>Ajuste de calidad en índices de precios: Permiten ajustar los índices de precios (como el Índice de Precios al Consumo o el Índice de Precios de Vivienda) por cambios en la calidad de los bienes. Si un producto sube de precio porque incorpora mejores características, el método hedónico puede diferenciar si la subida es por calidad (no es inflación "pura") o por una subida de precio real.</p></li>
+<li><p>Análisis del mercado inmobiliario: Para entender cómo diferentes atributos de una propiedad (tamaño, ubicación, número de habitaciones, etc.) afectan su precio y cómo valoran los compradores esas características.</p></li>
+<li><p>Evaluación de políticas públicas: Permiten evaluar el impacto económico de ciertas políticas (ej. mejoras en la calidad ambiental de un área) al observar cómo estas influyen en el valor de las propiedades cercanas.</p></li>
+<li><p>Marketing y diseño de productos: Ayudan a las empresas a entender qué características son más valoradas por los consumidores para optimizar el diseño de sus productos y estrategias de precios.</p></li>
+</ol>
+<p>El método de precios hedónicos conecta directamente con el equilibrio del consumidor desarrollado en el cuerpo del tema: los precios implícitos estimados para cada característica no son más que una aproximación empírica a las utilidades marginales relativas que, en el óptimo, determinan la relación marginal de sustitución entre atributos –la misma condición de tangencia que arroja la maximización de la utilidad sujeta a la restricción presupuestaria (Apéndice, 3.A.7)–. De ahí que la regresión hedónica pueda leerse como el correlato econométrico de la teoría ordinal de la demanda: mientras esta explica en qué condiciones se alcanza el equilibrio, el método hedónico permite recuperar empíricamente los precios sombra que ese equilibrio revela cuando el bien en cuestión no se transa por separado en el mercado.</p>
+</section>
+<section id="a.6.-la-función-de-producción-de-los-hogares-de-becker" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-la-función-de-producción-de-los-hogares-de-becker">3.A.6.&nbsp;&nbsp;La función de producción de los hogares de Becker</h3>
+<p>Gary <span class="citation" data-cites="3_Becker1965">Becker (<a href="01-tema-a1.html#ref-3_Becker1965" role="doc-biblioref">1965</a>)</span> propone un enfoque distinto del consumidor: los bienes de mercado no reportan utilidad por sí mismos, sino que son insumos que el hogar combina con tiempo para producir los verdaderos bienes que generan satisfacción –de forma análoga a como una empresa combina factores para producir un output–.</p>
+<p>Formalmente, el consumidor obtiene utilidad de una serie de bienes producidos en el hogar, <span class="math inline">\(Z_{i}\)</span>, cada uno obtenido mediante una función de producción doméstica que combina un bien de mercado,<span class="math inline">\(x_{i}\)</span>, y el tiempo dedicado a él,<span class="math inline">\(t_{i}\)</span>: <span class="math display">\[Z_{i}=f_{i}\left(x_{i},t_{i}\right),\qquad U=U\left(Z_{1},\ldots,Z_{n}\right)\]</span></p>
+<p>El consumidor maximiza esta utilidad sujeto a dos restricciones, no solo una: la restricción monetaria habitual y una restricción de tiempo, dado que el tiempo total disponible,<span class="math inline">\(T\)</span>, se reparte entre tiempo de trabajo,<span class="math inline">\(t_{w}\)</span>, y tiempo dedicado a la producción doméstica: <span class="math display">\[\sum_{i}p_{i}x_{i}=w\cdot t_{w}+V,\qquad\sum_{i}t_{i}+t_{w}=T\]</span></p>
+<p>Combinando ambas restricciones –sustituyendo <span class="math inline">\(t_{w}\)</span>– se obtiene una única restricción de “renta completa”: <span class="math display">\[\sum_{i}\left(p_{i}x_{i}+w\cdot t_{i}\right)=w\cdot T+V\]</span> donde <span class="math inline">\(w\cdot T+V\)</span> es la renta completa: el dinero disponible más el valor del tiempo total, valorado al salario.</p>
+<p>De esta restricción combinada se deduce que el precio efectivo –o precio sombra– de cada bien producido en el hogar no es solo su precio de mercado, sino que incluye también el coste de oportunidad del tiempo empleado en producirlo, ligado al salario <span class="math inline">\(w\)</span>. Esto explica, por ejemplo, por qué los individuos con salarios más altos sustituyen tiempo por bienes de mercado –comida precocinada en vez de cocinar, tintorería en vez de lavar en casa–: cuanto mayor es <span class="math inline">\(w\)</span>, más caro resulta, en términos de renta completa, el tiempo empleado en cualquier actividad.</p>
+<p>Este enfoque, en la misma línea crítica que la demanda de características de Lancaster, supera la limitación neoclásica de tratar el consumo como un acto instantáneo sin coste de oportunidad temporal, y ha sido la base de desarrollos posteriores en la economía de la familia, la oferta de trabajo y la economía del tiempo.</p>
+<p>A escala agregada, este enfoque tiene implicaciones macroeconómicas relevantes: al encarecerse el tiempo con el salario, un aumento salarial no solo desplaza la oferta de trabajo –vía el efecto sustitución habitual entre ocio y trabajo–, sino que también reasigna el tiempo dentro del propio hogar hacia actividades que requieren menos tiempo relativo, lo que ayuda a explicar la caída histórica del tiempo dedicado a la producción doméstica y el auge paralelo de sectores de mercado que sustituyen esa producción –restauración, guarderías, servicios domésticos–. Esta reasignación del tiempo del hogar hacia el mercado es, de hecho, una de las explicaciones citadas para el aumento sostenido de la participación laboral femenina en las economías desarrolladas durante la segunda mitad del siglo XX.</p>
+<p>Esto conecta directamente con un problema de medición: el PIB solo contabiliza la producción que pasa por el mercado, de modo que toda la producción doméstica –cuidado de hijos, limpieza, cocina– queda completamente fuera de las cuentas nacionales, pese a generar un valor económico real. <span class="citation" data-cites="3_NordhausTobin1972">Nordhaus y Tobin (<a href="01-tema-a1.html#ref-3_NordhausTobin1972" role="doc-biblioref">1972</a>)</span> fueron pioneros al proponer una Medida del Bienestar Económico (MEW) que ajustaba el PIB incorporando el valor del ocio y del trabajo no remunerado, aplicando precisamente la lógica de Becker. Trabajos más recientes, como el de <span class="citation" data-cites="3_LandefeldFraumeniVojtech2009">Landefeld et&nbsp;al. (<a href="01-tema-a1.html#ref-3_LandefeldFraumeniVojtech2009" role="doc-biblioref">2009</a>)</span>, han construido cuentas satélite oficiales de la producción doméstica en Estados Unidos: incorporarla elevaría el PIB medido convencionalmente en torno a una cuarta parte –con una tendencia decreciente desde cerca del 40% en 1965, a medida que más mujeres se incorporaban al mercado laboral–. Estas estimaciones tienen implicaciones de política evidentes: decisiones como la fiscalidad de los servicios domésticos, la provisión pública de cuidados o las comparaciones internacionales de bienestar dependen críticamente de si se tiene en cuenta, o no, esta producción invisible para el PIB.</p>
+</section>
+<section id="a.7.-el-problema-de-maximización-de-la-utilidad-mediante-el-método-de-lagrange" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-el-problema-de-maximización-de-la-utilidad-mediante-el-método-de-lagrange">3.A.7.&nbsp;&nbsp;El problema de maximización de la utilidad mediante el método de Lagrange</h3>
+<p>El problema de maximización de la utilidad presentado en el epígrafe “Equilibrio del consumidor” admite dos vías de resolución equivalentes: despejar la restricción presupuestaria para una de las variables y sustituirla directamente en la función de utilidad, o recurrir al método de los multiplicadores de Lagrange, más general y aplicable incluso cuando la restricción no admite un despeje explícito para ninguna de las variables. A continuación se desarrolla esta segunda vía paso a paso, siguiendo la misma lógica –plantear primero el problema, formalizar después el multiplicador y solo al final interpretarlo– con la que suele presentarse este método en los manuales de optimización estática<a href="#fn40" class="footnote-ref" id="fnref40" role="doc-noteref"><sup>40</sup></a>.</p>
+<p>Por la monotonía de las preferencias (Axioma 6), que implica la no saciedad local, el consumidor agota siempre su renta, de modo que la restricción presupuestaria de la desigualdad <span class="math inline">\(p_{x}\cdot x+p_{y}\cdot y\leq m\)</span> se convierte, en el óptimo, en una igualdad. El problema puede escribirse entonces como <span class="math display">\[\max_{x,y}\quad u\left(x,y\right)\quad\text{sujeto a}\quad p_{x}\cdot x+p_{y}\cdot y=m.\]</span> El primer paso del método de Lagrange consiste en escribir la restricción con un cero en un lado de la igualdad y construir el Lagrangiano sumando al objetivo el multiplicador, <span class="math inline">\(\lambda\)</span>, multiplicado por dicha expresión <span class="math display">\[\mathcal{L}\left(x,y,\lambda\right)=u\left(x,y\right)-\lambda\left(p_{x}\cdot x+p_{y}\cdot y-m\right).\]</span></p>
+<p>El segundo paso consiste en derivar el Lagrangiano respecto a cada una de las variables de elección y respecto al propio multiplicador, e igualar cada derivada a cero <span class="math display">\[\begin{align*}
+\dfrac{\partial\mathcal{L}}{\partial x} &amp; =UMg_{x}-\lambda\cdot p_{x}=0,\\
+\dfrac{\partial\mathcal{L}}{\partial y} &amp; =UMg_{y}-\lambda\cdot p_{y}=0,\\
+\dfrac{\partial\mathcal{L}}{\partial\lambda} &amp; =-\left(p_{x}\cdot x+p_{y}\cdot y-m\right)=0.
+\end{align*}\]</span> La última condición no es más que la restricción presupuestaria original. De las dos primeras se despeja directamente <span class="math display">\[\lambda=\dfrac{UMg_{x}}{p_{x}}=\dfrac{UMg_{y}}{p_{y}},\]</span> la misma condición ya avanzada en el cuerpo del tema, y dividiendo una entre otra se obtiene <span class="math display">\[\dfrac{UMg_{x}}{UMg_{y}}=\dfrac{p_{x}}{p_{y}}\Leftrightarrow RMS_{x,y}=\dfrac{p_{x}}{p_{y}},\]</span> la condición de tangencia entre la curva de indiferencia y la recta de balance: el consumidor deja de reajustar su cesta cuando la tasa a la que está dispuesto a sustituir un bien por otro coincide con la tasa a la que el mercado le permite hacerlo.<a href="#fn41" class="footnote-ref" id="fnref41" role="doc-noteref"><sup>41</sup></a></p>
+<p>Queda por precisar qué representa exactamente el multiplicador <span class="math inline">\(\lambda\)</span>. Supóngase que el consumidor se encuentra en la cesta óptima y que su renta aumenta en una cantidad infinitesimal, <span class="math inline">\(dm\)</span>. Si esa renta adicional se dedicase íntegramente al bien <span class="math inline">\(x\)</span>, permitiría comprar <span class="math inline">\(dm/p_{x}\)</span> unidades adicionales de dicho bien, lo que elevaría la utilidad en <span class="math inline">\(UMg_{x}\cdot dm/p_{x}\)</span>. Por la primera condición de primer orden, <span class="math inline">\(UMg_{x}=\lambda\cdot p_{x}\)</span>, de modo que ese incremento de utilidad es exactamente <span class="math inline">\(\lambda\cdot dm\)</span> –y el mismo resultado se obtendría si la renta adicional se dedicase al bien <span class="math inline">\(y\)</span>, precisamente porque en el óptimo las utilidades marginales ponderadas por el precio están igualadas entre todos los bienes–. Cada unidad adicional de renta reporta, por tanto, <span class="math inline">\(\lambda\)</span> unidades de utilidad, con independencia de en qué bien se gaste: <span class="math inline">\(\lambda\)</span> es el precio sombra de la restricción presupuestaria, la tasa a la que se relaja el máximo de utilidad alcanzable cuando se relaja la restricción de renta, es decir, la utilidad marginal de la renta ya avanzada en el cuerpo del tema.</p>
+<p>Por último, las condiciones de primer orden anteriores son necesarias, pero no bastarían por sí solas para garantizar que la cesta hallada sea un máximo si no fuera por los axiomas de deseabilidad (Axiomas 5 a 7), que garantizan que la función de utilidad es estrictamente cuasicóncava y dos veces diferenciable. En un problema de maximización de una función estrictamente cuasicóncava sujeta a una restricción lineal, dichas condiciones de primer orden identifican un único máximo global, sin necesidad de comprobar punto por punto el hessiano orlado <span class="citation" data-cites="3_MasColellWhinstonGreen1995">(<a href="01-tema-a1.html#ref-3_MasColellWhinstonGreen1995" role="doc-biblioref">Mas-Colell et&nbsp;al. 1995</a>)</span>. De este modo, la derivación completa por el método de Lagrange confirma, paso a paso, la condición de equilibrio ya avanzada en el cuerpo del tema.</p>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-3_Becker1965" class="csl-entry" role="listitem">
+Becker, Gary S. 1965. <span>«<span>A Theory of the Allocation of Time</span>»</span>. <em>The Economic Journal</em> 75 (299): 493-517. <a href="https://doi.org/10.2307/2228949">https://doi.org/10.2307/2228949</a>.
+</div>
+<div id="ref-3_DoepkeLehnertSellgren1999" class="csl-entry" role="listitem">
+Doepke, Matthias, Andreas Lehnert, y Andrew W. Sellgren. 1999. <span>«Macroeconomics»</span>. Manuscript.
+</div>
+<div id="ref-3_Edgeworth" class="csl-entry" role="listitem">
+Edgeworth, Francis Ysidro. 1881. <em><span>Mathematical Psychics: An Essay on the Application of Mathematics to the Moral Sciences</span></em>. C. Kegan Paul; Co.
+</div>
+<div id="ref-3_JehleReny2011" class="csl-entry" role="listitem">
+Jehle, Geoffrey A., y Philip J. Reny. 2011. <em><span>Advanced Microeconomic Theory</span></em>. 3rd ed. Prentice Hall.
+</div>
+<div id="ref-3_JensenMiller2008" class="csl-entry" role="listitem">
+Jensen, Robert T., y Nolan H. Miller. 2008. <span>«<span>Giffen Behavior and Subsistence Consumption</span>»</span>. <em>American Economic Review</em> 98 (4): 1553-77. <a href="https://doi.org/10.1257/aer.98.4.1553">https://doi.org/10.1257/aer.98.4.1553</a>.
+</div>
+<div id="ref-3_Lancaster1966" class="csl-entry" role="listitem">
+Lancaster, Kelvin J. 1966. <span>«<span>A New Approach to Consumer Theory</span>»</span>. <em>Journal of Political Economy</em> 74 (2): 132-57. <a href="http://www.jstor.org/stable/1828835">http://www.jstor.org/stable/1828835</a>.
+</div>
+<div id="ref-3_LandefeldFraumeniVojtech2009" class="csl-entry" role="listitem">
+Landefeld, J. Steven, Barbara M. Fraumeni, y Cindy M. Vojtech. 2009. <span>«<span>Accounting for Household Production: A Prototype Satellite Account Using the American Time Use Survey</span>»</span>. <em>Review of Income and Wealth</em> 55 (2): 205-25. <a href="https://doi.org/10.1111/j.1475-4991.2009.00319.x">https://doi.org/10.1111/j.1475-4991.2009.00319.x</a>.
+</div>
+<div id="ref-3_MasColellWhinstonGreen1995" class="csl-entry" role="listitem">
+Mas-Colell, Andreu, Michael D. Whinston, y Jerry R. Green. 1995. <em><span>Microeconomic Theory</span></em>. Oxford University Press.
+</div>
+<div id="ref-3_NicholsonSnyder2017" class="csl-entry" role="listitem">
+Nicholson, Walter, y Christopher Snyder. 2017. <em><span>Microeconomic Theory: Basic Principles and Extensions</span></em>. 12th ed. Cengage Learning.
+</div>
+<div id="ref-3_NordhausTobin1972" class="csl-entry" role="listitem">
+Nordhaus, William D., y James Tobin. 1972. <em><span>Is Growth Obsolete?</span></em> (New York).
+</div>
+<div id="ref-3_Pareto1906" class="csl-entry" role="listitem">
+Pareto, Vilfredo. 1906. <em>Manuale di <span>E</span>conomia <span>P</span>olitica, con una <span>I</span>ntroduzione alla <span>S</span>cienza <span>S</span>ociale</em>. Piccola Biblioteca Scientifica 13. Societ<span>à</span> Editrice Libraria.
+</div>
+<div id="ref-3_Rosen1999" class="csl-entry" role="listitem">
+Rosen, Sherwin. 1999. <span>«<span>Potato Paradoxes</span>»</span>. <em>Journal of Political Economy</em> 107 (S6): S294-313. <a href="https://doi.org/10.1086/250112">https://doi.org/10.1086/250112</a>.
+</div>
+<div id="ref-3_Samuelson1938" class="csl-entry" role="listitem">
+Samuelson, Paul A. 1938. <span>«<span>A Note on the Pure Theory of Consumer’s Behaviour</span>»</span>. <em>Economica</em>, New Series, vol. 5 (17): 61-71. <a href="https://doi.org/10.2307/2548836">https://doi.org/10.2307/2548836</a>.
+</div>
+<div id="ref-3_Veblen1899" class="csl-entry" role="listitem">
+Veblen, Thorstein. 1899. <em><span>The Theory of the Leisure Class: An Economic Study in the Evolution of Institutions</span></em>. The Macmillan Company.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>La utilidad se define como la capacidad de los bienes para satisfacer necesidades y se implanta en la teoría económica a partir de la primera Revolución Marginalista.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>En 1738, Daniel Bernoulli recurrió por primera vez de forma rigurosa a la utilidad marginal decreciente para resolver la paradoja de San Petersburgo, un juego con valor esperado monetario infinito por el que, sin embargo, ningún individuo estaría dispuesto a pagar una cantidad elevada. Bernoulli mostró que si la utilidad del dinero es cóncava –marginalmente decreciente–, el valor esperado de la utilidad del juego es finito, anticipando en más de un siglo el concepto de utilidad marginal que formalizaría la Revolución Marginalista.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>En 1854, Gossen formuló sus tres leyes, que han tenido una gran relevancia en el desarrollo de la Teoría de Demanda:</p>
+<ol type="1">
+<li><p>Ley de saturación de necesidades: “la utilidad de un bien disminuye conforme aumenta la cantidad disponible de este bien, hasta llegar a la saciedad”. Es decir, Umg decreciente.</p></li>
+<li><p>Ley de igualdad de las&nbsp;<span class="math inline">\(UMg\)</span> ponderadas: una persona distribuye su renta entre los bienes de modo que la última unidad monetaria gastada en cada uno le reporte la misma utilidad marginal. Es decir, en el óptimo, las <span class="math inline">\(UMg\)</span> ponderadas por su precio se igualan.</p></li>
+<li><p>Ley de la escasez como condición previa al valor económico, lo que implica la existencia de un problema económico y, por tanto, la posibilidad de optimización de los recursos.</p></li>
+</ol>
+<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn4"><p>El análisis de la Teoría NC de la Demanda se basa en:</p>
+<ul>
+<li><p>El individualismo metodológico, es decir, en el examen del comportamiento del individuo (consumidor).</p></li>
+<li><p>Un concepto subjetivo de utilidad.</p></li>
+<li><p>Racionalidad: dados precios y renta, el individuo planifica su gasto de manera que haga máxima su satisfacción (autores como Khaneman y Tversky o Richard Thaler considerarán irracionalidad de las decisiones). - Información completa: contexto de certidumbre.</p></li>
+</ul>
+<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn5"><p>Si la utilidad marginal del dinero es constante, la última unidad monetaria reporta la misma utilidad independientemente de la cantidad que se posea. Por ejemplo, no es lo mismo recibir una unidad monetaria con una renta de 10 que recibir dicha unidad con una renta de 10000.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Un conjunto se define como convexo si, para cada par de sus puntos, cada punto sobre el segmento que los une está recubierta por el conjunto. Un conjunto es convexo si se puede ir de un punto a otro el línea recta sin salir del mismo. Si dos planes de consumo son posibles, también lo será cualquier plan formado a partir del promedio ponderado. Este supuesto implica perfecta divisibilidad de los bienes.</p>
+<p>Así, un conjunto es convexo cuando cualquier combinación lineal de dos puntos pertenecientes al mismo está también incluida en el conjunto.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Con limitar la discrecionalidad de las preferencias se hace referencia a no escoger una muestra demasiado amplia sino limitada para que sea operativa y de buen comportamiento<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>La intuición es que el consumidor nunca se queda sin saber qué prefiere: ante dos cestas cualesquiera, siempre puede decir cuál le gusta más o que le son indiferentes. Si se cumplen las dos relaciones a la vez, es indiferente entre ambas.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>El orden lexicográfico compara los componentes de un conjunto uno a uno y ordena los elementos de acuerdo al primer elemento diferente que encontramos. No es posible dibujar curvas de indiferencia. Proporcionan un preorden, no un orden completo. Cumple con completitud, reflexividad, transitividad, y monotonía, pero no se puede construir ninguna función de utilidad, porque es necesario la propiedad de continuidad.</p>
+<p>Para saber más, acudir al anexo.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>La continuidad descarta preferencias como las lexicográficas (Apéndice, 3.A.3), que cumplen completitud, reflexividad y transitividad pero no continuidad, y por ello no admiten ninguna función de utilidad. No debe confundirse con la diferenciabilidad (Axioma 7): la continuidad garantiza que exista una función de utilidad, no que esta sea derivable en todo punto –una función tipo Leontief, por ejemplo, es continua pero presenta un vértice donde la RMS no está definida.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>La monotonía es la versión fuerte de un supuesto más general de deseabilidad, cuya versión más débil es la no saciedad local (véase la subsección “Curvas de indiferencia”): esta solo exige que, en cualquier punto, exista alguna cesta cercana estrictamente mejor –no que “más de todo” sea siempre mejor–. La monotonía implica no saciedad local, pero no al revés.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>A diferencia de la continuidad, que solo exige ausencia de saltos, la diferenciabilidad exige además ausencia de vértices: una función continua puede tener puntos angulares –como la tipo Leontief– donde la pendiente cambia bruscamente, mientras que una función diferenciable tiene pendiente única y bien definida en todo punto, lo que permite aplicar el cálculo diferencial (utilidades marginales, RMS, condiciones de primer orden) sin excepciones.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>En matemáticas, el "buen comportamiento" quiere decir también que no se está violando ninguna premisa necesaria para la aplicación satisfactoria de cualquiera que sea el análisis que esté en discusión.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p><span class="math inline">\(u\)</span> es una función del conjunto de bienes, <span class="math inline">\(X\)</span>, para los reales (números reales <span class="math inline">\(\mathbb{R}\)</span>) tal que, <span class="math inline">\(/\)</span>, el bien <span class="math inline">\(x\)</span> es al menos tan bueno como el bien <span class="math inline">\(y\)</span>, <span class="math inline">\(x\succsim y\)</span>, si y solo si, <span class="math inline">\(\Leftrightarrow\)</span>, esto tiene una traslación en términos de utilidad, <span class="math inline">\(u\left(x\right)\geq u\left(y\right)\)</span>.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Aclaración entre ordenación e ITM+, concepto que suele aparecer:</p>
+<ul>
+<li><p>La ordenación es la idea principal: la función de utilidad solo nos dice si una cesta de bienes es mejor, peor o igual que otra. Por ejemplo, "me gusta más la pizza que la hamburguesa".</p></li>
+<li><p>La propiedad de independencia de transformaciones monótonas positivas es la confirmación matemática de esto. Significa que los números que asignamos a esas preferencias no importan, solo su orden. Si le asigno un valor de 10 a la pizza y 5 a la hamburguesa, el hecho de que la pizza me guste más no cambia si en su lugar les asigno valores de 100 y 50. Lo que importa es que 100 es mayor que 50.</p></li>
+</ul>
+<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn16"><p>Es decir, que dada una cesta que reporta mayor utilidad que otra, cualquier combinación lineal de ambas reportará más utilidad que la que menos utilidad aporte. Esta propiedad nos permite establecer que la maximización de U(x) es equivalente a elegir la cesta que reporta más utilidad. Es cuasicóncava y no cóncava porque las transformaciones monótonas positivas preservan la ordenación de preferencias pero alteran la forma.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>Las combinaciones que son preferidas o indiferentes forman parte de un conjunto convexo<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Por la monotonía evitamos que haya males y que el individuo llegue a saturarse de algún bien.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>La intuición es que la RMS mide cuánto de un bien está dispuesto a entregar el consumidor a cambio de una unidad más del otro sin quedar ni mejor ni peor. Es una valoración subjetiva, a diferencia de la relación de precios, que es la tasa a la que el mercado permite intercambiar los bienes. Por ejemplo, si el consumidor está dispuesto a renunciar a dos cafés por un té más, su RMS entre té y café es dos.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>La intuición es que&nbsp;<span class="math inline">\(\sigma\)</span> mide lo fácil que resulta sustituir un bien por otro. Si es alta, un pequeño cambio en la valoración relativa de los bienes lleva a cambiar mucho la proporción en que se consumen, y en el caso extremo de los sustitutivos perfectos&nbsp;<span class="math inline">\(\sigma\)</span> es infinita. Si es nula, la proporción no cambia en absoluto, como ocurre con los complementarios perfectos.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>Otros casos (levantamiento de supuestos)</p>
+<ul>
+<li><p>Bienes neutrales: Su consumo le es indiferente al individuo. Por ello las curvas de indiferencia son rectas verticales u horizontales según qué bien sea neutro.</p></li>
+<li><p>Males: Las curvas de indiferencia tendrán pendiente positiva y serán crecientes. La utilidad crecerá hacia el eje de abscisas u ordenadas dependiendo de que bien sea el mal.</p></li>
+<li><p>Curvas de indiferencia cóncavas: La RMS es creciente al aumentar X (dados los bienes X e Y). Estas curvas de indiferencia no implican que los bienes sean males, únicamente rompen el supuesto de convexidad, es decir la preferencia por la variedad. Para saber analíticamente si un bien es un mal, calculamos la <span class="math inline">\(UMg\)</span> (primera derivada) del bien y si es negativa es un mal.</p></li>
+</ul>
+<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn22"><p>Esto se debe a que al ser la <span class="math inline">\(RMS\)</span> constante el valor de <span class="math inline">\(\partial RMS_{x,y}\)</span> en la ecuación <a href="#eq-3-elasticidad-de-sustitucion" class="quarto-xref">&nbsp;<span>3.5</span></a> es 0, por lo tanto el valor de <span class="math inline">\(\sigma\)</span> es <span class="math inline">\(\infty\)</span>.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>En el segmento horizontal, la <span class="math inline">\(RMS\)</span> es cero, ya que no hay disposición a sustituir un bien por el otro. En el segmento vertical, la <span class="math inline">\(RMS\)</span> es infinita. Finalmente, en el vértice —el punto clave de consumo óptimo— la <span class="math inline">\(RMS\)</span> es indefinida, dado el quiebre de la curva. Esto subraya la imposibilidad de sustitución entre los bienes, ya que solo aumentan la utilidad en una proporción fija.</p>
+<p>Así, en el caso de una función de utilidad tipo Leontief, el consumo solo tiene sentido en su vértice.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>En los extremos la cantidad consumida del otro bien es cero. En el caso de <span class="math inline">\(\dfrac{m}{p_{x}}\)</span>, viene de que el consumo de <span class="math inline">\(y\)</span> es 0, por lo que <span class="math inline">\(m=p_{x}\cdot x\)</span> entonces <span class="math inline">\(x=\dfrac{m}{p_{x}}\)</span> y lo mismo aplica en el extremo de solo consumir el bien <span class="math inline">\(y\)</span>.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>Coste de oportunidad al reducir la cantidad de <span class="math inline">\(y\)</span> que puede obtenerse al reducir la cantidad de <span class="math inline">\(x\)</span> en una unidad y suponiendo que los precios están dados. Este coste de oportunidad será constante.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Debido a la no saciedad local, el símbolo de desigualdad, <span class="math inline">\(\leq\)</span>, de la restricción presupuestaria pasa a ser una igualdad, =, a la hora de resolver el Lagrangiano.</p>
+<p>Así, la desigualdad de la restricción (<span class="math inline">\(\le\)</span>) se convierte en una igualdad (=) porque, por el principio de no saciedad, el consumidor siempre gasta todo su ingreso para obtener la máxima satisfacción. La solución a este problema, usando el método de Lagrange, nos da la condición clave de equilibrio: la Relación Marginal de Sustitución (RMS) debe ser igual a la relación de precios. Esto significa que la valoración subjetiva del consumidor se alinea perfectamente con la valoración objetiva del mercado.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>La condición que proporciona la solución (elección del consumidor) viene dada por la igualación entre las&nbsp;<span class="math inline">\(UMg\)</span> ponderadas por el precio de cada bien y la igualación de todas ellas al multiplicador de Lagrange. El consumidor distribuye toda su renta entre los diferentes bienes hasta que las&nbsp;<span class="math inline">\(UMg\)</span> ponderadas por el precio se igualan (Segunda Ley de Gossen).</p>
+<p>Siendo&nbsp;<span class="math inline">\(\lambda\)</span> el multiplicador de Lagrange (precio sombra de la restricción) que, en este caso, representa la&nbsp;<span class="math inline">\(UMg\)</span> de la renta, es decir, lo que aumenta la utilidad máxima al aumentar la renta en una unidad. A diferencia del enfoque cardinal,&nbsp;<span class="math inline">\(\lambda\)</span> no es constante: depende de los precios y de la renta.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>Curiosidad:</p>
+<ul>
+<li><p>Si <span class="math inline">\(RMS&gt;P_{1}/P_{2}\)</span>, gráficamente la pendiente de la curva de indiferencia es superior a la de la recta de balance,la valoración subjetiva del consumidor del bien 1 (<span class="math inline">\(RMS\)</span>) será superior a la valoración objetiva (precio relativo) de dicho bien. Por tanto, el consumidor aumentará su utilidad sustituyendo unidades del bien 2 por unidades del bien 1.</p></li>
+<li><p>Si <span class="math inline">\(RMS&lt;P_{1}/P_{2}\)</span>, ocurrirá lo contrario, donde la pendiente de la curva de indiferencia es inferior a la de la recta de balance</p></li>
+</ul>
+<p>El consumidor continuará reajustando su consumo hasta que su <span class="math inline">\(RMS\)</span> sea exactamente igual al precio relativo, <span class="math inline">\(RMS=P_{1}/P_{2}\)</span> , momento en el que alcanza su punto de consumo óptimo y no tiene incentivo para realizar más sustituciones. Gráficamente, la pendiente de la curva de indiferencia y la pendiente de la recta de balance serán iguales.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>El coste de oportunidad y el precio relativo (valoración objetiva) pueden divergir cuando no se cumplen las condiciones ideales del mercado. Esto sucede, por ejemplo:</p>
+<ul>
+<li><p>En mercados imperfectos: Si hay monopolios u oligopolios, los precios no reflejan el coste de producción, alterando el verdadero coste de oportunidad.</p></li>
+<li><p>En mercados con bienes no transables: Si un bien no se puede comprar o vender, su coste de oportunidad es subjetivo y no está dictado por un precio de mercado.</p></li>
+<li><p>Con información asimétrica: Si los precios no reflejan toda la información disponible, el coste de oportunidad percibido por un consumidor puede diferir del coste real.</p></li>
+</ul>
+<p>En la teoría neoclásica, sin embargo, se asume un mercado ideal donde el precio relativo es el coste de oportunidad, lo que simplifica el modelo para entender la elección racional del consumidor.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>Gorman, W. M. (1953), “Community Preference Fields”,<em>Econometrica</em>, 21(1), pp.&nbsp;63-80. También conocida como forma polar de Gorman (<em>Gorman polar form</em>), desarrollada en Gorman (1961),<em>Metroeconomica</em>.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>El objetivo será determinar si la teoría neoclásica de la demanda nos permite identificar regularidades robustas (que se cumplan bajo cualquier circunstancia: “leyes de demanda”) y poder así derivar la curva de demanda. Desgraciadamente, veremos que la teoría neoclásica de la demanda no ofrece muchas regularidades robustas pero si algunas que comentamos a continuación<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>La intuición es que, cuando un bien se abarata, conviene sustituir otros bienes por él, y cuando se encarece, conviene sustituirlo por otros. Por eso este efecto siempre va en sentido contrario a la variación del precio. Por ejemplo, si baja el precio del café, el café sale más barato en comparación con el té, y el consumidor tiende a tomar más café y menos té.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p>La intuición es que una bajada de precios hace al consumidor más rico sin que gane más dinero, y una subida lo hace más pobre. Cómo reacciona a ese cambio depende del bien: si es normal, comprará más al enriquecerse, y si es inferior, comprará menos. Siguiendo el ejemplo, al bajar el precio del café al consumidor le sobra dinero, y si el café es un bien normal tomará todavía más café.<a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn34"><p>En ese sentido, su signo es contrario al de la variación del precio<a href="#fnref34" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn35"><p>Caso excepcional de los bienes Giffen: si un bien es inferior y absorbe una gran parte de la renta, un aumento de su precio puede hacer subir su demanda. Esto ocurre porque el encarecimiento empobrece tanto al consumidor que este se ve obligado a renunciar a otros bienes más caros, comprando aún más del bien barato para poder subsistir –el efecto renta, positivo por tratarse de un bien inferior, supera al efecto sustitución, siempre negativo–. El ejemplo clásico de manual –las patatas durante la hambruna irlandesa del siglo XIX, popularizado por Marshall– carece en realidad de verificación empírica sólida y ha sido cuestionado por historiadores económicos <span class="citation" data-cites="3_Rosen1999">(<a href="01-tema-a1.html#ref-3_Rosen1999" role="doc-biblioref">Rosen 1999</a>)</span>. La evidencia empírica más sólida de comportamiento Giffen real procede de <span class="citation" data-cites="3_JensenMiller2008">Jensen y Miller (<a href="01-tema-a1.html#ref-3_JensenMiller2008" role="doc-biblioref">2008</a>)</span>, que documentaron el fenómeno subsidiando el precio de alimentos básicos entre hogares muy pobres de China: evidencia fuerte para el arroz en Hunan y más débil para el trigo en Gansu. No existen “bienes Giffen” en sentido estricto, sino situaciones puntuales, verificadas empíricamente, en las que se confirma esta paradoja.<a href="#fnref35" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn36"><p>Bien Veblen: si sube el precio, sube la demanda –al contrario que un bien Giffen, aquí no hay ningún motivo de subsistencia, sino que el precio elevado forma parte del propio atractivo del bien (consumo conspicuo u ostentoso, en el sentido dado por <span class="citation" data-cites="3_Veblen1899">Veblen (<a href="01-tema-a1.html#ref-3_Veblen1899" role="doc-biblioref">1899</a>)</span>). Se trata típicamente de bienes de lujo –relojes de alta gama, bolsos de marcas exclusivas, ciertos vinos de gama alta–, donde un precio más bajo podría incluso reducir su atractivo social. A diferencia de los bienes Giffen, que son inferiores, los bienes Veblen son bienes de lujo; ambos comparten una pendiente de demanda positiva, pero por razones opuestas.<a href="#fnref36" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn37"><p>Gráficamente, las curvas de indiferencia tienen la misma pendiente a lo largo de cualquier recta trazada desde el origen. La intuición es que el consumidor reparte su renta en las mismas proporciones sea cual sea su nivel: si su renta se duplica, compra el doble de cada bien. Un ejemplo es la función Cobb-Douglas.<a href="#fnref37" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn38"><p>La intuición es que, una vez aislado el efecto sustitución, es decir, con la utilidad constante, la relación entre dos bienes es recíproca: el efecto que una subida de un euro en el precio del café tiene sobre la demanda de té es igual al que una subida de un euro en el precio del té tiene sobre la demanda de café.<a href="#fnref38" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn39"><p>Algunos ejemplos:</p>
+<ul>
+<li><p>La seguridad en un viaje aéreo: se elige siempre la aerolínea con menor riesgo de accidente, sin importar lo cómoda o lujosa que sea la otra.</p></li>
+<li><p>Medicamentos y efectos secundarios: se elige siempre el medicamento con mayor probabilidad de curación, incluso si eso implica soportar efectos secundarios más desagradables.</p></li>
+<li><p>Alimentos y alergias graves: se elige siempre el alimento del que se tiene total certeza de que no contiene el alérgeno, sin importar lo apetitoso que sea otro plato que pueda contenerlo.</p></li>
+</ul>
+<a href="#fnref39" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn40"><p>Aunque es un manual de macroeconomía, la exposición del método de Lagrange en Doepke, Lehnert y Sellgren&nbsp;<span class="citation" data-cites="3_DoepkeLehnertSellgren1999">(<a href="01-tema-a1.html#ref-3_DoepkeLehnertSellgren1999" role="doc-biblioref">1999</a>)</span> –planteando primero el problema, formalizando después el Lagrangiano y solo al final interpretando el multiplicador– resulta especialmente clara para ganar intuición antes de formalizar, por lo que se ha tomado como modelo expositivo en este apartado.<a href="#fnref40" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn41"><p>Esta derivación presupone una solución interior, es decir, que el consumidor adquiere una cantidad estrictamente positiva de ambos bienes. El supuesto de que las preferencias son asintóticas a los ejes –introducido junto con el Teorema de Debreu– garantiza precisamente esa solución interior. Cuando ese supuesto no se sostiene y puede haber soluciones de esquina, las condiciones de Lagrange se generalizan mediante las condiciones de Kuhn-Tucker, que permiten que alguna de las restricciones de no negatividad sea activa en el óptimo <span class="citation" data-cites="3_JehleReny2011">(<a href="01-tema-a1.html#ref-3_JehleReny2011" role="doc-biblioref">Jehle y Reny 2011</a>)</span>.<a href="#fnref41" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./02-tema-a2.html" class="pagination-link" aria-label="Del pensamiento económico de Keynes a la actualidad">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./04-tema-a4.html" class="pagination-link" aria-label="Dualidad y elección en situaciones de riesgo">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

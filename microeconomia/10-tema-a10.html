@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Mercados con productos diferenciados: diferenciación horizontal y vertical, el modelo de competencia monopolística y sus desarrollos posteriores.">
+
+<title>Tema A10. Teoría de la competencia monopolística | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./11-tema-a11.html" rel="next">
+<link href="./09-tema-a9.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A10. Teoría de la competencia monopolística | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Mercados con productos diferenciados: diferenciación horizontal y vertical, el modelo de competencia monopolística y sus desarrollos posteriores.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A10. Teoría de la competencia monopolística | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Mercados con productos diferenciados: diferenciación horizontal y vertical, el modelo de competencia monopolística y sus desarrollos posteriores.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A10. Análisis de mercados (IV). Diferenciación de productos. La competencia monopolística y otros desarrollos.",
+ "alternateName": "Teoría de la competencia monopolística",
+ "description": "Mercados con productos diferenciados: diferenciación horizontal y vertical, el modelo de competencia monopolística y sus desarrollos posteriores.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/10-tema-a10.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./10-tema-a10.html"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">10.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#justificación-de-la-diferenciación-de-productos" id="toc-justificación-de-la-diferenciación-de-productos" class="nav-link" data-scroll-target="#justificación-de-la-diferenciación-de-productos"><span class="header-section-number">10.2</span> Justificación de la diferenciación de productos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#diferenciación-horizontal-espacial" id="toc-diferenciación-horizontal-espacial" class="nav-link" data-scroll-target="#diferenciación-horizontal-espacial"><span class="header-section-number">10.3</span> Diferenciación horizontal espacial<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos 30 segundos">6'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#modelo-de-hotelling" id="toc-modelo-de-hotelling" class="nav-link" data-scroll-target="#modelo-de-hotelling">Modelo de Hotelling</a></li>
+  <li><a href="#competencia-con-localización-exógena" id="toc-competencia-con-localización-exógena" class="nav-link" data-scroll-target="#competencia-con-localización-exógena">Competencia con localización exógena</a></li>
+  <li><a href="#competencia-con-localización-endógena" id="toc-competencia-con-localización-endógena" class="nav-link" data-scroll-target="#competencia-con-localización-endógena">Competencia con localización endógena</a></li>
+  <li><a href="#implicaciones-de-bienestar" id="toc-implicaciones-de-bienestar" class="nav-link" data-scroll-target="#implicaciones-de-bienestar">Implicaciones de bienestar</a></li>
+  </ul></li>
+  <li><a href="#diferenciación-horizontal-no-espacial" id="toc-diferenciación-horizontal-no-espacial" class="nav-link" data-scroll-target="#diferenciación-horizontal-no-espacial"><span class="header-section-number">10.4</span> Diferenciación horizontal no espacial<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></a>
+  <ul class="collapse">
+  <li><a href="#el-modelo-de-chamberlin" id="toc-el-modelo-de-chamberlin" class="nav-link" data-scroll-target="#el-modelo-de-chamberlin">El Modelo de Chamberlin</a></li>
+  <li><a href="#preferencia-por-la-variedad" id="toc-preferencia-por-la-variedad" class="nav-link" data-scroll-target="#preferencia-por-la-variedad">Preferencia por la variedad</a></li>
+  </ul></li>
+  <li><a href="#diferenciación-vertical" id="toc-diferenciación-vertical" class="nav-link" data-scroll-target="#diferenciación-vertical"><span class="header-section-number">10.5</span> Diferenciación Vertical <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></a></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">10.6</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-el-modelo-de-ciudad-circular-de-salop" id="toc-a.1.-el-modelo-de-ciudad-circular-de-salop" class="nav-link" data-scroll-target="#a.1.-el-modelo-de-ciudad-circular-de-salop">10.A.1.&nbsp;&nbsp;El modelo de ciudad circular de Salop</a></li>
+  <li><a href="#a.2.-teoría-de-la-demanda-de-características-de-lancaster" id="toc-a.2.-teoría-de-la-demanda-de-características-de-lancaster" class="nav-link" data-scroll-target="#a.2.-teoría-de-la-demanda-de-características-de-lancaster">10.A.2.&nbsp;&nbsp;Teoría de la demanda de características de Lancaster</a></li>
+  <li><a href="#a.3.-perspectiva-histórica-los-enfoques-de-direcciones-y-de-no-direcciones" id="toc-a.3.-perspectiva-histórica-los-enfoques-de-direcciones-y-de-no-direcciones" class="nav-link" data-scroll-target="#a.3.-perspectiva-histórica-los-enfoques-de-direcciones-y-de-no-direcciones">10.A.3.&nbsp;&nbsp;Perspectiva histórica: los enfoques de direcciones y de no direcciones</a></li>
+  <li><a href="#a.4.-otros-desarrollos-publicidad-y-proliferación-de-marcas" id="toc-a.4.-otros-desarrollos-publicidad-y-proliferación-de-marcas" class="nav-link" data-scroll-target="#a.4.-otros-desarrollos-publicidad-y-proliferación-de-marcas">10.A.4.&nbsp;&nbsp;Otros desarrollos: publicidad y proliferación de marcas</a></li>
+  <li><a href="#a.5.-aplicaciones-del-modelo-de-dixit-y-stiglitz" id="toc-a.5.-aplicaciones-del-modelo-de-dixit-y-stiglitz" class="nav-link" data-scroll-target="#a.5.-aplicaciones-del-modelo-de-dixit-y-stiglitz">10.A.5.&nbsp;&nbsp;Aplicaciones del modelo de Dixit y Stiglitz</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Análisis de mercados (IV). Diferenciación de productos. La competencia monopolística y otros desarrollos.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">10.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>La Teoría microeconómica neoclásica se construyó sobre el supuesto de la existencia de bienes homogéneos para modelizar el comportamiento de los agentes económicos. No obstante, en la práctica se observa que muchas industrias producen un elevado número de bienes diferenciados en muchas características o dimensiones, tales como la localización geográfica, la calidad, el diseño o el grado de servicios proporcionado con el producto entre otros.</p>
+<p>Esta insatisfacción teórica llevó a autores como Sraffa, Robinson o Chamberlin a desarrollar modelos de Competencia Imperfecta, entre los que se encuentran los de competencia monopolística, donde el supuesto fundamental es la existencia de productos no homogéneos, es decir, diferenciados, entendidos como sustitutivos cercanos entre sí desde el punto de vista del consumo.</p>
+<p>Así, la diferenciación puede ser:</p>
+<ul>
+<li><p>Horizontal, los bienes se diferencian por sus características, sin que haya unanimidad entre los consumidores sobre qué característica es mejor (por ejemplo, un jersey rojo o negro).</p></li>
+<li><p>Vertical, todos los consumidores coinciden en qué variedad es mejor, de modo que a igualdad de precio todos elegirían la de mayor calidad, y solo difieren en cuánto están dispuestos a pagar por ella<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p></li>
+</ul>
+<p>Por consiguiente, el objetivo de esta exposición es el análisis de la competencia monopolística a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Justificación de la diferenciación de productos, con el modelo de Lancaster.</p></li>
+<li><p>Diferenciación horizontal espacial, donde se desarrollará el modelo de Hotelling,</p></li>
+<li><p>Diferenciación horizontal no espacial, donde se analizará el modelo de Chamberlin y el modelo de preferencia por la variedad de Dixit-Stiglitz.</p></li>
+<li><p>Diferenciación Vertical, que se analizará modificando el modelo de Hotelling.</p></li>
+</ol>
+</section>
+<section id="justificación-de-la-diferenciación-de-productos" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="justificación-de-la-diferenciación-de-productos"><span class="header-section-number">10.2</span> Justificación de la diferenciación de productos <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Comenzando con la justificación, la diferenciación de productos hace que el concepto de industria o mercado sea más ambiguo<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. Así, cabe plantear el por qué las empresas buscan diferenciarse:</p>
+<ul>
+<li><p>Por el lado de la oferta, la diferenciación supone que cada empresa ofrece su producto en exclusiva, por lo que la empresa evita una demanda totalmente elástica, logrando enfrentarse a una demanda con pendiente negativa que le otorga poder de mercado, es decir, puede influir en el precio de su variedad y aumentarlo sin perder a todos sus clientes.</p></li>
+<li><p>Por el lado de la demanda, se justifica por el modelo de Lancaster de demanda de características<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p></li>
+</ul>
+<p>Lancaster parte del enfoque de que lo que demandan los consumidores no son bienes en sí mismos, sino las características presentes en ellos, que son las que en realidad les permiten satisfacer sus necesidades. Así, dichas características coexisten en un mismo bien en distintas proporciones.</p>
+<p>Gráficamente, como se observa en la <a href="#fig-10-modelo-lancaster-simplificado" class="quarto-xref">Figura&nbsp;<span>10.1</span></a>, partiendo de que hay dos características, <span class="math inline">\(a_{1}\)</span> y <span class="math inline">\(a_{2}\)</span>, se dibujan los vectores correspondientes a cada uno de los bienes, <span class="math inline">\(X\)</span>, <span class="math inline">\(Y\)</span>, <span class="math inline">\(Z\)</span> que dependiendo de la pendiente incorporarán más de una característica u otra. Además, sobre cada vector se marca el punto que alcanzaría el consumidor si gastase toda su renta en ese bien, de modo que la distancia al origen depende del precio, y la unión de esos puntos forma la frontera de posibilidades de consumo. Si baja el precio de un bien, su punto se aleja del origen y la frontera se amplía. No obstante, el consumidor puede elegir consumir dos bienes como hace en <span class="math inline">\(E\)</span>, para una curva de indiferencia, <span class="math inline">\(u\)</span>.</p>
+<div id="fig-10-modelo-lancaster-simplificado" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo Lancaster simplificado">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-modelo-lancaster-simplificado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.1: Modelo Lancaster simplificado
+</figcaption>
+<div aria-describedby="fig-10-modelo-lancaster-simplificado-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-lancaster-simple.svg" class="img-fluid figure-img" alt="Modelo Lancaster simplificado">
+</div>
+</figure>
+</div>
+<p>Así, esta nueva teoría de la demanda permite explicar tres cuestiones que la teoría neoclásica no era capaz de explicar:</p>
+<ol type="1">
+<li><p>Ante bajadas del precio de un bien, el consumidor puede no variar su comportamiento dada su preferencia por una determinada característica (a no ser que baje mucho), explicando la fidelidad a las marcas.</p></li>
+<li><p>Si una nueva marca desarrollase un producto <span class="math inline">\(H\)</span> con una combinación equilibrada de características entre los bienes <span class="math inline">\(Y\)</span> y <span class="math inline">\(Z\)</span>, como se observa en el gráfico, se haría con la demanda del consumidor, explicando el desarrollo de nuevos productos.</p></li>
+<li><p>Además, esta teoría justifica la importancia de dar a conocer las características de un producto, explicando la publicidad.</p></li>
+</ol>
+<p>Una vez introducida la justificación de diferenciación de productos, a continuación analizaremos los modelos de diferenciación horizontal.</p>
+</section>
+<section id="diferenciación-horizontal-espacial" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="diferenciación-horizontal-espacial"><span class="header-section-number">10.3</span> Diferenciación horizontal espacial<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos 30 segundos">6'30"</span></h2>
+<p>Comenzando con los modelos de diferenciación horizontal espacial, estos estudian un enfoque direcciones mediante modelos de oligopolio. En ellos las preferencias de los individuos se definen sobre el espacio de características, es decir, hay un solo bien con distintas características<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, y los individuos demandan un determinado nivel de características –por ejemplo, el nivel de azúcar en la Coca-cola: los consumidores demandan Coca-cola normal, o light, o zero–.</p>
+<p>Concretamente, los bienes se diferencian entre sí por su localización geográfica, que es una metáfora del grado que poseen de una determinada característica. Así, en estos modelos, cuando una empresa decide su localización, en realidad lo que está decidiendo es el grado de la característica que va a producir<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p>
+<p>Para su estudio se analizará el modelo de Hotelling.</p>
+<section id="modelo-de-hotelling" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="modelo-de-hotelling">Modelo de Hotelling</h3>
+<p>El modelo de Hotelling o de competencia espacial <span class="citation" data-cites="10_Hotelling1929">(<a href="01-tema-a1.html#ref-10_Hotelling1929" role="doc-biblioref">Hotelling 1929</a>)</span> explica la diferenciación horizontal con un producto homogéneo utilizando la competencia espacial, es decir, los bienes se diferencian entre sí por su situación geográfica, que funciona como una metáfora del grado que posee de una determinada característica, por lo que el enfoque va a ser de direcciones, es decir, las preferencias de los consumidores se definen sobre un espacio de características.</p>
+<section id="supuestos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="supuestos">Supuestos</h5>
+<ol type="1">
+<li><p>Calle lineal de longitud uno y densidad uno.</p></li>
+<li><p>Consumidores uniformemente distribuidos a lo largo de ella.</p></li>
+<li><p>Dos empresas, (A) y (B), que venden un producto idéntico con los mismos costes de producción, de forma que en lo único en que se diferencian es en la localización (una en cada extremo)<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a>.</p></li>
+<li><p>Existe un coste de transporte, <span class="math inline">\(t\)</span>, de los consumidores. Los costes de transporte pueden interpretarse como la heterogeneidad de gustos de los consumidores: si, por ejemplo, los costes de transporte del consumidor son nulos, ello significa que no le supone ningún coste pasar de consumir una variedad a otra, es decir, significa que los gustos son homogéneos, por lo que los individuos no valoran la diferenciación ofrecida por las empresas (es decir, les da igual que las empresas estén situadas en lugares distintos). Lo contrario ocurre si los gustos de los consumidores son heterogéneos (<span class="math inline">\(t&gt;0\)</span>).</p></li>
+<li><p>Todos los consumidores consumen, pues asumimos que su excedente, <span class="math inline">\(V\)</span>, es positivo tras pagar el precio y los costes de transporte.</p></li>
+</ol>
+<p>La utilidad del consumidor, <span class="math inline">\(u\)</span>, vendrá dada por su excedente, <span class="math inline">\(V\)</span>, o “predisposición a pagar”, menos el precio pagado, <span class="math inline">\(P\)</span>, menos los costes de transporte, <span class="math inline">\(t\)</span>, que pueden ser lineales, <span class="math inline">\(t\cdot x\)</span>, –líneas rectas– o cuadráticos, <span class="math inline">\(t\cdot x^{2}\)</span>, –curvas convexas–, como veremos. <span id="eq-a-10-1"><span class="math display">\[u=V-P-t\cdot x \tag{10.1}\]</span></span></p>
+<p>Gráficamente, en un plano de ciudad lineal, 0 y 1, y de excedente del consumidor como el de la <a href="#fig-10-ciudad-lineal" class="quarto-xref">Figura&nbsp;<span>10.2</span></a>, si el consumidor se sitúa en <span class="math inline">\(x\)</span> y cada empresa se sitúa en un extremo, la utilidad que obtiene el individuo de consumir 0 es la misma que la que obtiene de consumir 1: ninguna, pues en los extremos –que es donde están las tiendas–, <span class="math inline">\(P+t=V\)</span>, pues el excedente del consumidor se agota por el precio pagado y por los costes de transporte por el camino recorrido hasta cualquiera de las tiendas. Podemos definir los costes cuadráticos o lineales (costes cuadráticos en rojo, lineales en azul en el gráfico).</p>
+<div id="fig-10-ciudad-lineal" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Ciudad lineal">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-ciudad-lineal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.2: Ciudad lineal
+</figcaption>
+<div aria-describedby="fig-10-ciudad-lineal-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-ciudad-lineal.svg" class="img-fluid figure-img" alt="Ciudad lineal">
+</div>
+</figure>
+</div>
+<p>Una vez establecidos los supuestos analizaremos los tipos de competencia en la ciudad lineal.</p>
+</section>
+</section>
+<section id="competencia-con-localización-exógena" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="competencia-con-localización-exógena">Competencia con localización exógena</h3>
+<p>Asumimos que las localizaciones de las empresas son fijas, de forma que se mantienen en los extremos. Las empresas deciden, pues, únicamente sobre los precios (equilibrio de Nash en precios).</p>
+<p>Un consumidor que esté indiferente estará situado (es decir, tendrá unos gustos) allí donde su excedente neto de comprar el bien en la tienda A (a una distancia x) sea igual a su excedente neto de comprar el bien en la tienda B (a una distancia <span class="math inline">\(1\text{–}      x\)</span>): <span class="math inline">\(U_{A}=U_{B}\)</span>. <span id="eq-a-10-2"><span class="math display">\[p_{A}+t\cdot x=p_{B}+t\left(1-x\right) \tag{10.2}\]</span></span></p>
+<p>La demanda de cada empresa será toda la que esté entre ella y el consumidor indiferente, de forma que, operando: <span id="eq-a-10-3"><span class="math display">\[\begin{aligned}
+D_{A}\left(p_{A},p_{B}\right)=x=\dfrac{p_{B}-p_{A}+t}{2\cdot t}\\
+D_{B}\left(p_{A},p_{B}\right)=1-x=\dfrac{p_{A}-p_{B}+t}{2\cdot t}
+\end{aligned} \tag{10.3}\]</span></span></p>
+<p>Dados los supuestos de arriba (localización en los extremos y excedente neto positivo), las demandas obtenidas (y, por tanto, el resto de conclusiones que siguen) serán las mismas con independencia de la forma que adquieran los costes de transporte (lineales –ejemplo visto– o cuadráticos –con <span class="math inline">\(x^{2}\)</span> y <span class="math inline">\((1\text{–}      x)^{2}\)</span>–). Con máxima diferenciación (localización exógena) da igual costes lineales o cuadráticos.</p>
+<p>Los beneficios de una empresa serán: <span id="eq-a-10-4"><span class="math display">\[\pi_{A}=\left(p_{A}-c\right)\cdot D_{A} \tag{10.4}\]</span></span> donde <span class="math inline">\(\left(p_{A}-c\right)\)</span> es el margen unitario de la empresa A y <span class="math inline">\(c\)</span> es el coste marginal.</p>
+<p>Así, el programa de optimización de una empresa será la maximización de los beneficios <span id="eq-a-10-5"><span class="math display">\[\underset{\left\{ p_{A}\right\} }{\max}\quad\pi_{A}\left(p_{A}-c\right)\cdot D_{A} \tag{10.5}\]</span></span> de cuya CPO tanto para la empresa A como para la empresa B obtenemos las funciones de reacción: <span id="eq-a-10-6"><span class="math display">\[FR\left(A\right)=\dfrac{p_{B}+t+c}{2};FR\left(B\right)=\dfrac{p_{A}+t+c}{2} \tag{10.6}\]</span></span> y usando la simetría del problema, <span class="math inline">\(p_{A}=p_{B}\)</span>, se obtienen los precios y los beneficios de las empresas<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>: <span id="eq-a-10-7"><span class="math display">\[\begin{aligned}
+\pi^{*}_{A}=\pi^{*}_{B}=\dfrac{t}{2}\\
+P^{*}_{A}=P^{*}_{B}=c+t
+\end{aligned} \tag{10.7}\]</span></span></p>
+<p>Por tanto, se observa que cuanto mayor sea la heterogeneidad de gustos entre los consumidores (es decir, mayor sea <span class="math inline">\(t\)</span>), más cautivos serán de la empresa más cercana físicamente (es decir, de la empresa más cercana a sus gustos), y, por lo tanto, las empresas podrán exigir unos precios mayores y obtener beneficios más altos. Así, si los gustos de los consumidores son homogéneos, <span class="math inline">\(t=0\)</span>, se dará el resultado de Bertrand (<span class="math inline">\(p=c\)</span>, <span class="math inline">\(\pi=0\)</span>), mientras que si son heterogéneos, <span class="math inline">\(t&gt;0\)</span>, el precio tendrá un mark-up y los beneficios serán positivos.</p>
+</section>
+<section id="competencia-con-localización-endógena" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="competencia-con-localización-endógena">Competencia con localización endógena</h3>
+<p>En el caso de que la localización sea endógena, el juego se define en 2 etapas: primero, las empresas eligen simultáneamente su localización; luego, dada su localización, deciden simultáneamente sus precios. Así, si una empresa decide moverse para el centro, experimentará 2 tipos de efectos contrapuestos: i) efecto demanda (+), pues aumenta su mercado objetivo; y ii) efecto competición (–), pues aumenta la competencia en precios (las empresas se diferencian menos).</p>
+<p>Así, ante:</p>
+<ul>
+<li><p>Costes cuadráticos: el efecto competición será mayor que el efecto demanda<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>, por lo que las empresas se situarán en los extremos de la ciudad (es decir, diferenciación máxima) y los precios serán, por tanto, máximos&nbsp;<span class="citation" data-cites="10_DAspremont1979">(<a href="01-tema-a1.html#ref-10_DAspremont1979" role="doc-biblioref"><span class="nocase">d’Aspremont et&nbsp;al.</span> 1979</a>)</span><a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>.<br>
+Si no hay competencia en precios (por ejemplo, porque el Gobierno fija un precio), entonces el efecto competición desaparece y las empresas se localizarán en el centro de la ciudad (es decir, diferenciación mínima).</p></li>
+<li><p>Costes lineales: puede no haber equilibrio. Ello se debe a que, si en una primera etapa las empresas deciden localizarse en el interior del intervalo en lugar de en los extremos, entonces una reducción en el precio de, por ejemplo, la empresa B, atraerá a consumidores situados entre las dos empresas, pero también a consumidores situados a la izquierda de la empresa A. Esto hace que las funciones de demanda sean discontinuas, y que las funciones de beneficios sean discontinuas y no cóncavas, por lo que puede no existir un equilibrio en precios.</p></li>
+</ul>
+</section>
+<section id="implicaciones-de-bienestar" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="implicaciones-de-bienestar">Implicaciones de bienestar</h3>
+<p>En suma, cuando las empresas toman decisiones sobre su localización, no toman decisiones óptimas desde un punto de vista social: adoptan una diferenciación excesiva. Un planificador central podría aumentar el bienestar global minimizando los costes de transporte a los que se enfrentan los individuos localizando las empresas en los puntos ¼ y ¾<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>.</p>
+<p>Así, la estructura de precios no afecta al bienestar, debido a las demandas unitarias de los consumidores. El mark-up solo produce una redistribución de excedentes.</p>
+<p>De esta forma, el modelo de Hotelling nos permite estudiar la competencia en precios con productos diferenciados en el contexto de duopolio. No obstante, deja sin responder el número de empresas que decidirán entrar en el mercado, así como su grado de diferenciación, bajo la presencia de costes de entrada. El modelo de ciudad circular de&nbsp;<span class="citation" data-cites="10_Salop1979">Salop (<a href="01-tema-a1.html#ref-10_Salop1979" role="doc-biblioref">1979</a>)</span> permite comprender esta cuestión, en un contexto de oligopolios solapados<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>.</p>
+<p>Por consiguiente, en los modelos de diferenciación espacial las empresas desean diferenciarse para explotar la heterogeneidad de gustos de los consumidores que se expresa por los costes que estos afrontan por cambiar el consumo de una variedad por otra (es decir, los costes de transporte)<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>.</p>
+<p>Una idea básica pero crucial de estos modelos es que no hace falta que existan beneficios extraordinarios para que en un mercado se dé una competencia imperfecta. El grado de diferenciación será el resultado de dos fuerzas que operan en sentidos opuestos, el efecto demanda y el efecto competición.</p>
+</section>
+</section>
+<section id="diferenciación-horizontal-no-espacial" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="diferenciación-horizontal-no-espacial"><span class="header-section-number">10.4</span> Diferenciación horizontal no espacial<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></h2>
+<p>Por otro lado, ahora se analizará la diferenciación horizontal no espacial mediante modelos de competencia monopolística, donde las preferencias se definen en un espacio de bienes y no en un espacio de características.</p>
+<section id="el-modelo-de-chamberlin" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="el-modelo-de-chamberlin">El Modelo de Chamberlin</h3>
+<p>El estudio tradicional de la Competencia Monopolística comienza con el modelo de <span class="citation" data-cites="10_Chamberlin1933">Chamberlin (<a href="01-tema-a1.html#ref-10_Chamberlin1933" role="doc-biblioref">1933</a>)</span> o modelo de grupo numeroso. Parte de la existencia de un conjunto de productos percibidos por los consumidores como sustitutivos cercanos con una elasticidad de sustitución alta, por lo que se utiliza un enfoque de no direcciones.</p>
+<section id="estructura-intermedia" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="estructura-intermedia">Estructura intermedia</h5>
+<p>De esta forma, la competencia monopolística es una estructura de mercado intermedia entre la competencia perfecta y el monopolio, en la que muchas empresas, con libre entrada y salida, venden variedades diferenciadas de un mismo producto<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>.</p>
+<ul>
+<li><p>Similitudes con la competencia perfecta: i) elevado número de empresas (el suficiente como para que individualmente no sean capaces de influir sobre el precio de la industria); y ii) libertad de entrada y de salida.</p></li>
+<li><p>Diferencia con la competencia perfecta: producto diferenciado, lo que otorga a cada empresa poder de mercado sobre su variedad, aunque está limitado a la existencia de competencia.</p></li>
+<li><p>Existen interdependencias no reconocidas.</p></li>
+</ul>
+<p>Concretamente, en el enfoque no direcciones las preferencias de los individuos se definen sobre el espacio de bienes, es decir, hay varios bienes que son sustitutivos imperfectos, y los individuos diversifican su consumo entre dichos bienes (por ejemplo, Coca-cola vs.&nbsp;Pepsi). Que los bienes sean sustitutivos imperfectos significa que la elasticidad cruzada de su demanda será alta, pero no infinita.</p>
+<p>Ahora no queremos estudiar aspectos estratégicos de los productores como el posicionamiento de productos o competencia en precios. Ahora se estudiarán las consecuencias de la estructura de competencia monopolística sobre la eficiencia de producción y el bienestar.</p>
+</section>
+<section id="supuestos-1" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="supuestos-1">Supuestos</h4>
+<p>Los supuestos del modelo del modelo son básicamente los mismos que en competencia perfecta, excepto por la no existencia de un producto homogéneo:</p>
+<ol type="1">
+<li><p>Diferenciación horizontal, es decir, competencia monopolística, de manera que cada empresa lanzará al mercado una variedad de producto diferenciada, por lo que habrá tantas variedades como empresas.<br>
+Así, cada empresa será monopolista de su variedad, lo que le otorgará poder de mercado, de manera que ya no se enfrentará a una curva de demanda totalmente elástica sino con pendiente ligeramente negativa, pudiendo pues fijar un precio por encima de sus costes marginales.<br>
+No obstante, su poder de mercado será limitado (es decir, la pendiente de su demanda será sólo ligeramente negativa), ya que cada empresa sigue sujeta a la competencia de las otras empresas en la medida en que los productos, al ser meras variedades, son sustitutivos imperfectos los unos de los otros.</p></li>
+<li><p>Supuesto heroico<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>: todas las empresas del grupo se enfrentan a curvas de demanda idénticas, porque las preferencias de los consumidores se reparten por igual entre las variedades, y tienen curvas de costes idénticas (con forma de U), es decir, la diferencia de los productos no está en los costes. De ello se deriva que existe un precio común para toda la industria.</p></li>
+<li><p>Maximización miope de beneficios. Las empresas maximizan beneficios, pero tienen un comportamiento miope: piensan que si ellas modifican los precios, las demás mantendrán constantes los suyos, es decir, las empresas tienen una variación conjetural nula. Por tanto, no existe interacción estratégica.</p></li>
+</ol>
+</section>
+<section id="equilibrio-en-el-corto-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="equilibrio-en-el-corto-plazo">Equilibrio en el corto plazo</h4>
+<p>En este contexto, se define el corto plazo como el horizonte temporal donde viene dado el nivel de capital, <span class="math inline">\(\bar{K}\)</span>, el tamaño de planta y el número de empresas, es decir, no hay entrada de empresas.</p>
+<p>El equilibrio resultante es similar al de monopolio, es decir, los monopolistas se enfrenta a una curva de demanda con pendiente negativa por la heterogeneidad de productos, aunque ligeramente negativa ya que existe un gran número de bienes sustitutivos imperfectos.</p>
+<section id="miopía-demanda-planeada-y-efectiva" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="miopía-demanda-planeada-y-efectiva">Miopía: demanda planeada y efectiva</h5>
+<p>Además, la miopía de los agentes a la hora de tomar decisiones da lugar a:</p>
+<ol type="1">
+<li><p>Demanda planeada, <span class="math inline">\(d\)</span>, que refleja variación en las ventas sin tener en cuenta la reacción de los competidores. Esta curva es más elástica que la de demanda efectiva porque la empresa, por su miopía, cree que ante una disminución del precio va a vender más cantidad de la que realmente vende. Esta curva se desplaza (la ajusta la empresa) cuando el nivel de precios varía.</p></li>
+<li><p>Demanda efectiva, <span class="math inline">\(D\)</span>, que refleja variación en las ventas cuando todos los competidores ajustan sus precios suponiendo que la empresa mantiene su cuota de mercado. Solo se desplaza cuando cambia el número de empresas.</p></li>
+</ol>
+</section>
+<section id="análisis-gráfico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico">Análisis gráfico</h5>
+<p>Gráficamente, en un plano precios cantidades como el de la <a href="#fig-10-1-demanda-quebrada" class="quarto-xref">Figura&nbsp;<span>10.3</span></a>,</p>
+<ul>
+<li><p>La pendiente de la demanda efectiva, <span class="math inline">\(D\)</span>, es mayor que la pendiente de la demanda planeada, <span class="math inline">\(d\)</span>. Esto significa que ante una bajada de precios el aumento de las ventas real será menor que el esperado.</p></li>
+<li><p>Partiendo de un punto de equilibrio como el <span class="math inline">\(A\)</span>, se supone que la empresa baja el precio de <span class="math inline">\(P_{0}\)</span> a <span class="math inline">\(P_{1}\)</span>, creyendo que nadie lo seguirá, aumentando su demanda de <span class="math inline">\(x_{0}\)</span> a <span class="math inline">\(x_{1}\)</span>.</p></li>
+<li><p>Sin embargo, el resto de empresas bajarán los precios para no perder su cuota, lo que hace que las ventas solo pasen de <span class="math inline">\(x_{0}\)</span> a <span class="math inline">\(x^{\prime}_{1}\)</span> <a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>.</p></li>
+<li><p>Por consiguiente, la auténtica demanda de la empresa estaría quebrada, y se correspondería con la demanda planeada, <span class="math inline">\(d\)</span>, para precios superiores a <span class="math inline">\(P_{0}\)</span> y con la demanda efectiva, <span class="math inline">\(D\)</span>, para precios inferiores a <span class="math inline">\(P_{0}\)</span>. Aunque esta curva quebrada surge del cruce de <span class="math inline">\(d\)</span> y <span class="math inline">\(D\)</span> en el análisis de Chamberlin, él no la empleó como herramienta de análisis: fue Sweezy <span class="citation" data-cites="10_Sweezy1939">(<a href="01-tema-a1.html#ref-10_Sweezy1939" role="doc-biblioref">1939</a>)</span> quien la convirtió en un modelo de oligopolio para explicar la rigidez de los precios.</p></li>
+</ul>
+<div id="fig-10-1-demanda-quebrada" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Demanda Quebrada">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-1-demanda-quebrada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.3: Demanda Quebrada
+</figcaption>
+<div aria-describedby="fig-10-1-demanda-quebrada-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-demanda-quebrada.svg" class="img-fluid figure-img" alt="Demanda Quebrada">
+</div>
+</figure>
+</div>
+<p>Por otro lado, el objetivo de la empresa será la maximización del beneficios determinado por los ingresos totales, <span class="math inline">\(IT\)</span>, menos los costes totales, <span class="math inline">\(CT\)</span>, asumiendo que los costes totales tienen una forma tradicional de U<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>: <span id="eq-a-10-8"><span class="math display">\[\max\quad\Pi=IT-CT=P\left(Q\right)\cdot Q-CT\left(Q\right) \tag{10.8}\]</span></span></p>
+<p>Las CPO del problema determinan que el equilibrio se alcanza en el nivel en el que los ingresos marginales se igualan a los costes marginales, <span class="math inline">\(IMg=CMg\)</span>, para un nivel de producción que coincida con la intersección de las curvas de demanda efectiva y demanda planeada, <span class="math inline">\(d=D\)</span>. Si <span class="math inline">\(IMg\neq CMg\)</span> entonces existirán incentivos para alterar el nivel de producción, provocando reajustes.</p>
+</section>
+<section id="análisis-gráfico-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-1">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de precios, <span class="math inline">\(P\)</span>, y cantidades, <span class="math inline">\(x\)</span>, como el de la <a href="#fig-10-modelo-de-chamberlin-en-el-cp" class="quarto-xref">Figura&nbsp;<span>10.4</span></a>, se representan las curvas de demanda efectiva, <span class="math inline">\(D\)</span>, planeada, <span class="math inline">\(d\)</span>, y la de coste marginal, <span class="math inline">\(CMg\)</span>:</p>
+<ul>
+<li><p>Partiendo de un equilibrio como <span class="math inline">\(A\)</span> los ingresos marginales (líneas de puntos), asociados a la demanda planeada, <span class="math inline">\(d\)</span>, serán superiores a los costes marginales por lo que habrá incentivos a aumentar la producción hasta <span class="math inline">\(C\)</span>, donde los ingresos y costes marginales coinciden en <span class="math inline">\(B\)</span>.</p></li>
+<li><p>Para ello disminuirá los precios teniendo en cuenta su demanda planeada pero los competidores reaccionan, por lo que se alcanzará un nuevo equilibrio en <span class="math inline">\(C^{\prime}\)</span>. Cuando la empresa constata que los competidores también han reaccionado, revisará su demanda planeada y la desplazará hasta el nuevo equilibrio en <span class="math inline">\(C^{\prime}\)</span>. No obstante, en este punto los ingresos marginales seguirán siendo superiores a los costes marginales.</p></li>
+<li><p>Este movimiento se repetirá sucesivamente hasta alcanzar un equilibrio en <span class="math inline">\(E\)</span> en el que los ingresos marginales coinciden con los costes marginales en <span class="math inline">\(F\)</span> y, además, coincide con la intersección de las 2 curvas de demanda. En dicho punto la empresa no tiene incentivos para modificar su producción.</p></li>
+<li><p>A su vez, en el corto plazo el equilibrio es compatible con beneficios o pérdidas dependiendo de dónde se sitúe la curva de costes medios, <span class="math inline">\(CMe\)</span>.</p></li>
+</ul>
+<div id="fig-10-modelo-de-chamberlin-en-el-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Chamberlin: equilibrio en el corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-modelo-de-chamberlin-en-el-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.4: Modelo de Chamberlin: equilibrio en el corto plazo
+</figcaption>
+<div aria-describedby="fig-10-modelo-de-chamberlin-en-el-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-modelo-de-chamberlin-cp.svg" class="img-fluid figure-img" alt="Modelo de Chamberlin: equilibrio en el corto plazo">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="equilibrio-en-el-largo-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="equilibrio-en-el-largo-plazo">Equilibrio en el largo plazo</h4>
+<p>Sin embargo, en el largo plazo existen 2 fuerzas que pueden alterar las condiciones de equilibrio</p>
+<ol type="1">
+<li><p>Las empresas pueden alterar su tamaño de planta y elegir el tamaño óptimo.</p></li>
+<li><p>Existe libertad de entrada y salida dependiendo de la existencia de beneficios.</p></li>
+</ol>
+<p>Esta modificación del número de empresas se verá reflejada en la demanda efectiva, <span class="math inline">\(D\)</span>. Así, el resultado será un equilibrio en el largo plazo en el que desaparecerán los beneficios extraordinarios, determinando un equilibrio estable.</p>
+<section id="análisis-gráfico-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-2">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de precios y cantidades como el de la <a href="#fig-10-modelo-de-chamberlin-en-el-lp" class="quarto-xref">Figura&nbsp;<span>10.5</span></a>:</p>
+<ul>
+<li><p>En el punto <span class="math inline">\(E\)</span> existirán beneficios, pues para este nivel de producción, el precio está por encima de la curva de costes medios a largo plazo, <span class="math inline">\(CMe_{lp}\)</span></p></li>
+<li><p>Ello atraerá a nuevas empresas al mercado, lo que va a producir un desplazamiento de la curva de demanda efectiva hacia la izquierda, <span class="math inline">\(D^{\prime}\)</span>, hasta el punto en el que los beneficios desaparezcan, es decir, un punto situado sobre la curva de costes medios, en <span class="math inline">\(G\)</span>. Como cada empresa tratará de recuperar el nivel de beneficios, disminuirá el nivel de precios hasta el nivel inicial.</p></li>
+<li><p>Pero dicho punto <span class="math inline">\(G\)</span> es de desequilibrio ya que el ingreso marginal no se iguala al coste marginal, por lo que disminuirá el precio para recuperar la cantidad en el punto inicial <span class="math inline">\(E\)</span>, considerando su curva <span class="math inline">\(d^{\prime}\)</span>. No obstante todas las empresas le siguen y solo podrá vender la cantidad correspondiente a <span class="math inline">\(G^{\prime}\)</span>, la cual genera pérdidas dado que está debajo de la <span class="math inline">\(CMe\)</span>, como se observa en el área sombreada.</p></li>
+<li><p>De la misma forma que en el corto plazo, esto hará que las empresas reajusten sus demandas planeadas. Además, la situación de pérdidas producirá una salida de empresas del mercado desplazando la curva de demanda efectiva hacia la derecha. A su vez, como las empresas siguen siendo miopes seguirán disminuyendo los niveles de precios dando lugar a estos 2 efectos sucesivamente:</p>
+<ol type="1">
+<li><p>En primer lugar el desplazamiento de la demanda planeada hacia abajo, <span class="math inline">\(\Downarrow d\)</span>, y</p></li>
+<li><p>En segundo lugar el desplazamiento de la demanda efectiva hacia la derecha, <span class="math inline">\(D\Rightarrow\)</span>.</p></li>
+</ol></li>
+<li><p>Esto ocurrirá hasta que en un punto en el que las 2 demandas se igualen, concretamente en el punto <span class="math inline">\(H\)</span> con <span class="math inline">\(D^{\prime\prime}\)</span> y <span class="math inline">\(d^{\prime\prime}\)</span>, donde la demanda planeada va a ser tangente a la curva de costes medios a largo plazo, y donde el ingreso marginal es igual al coste marginal. Esto asegura que a largo plazo los beneficios son normales –beneficios nulos–, generando un equilibrio estable donde no entran ni salen empresas.</p></li>
+</ul>
+<div id="fig-10-modelo-de-chamberlin-en-el-lp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Chamberlin: equilibrio en el largo plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-modelo-de-chamberlin-en-el-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.5: Modelo de Chamberlin: equilibrio en el largo plazo
+</figcaption>
+<div aria-describedby="fig-10-modelo-de-chamberlin-en-el-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-modelo-de-chamberlin-lp.svg" class="img-fluid figure-img" alt="Modelo de Chamberlin: equilibrio en el largo plazo">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="teorema-de-exceso-de-capacidad" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="teorema-de-exceso-de-capacidad">Teorema de exceso de capacidad</h4>
+<p>Como se puede observar, en el equilibrio a largo plazo cada empresa produce a un coste medio mayor que el mínimo de la curva de costes medios –punto donde se cortan <span class="math inline">\(CMg\)</span> y <span class="math inline">\(CMe_{lp}\)</span>–, es decir, a un coste mayor que si produjera con su capacidad óptima por lo que las empresas presentan economías de escala no explotadas.</p>
+<p>Este hecho es analizado en el teorema de exceso de capacidad&nbsp;<span class="citation" data-cites="10_Chamberlin1933 10_Kaldor1935">(<a href="01-tema-a1.html#ref-10_Chamberlin1933" role="doc-biblioref">Chamberlin 1933</a>; <a href="01-tema-a1.html#ref-10_Kaldor1935" role="doc-biblioref">Kaldor 1935</a>)</span><a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>, cuya explicación radica en que los consumidores valoran la diferenciación: por lo tanto cuantas más variedades haya, menor será la cantidad producida de cada variedad, lo que dificultará el aprovechamiento de las economías de escala.</p>
+<section id="análisis-gráfico-3" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-3">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de precios y cantidades producidas como el de la <a href="#fig-10-teorema-exceso-de-capacidad" class="quarto-xref">Figura&nbsp;<span>10.6</span></a> se representa la curva de costes medios a corto plazo y la curva de costes medios a largo plazo que es una envolvente de las diferentes curvas de costes medios a corto plazo. Además, representando la curva de demanda planeada, cada monopolista producirá en el punto <span class="math inline">\(H\)</span> una cantidad, <span class="math inline">\(X_{H}\)</span>, generando 2 tipos de exceso de capacidad</p>
+<ol type="1">
+<li><p>Exceso de capacidad técnica, es decir, la diferencia entre la cantidad producida en <span class="math inline">\(H\)</span> y la que minimizaría el coste medio de la planta instalada, en <span class="math inline">\(I\)</span>, de modo que la empresa infrautiliza su propia planta y soporta un coste medio mayor del necesario.</p></li>
+<li><p>Exceso de capacidad socioeconómica, determinado por la diferencia entre el mínimo de la curva de costes medios a corto plazo, <span class="math inline">\(I\)</span>, y el mínimo de la curva de costes medio a largo plazo, <span class="math inline">\(J\)</span>. El tamaño de planta no es óptimo desde un punto de vista social, esto se debe a que al competidor monopolista no le interesa construir una planta mayor.</p></li>
+</ol>
+<div id="fig-10-teorema-exceso-de-capacidad" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Teorema exceso de capacidad">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-teorema-exceso-de-capacidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.6: Teorema exceso de capacidad
+</figcaption>
+<div aria-describedby="fig-10-teorema-exceso-de-capacidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-a-5-teorema-exceso-de-capacidad.svg" class="img-fluid figure-img" alt="Teorema exceso de capacidad">
+</div>
+</figure>
+</div>
+<p>Además, el teorema de exceso de capacidad destaca el hecho de que en competencia monopolística el número de empresas pierde relevancia a la hora de caracterizar el mercado ya que el equilibrio está muy alejado del de competencia perfecta.</p>
+</section>
+</section>
+<section id="ineficiencias" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="ineficiencias">Ineficiencias</h4>
+<p>Por consiguiente, en el equilibrio en competencia monopolística se genera</p>
+<ul>
+<li><p>Ineficiencia asignativa, ya que el precio es mayor que el coste marginal, <span class="math inline">\(P&gt;CMg\)</span>. Al igual que en el monopolio, existe un rango de producción para el cual la valoración de los consumidores es mayor que el coste de producción.</p></li>
+<li><p>Ineficiencia productiva, ya que cada empresa produce con un coste medio superior al mínimo, <span class="math inline">\(CMe&gt;\text{M{í}n }CMe\)</span>, debido al exceso de capacidad analizado anteriormente, y, como a largo plazo <span class="math inline">\(P=CMe\)</span>, los consumidores pagan un precio superior a ese mínimo.</p></li>
+</ul>
+<section id="bienestar" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="bienestar">Bienestar</h5>
+<p>Esto va a provocar un empeoramiento del bienestar de los consumidores aunque existen 2 razones para pensar que la competencia monopolística no es tan negativa socialmente debido a que</p>
+<ol type="1">
+<li><p>El poder de mercado en competencia monopolística es reducido, la demanda suele ser muy elástica y las ineficiencias pequeñas.</p></li>
+<li><p>La competencia monopolística ofrece a los consumidores una mayor diversidad de productos.</p></li>
+</ol>
+<p>Por consiguiente, la valoración global de la competencia monopolística dependerá de la comparación de las ineficiencias y ventajas que genere<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>.</p>
+</section>
+</section>
+<section id="criticas-al-modelo-de-chamberlin" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="criticas-al-modelo-de-chamberlin">Criticas al modelo de Chamberlin</h4>
+<p>Por otro lado, existen una serie de críticas al modelo de Chamberlin:</p>
+<ol type="1">
+<li><p>No se define de una forma precisa la industria, es decir, no se define el nivel de elasticidad cruzada que deben tener los bienes sustitutivos para formar parte de la misma industria. De ahí la célebre crítica de Stigler de que la indefinición es tal que, para ex fumadores, el chicle sería un buen sustitutivo del tabaco.</p></li>
+<li><p>No precisa el número de empresas necesarias para distinguir entre una situación de competencia monopolística y de oligopolio, es decir, para que comience a darse interdependencia estratégica entre las empresas.</p></li>
+<li><p>Concepto de demanda planeada insuficiente. La curva de demanda planeada solo considera consumidores finales, para los que es importante la diferenciación, pero, como señala <span class="citation" data-cites="10_Andrews1949">Andrews (<a href="01-tema-a1.html#ref-10_Andrews1949" role="doc-biblioref">1949</a>)</span>, deja fuera a gran parte de los consumidores intermedios de materias primas, para los que la diferenciación no es tan importante.</p></li>
+<li><p>La diferenciación como concepto no casa con:</p>
+<ol type="1">
+<li><p>El concepto de industria, puesto que impide la agregación de ofertas y de demandas individuales (salvo que el precio sea único, de ahí que Chamberlin se viese obligado a introducir el supuesto heroico).</p></li>
+<li><p>El supuesto heroico, pues si los productos son diferenciados, ¿por qué cabría esperar que las demandas de todos los productos fueran iguales, y los costes de todas las empresas fueran también iguales?</p></li>
+<li><p>Miopía, pues la diferenciación implica el estudio del comportamiento de la competencia para distanciarse de ella, por lo que resulta difícil creer que la empresa tenga una variación conjetural nula.</p></li>
+<li><p>Libre entrada, pues la diferenciación implica costes hundidos (por ejemplo, I+D, prospecciones de mercado, formación del personal, etc.), lo que facilita el surgimiento de barreras de entrada.</p></li>
+</ol></li>
+</ol>
+<p>En suma, Chamberlin aportó un modelo esencial de la teoría de la competencia monopolística. Sin embargo, aunque con el modelo representamos las ineficiencias productivas y asignativas, no podemos observar cuales son las ganancias en bienestar del consumidor: ¿Cómo representamos la eficiencia resultante de la preferencia por la variedad? Con el modelo de Dixit y Stiglitz.</p>
+</section>
+</section>
+<section id="preferencia-por-la-variedad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="preferencia-por-la-variedad">Preferencia por la variedad</h3>
+<p>Por otro lado, los modelos de preferencia por la variedad justificarán la diferenciación y completan o refinan el modelo de Chamberlin. En ese sentido, hasta ahora se ha supuesto que cada consumidor se posicionaba por una variedad preferida. Sin embargo, es posible que el consumidor prefiera diversificar su consumo en diferentes variedades.</p>
+<p>Para analizar este enfoque se utilizará el modelo de <span class="citation" data-cites="10_Dixit1977">Dixit y Stiglitz (<a href="01-tema-a1.html#ref-10_Dixit1977" role="doc-biblioref">1977</a>)</span>,cuyo rasgo característico es la presencia de un consumidor agente representativo.</p>
+<section id="supuestos-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="supuestos-2">Supuestos</h5>
+<p>Parte de los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Estructura de mercado de herencia chamberliana, es decir, de diferenciación horizontal del producto con competencia monopolística.</p></li>
+<li><p>Economías de escala internas a la empresa. La tecnología de producción (la misma para todas las empresas) está compuesta por un coste fijo y un coste variable constante: <span class="math inline">\(CT=CF+cq\)</span> (rendimientos crecientes a escala)</p></li>
+<li><p>Existe libre entrada en el mercado, por lo que (E(Bº)=0)</p></li>
+<li><p>Preferencia por la variedad, es decir, que la utilidad que le reporta al individuo el consumo de <span class="math inline">\(n\)</span> variedades es, ceteris paribus, superior a la que le reporta el consumo de tan solo <span class="math inline">\(n\text{–}      1\)</span> variedades. Por lo tanto, los consumidores eligen varios bienes.</p></li>
+<li><p>Supuesto heroico de precio común a la industria.</p></li>
+</ol>
+</section>
+<section id="problema-de-maximización-del-consumidor" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="problema-de-maximización-del-consumidor">Problema de maximización del consumidor</h4>
+<p>En este contexto, la preferencia por la variedad se representa mediante una función de utilidad tipo CES –es decir, con elasticidad de sustitución constante–. Así, la función de utilidad se compone de la suma de <span class="math inline">\(x_{i}\)</span>, que es cada una de las variedades consumidas del bien, y <span class="math inline">\(n\)</span> representa el número de variedades donde <span class="math inline">\(\theta\)</span> determina el grado de sustitución entre los bienes <span id="eq-a-10-9"><span class="math display">\[u=\sum\limits_{i=1}^{n}x^{\theta}_{i},\quad\theta\in\left(0,1\right) \tag{10.9}\]</span></span> donde <span class="math inline">\(\theta\)</span> es el grado de sustitución de los <span class="math inline">\(n\)</span> bienes, y que será menor que uno y mayor que cero (porque la función de utilidad es cóncava, implica sustituibilidad imperfecta). Por otro lado, esta función verifica la preferencia por la variedad.</p>
+<p>La elasticidad de sustitución entre variedades,&nbsp;<span class="math inline">\(\sigma\)</span>, que mide en qué porcentaje varía el cociente entre las cantidades consumidas de dos variedades cuando su precio relativo varía un 1 %, asociada a esta función de utilidad y a la preferencia por la variedad,&nbsp;<span class="math inline">\(PV\)</span>, será <span id="eq-a-10-10"><span class="math display">\[\sigma=\dfrac{1}{1-\theta}=\dfrac{1}{PV} \tag{10.10}\]</span></span> por lo que cuanto mayor sea la preferencia por la variedad, <span class="math inline">\(PV\)</span>, menor elasticidad de sustitución entre variedades. Es decir, cuanto mayor sea el valor de <span class="math inline">\(1-\theta\)</span> existe mayor preferencia por la variedad, ya que los consumidores consideran menos sustitutivas unas variedades respecto a otras<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>.</p>
+<p>De esta forma, el consumidor representativo maximizará su utilidad <span id="eq-a-10-11"><span class="math display">\[\max\quad u=\sum\limits_{i=1}^{n}x^{\theta}_{i} \tag{10.11}\]</span></span> sujeto a una restricción presupuestaria <span id="eq-a-10-12"><span class="math display">\[\sum\limits_{i=1}^{n}p_{i}\cdot x_{i}\leq m \tag{10.12}\]</span></span> donde <span class="math inline">\(p_{i}\)</span> es el precio del bien <span class="math inline">\(x_{i}\)</span> y <span class="math inline">\(m\)</span> representa la renta.</p>
+<p>La CPO del problema es la siguiente <span id="eq-a-10-13"><span class="math display">\[\dfrac{x_{i}}{x_{j}}=\left(\dfrac{p_{j}}{p_{i}}\right)^{\dfrac{1}{PV}} \tag{10.13}\]</span></span> donde, además, la elasticidad de sustitución de los bienes coincide en este modelo con la elasticidad-precio de la demanda en valor absoluto<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a>.</p>
+<p>La interpretación de este resultado es clara: cuanto mayor sea la preferencia por la variedad de un individuo, más rígida será la demanda de cada bien (es decir, menos elástica, más cercana a cero), y menor, por tanto, la sustituibilidad entre dos bienes. Por eso, si la preferencia por la variedad es alta, los precios de las diferentes variedades podrán divergir más sin que ello afecte tanto a las cantidades relativas demandadas.</p>
+</section>
+<section id="problema-de-maximización-del-productor" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="problema-de-maximización-del-productor">Problema de maximización del productor</h4>
+<p>Por el lado de la oferta, se supondrá que cada producto <span class="math inline">\(x_{i}\)</span> se fabrica solo con trabajo <span class="math inline">\(l_{i}\)</span> que depende de forma linea de la cantidad producida <span id="eq-10-funcion-de-produccion-dixit-stiglitz"><span class="math display">\[l_{i}=a+b\cdot x_{i} \tag{10.14}\]</span></span> donde&nbsp;<span class="math inline">\(a\)</span> representa el tamaño de las economías de escala, y&nbsp;<span class="math inline">\(b\)</span> la cantidad de trabajo necesaria por cada unidad adicional producida.</p>
+<p>Además, dado un salario constante, <span class="math inline">\(w\)</span>, la función de costes de cada variedad, <span class="math inline">\(C_{i}\)</span>, vendrá determinada por <span id="eq-a-10-14"><span class="math display">\[C_{i}=w\cdot a+w\cdot b\cdot x_{i} \tag{10.15}\]</span></span> donde <span class="math inline">\(w\cdot a\)</span> representan los costes fijos y un coste variable que depende de la cantidad producida, <span class="math inline">\(c\cdot x_{i}\)</span>, donde <span class="math inline">\(c=w\cdot b\)</span> representa el coste marginal. Cabe destacar que la existencia del coste fijo hace que la producción de la empresa tenga economías de escala: su coste medio es decreciente con el nivel de producción de la empresa: <span class="math inline">\(CMe_{i}=\dfrac{w\cdot a}{x_{i}}+w\cdot b\)</span></p>
+<p>El objetivo de la empresa será maximizar su beneficio <span id="eq-10-produccion-dixit-stiglit"><span class="math display">\[\max\quad\Pi=IT-CT=p_{i}\cdot x_{i}-C_{i} \tag{10.16}\]</span></span> y, dado que la empresa tiene poder de mercado sobre la variedad que produce, la condición de primer orden establece que los ingresos marginales se deben igualar a los costes marginales, en función de la elasticidad-precio de la demanda,&nbsp;<span class="math inline">\(\varepsilon\)</span>, es decir <span id="eq-a-10-15"><span class="math display">\[IMg=CMg\Rightarrow p_{i}\left(1-\dfrac{1}{\varepsilon}\right)=w\cdot b \tag{10.17}\]</span></span> e introduciendo el supuesto de simetría –todas las empresas son idénticas, tiene la misma función de coste y se enfrentan a demandas idénticas: <span class="math inline">\(p_{i}=p\quad\forall i\)</span>– y sustituyendo el valor de la elasticidad precio de la demanda, <span class="math inline">\(\varepsilon\)</span>, se obtiene que el precio será <span id="eq-10-precio-dixit-stiglitz"><span class="math display">\[p=\dfrac{w\cdot b}{\theta} \tag{10.18}\]</span></span></p>
+<p>De esta forma, las conclusiones son análogas a las obtenidas cuando vimos el problema del consumidor: el productor podrá lanzar al mercado un precio mayor cuanto menor sea la sustitución de bienes para el individuo (↓<span lang="el">θ</span>), es decir, cuanto mayor sea su preferencia por la variedad (↑PV)<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a>.</p>
+<section id="cantidad-producida" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="cantidad-producida">Cantidad producida</h5>
+<p>Por otro lado, bajo la condición de libre entrada y salida del mercado los beneficios deberán ser igual a 0, <span class="math inline">\(\Pi=0\)</span>, por lo que sustituyendo el precio (<a href="#eq-10-precio-dixit-stiglitz" class="quarto-xref">&nbsp;<span>10.18</span></a>) en la función de producción (<a href="#eq-10-produccion-dixit-stiglit" class="quarto-xref">&nbsp;<span>10.16</span></a>) y despejando en función de <span class="math inline">\(x_{i}\)</span> <span id="eq-a-10-16"><span class="math display">\[x=\dfrac{a\cdot\theta}{b\left(1-\theta\right)} \tag{10.19}\]</span></span> por lo tanto, la cantidad producida depende</p>
+<ul>
+<li><p>Negativamente, de la preferencia por la variedad, <span class="math inline">\(\left(1-\theta\right)\)</span>, y no del tamaño de mercado: a mayor preferencia por la variedad, menor será la cantidad producida de cada una de las variedades y menor aprovechamiento de las economías de escala, existiendo exceso de capacidad.</p></li>
+<li><p>Negativamente, del parámetro <span class="math inline">\(b\)</span> que determina el coste marginal.</p></li>
+<li><p>Positivamente, del parámetro <span class="math inline">\(a\)</span> que determina el coste fijo y por lo tanto el nivel de economías de escala.</p></li>
+</ul>
+</section>
+<section id="número-de-empresas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="número-de-empresas">Número de empresas</h5>
+<p>Por otro lado, para obtener el número de empresas y, por lo tanto, de variedades, primero se obtendrá la cantidad de trabajo que utiliza cada empresa a partir de la función de producción (<a href="#eq-10-funcion-de-produccion-dixit-stiglitz" class="quarto-xref">&nbsp;<span>10.14</span></a>) <span id="eq-a-10-17"><span class="math display">\[l=\dfrac{a}{1-\theta} \tag{10.20}\]</span></span> que, al igual que la cantidad producida, depende negativamente de la preferencia por la variedad.</p>
+</section>
+<section id="número-de-variedades" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="número-de-variedades">Número de variedades</h5>
+<p>Además, si se supone que la cantidad total de trabajo en la economía está fija y viene dada por el tamaño de la población, <span class="math inline">\(L\)</span>, el número de empresas, y por tanto de variedades, será:</p>
+<p><span id="eq-a-10-18"><span class="math display">\[n=\dfrac{L}{l}\Rightarrow n=\dfrac{L\left(1-\theta\right)}{a} \tag{10.21}\]</span></span></p>
+<p>por lo que el número de variedades depende</p>
+<ul>
+<li><p>Positivamente del tamaño del mercado, <span class="math inline">\(L\)</span>.</p></li>
+<li><p>Positivamente de la preferencia por la variedad, <span class="math inline">\(1-\theta\)</span>.</p></li>
+<li><p>Negativamente de las economías de escala, a través del parámetro <span class="math inline">\(a\)</span> que determina el coste fijo.</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusiones-del-modelo-de-dixit-y-stiglitz" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="conclusiones-del-modelo-de-dixit-y-stiglitz">Conclusiones del modelo de Dixit y Stiglitz</h4>
+<p>Por lo tanto, el modelo de <span class="citation" data-cites="10_Dixit1977">Dixit y Stiglitz (<a href="01-tema-a1.html#ref-10_Dixit1977" role="doc-biblioref">1977</a>)</span> implica:</p>
+<ol type="1">
+<li><p>La diferenciación aumenta la utilidad de los consumidores porque tienen preferencia por la variedad.</p></li>
+<li><p>Es posible fijar los precios con mark-up (mayores al coste marginal).</p></li>
+<li><p>Suaviza la competencia en precios.</p></li>
+<li><p>Justifica actividades como la publicidad.</p></li>
+<li><p>Beneficio normal a largo plazo (<span class="math inline">\(P=Cme\)</span>).</p></li>
+<li><p>El número de empresas dependerá: (-) <span class="math inline">\(CF\)</span>, (+) dela <span class="math inline">\(PV\)</span>, <span class="math inline">\(1\text{–}      \theta\)</span>, y (+) de las ventas totales de la industria.</p></li>
+</ol>
+<p>Además, su importancia radica en que este modelo de competencia monopolística constituye la base de las nuevas teorías del comercio internacional, del crecimiento económico así como en la Macroeconomía y la Geografía Económica<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a>.</p>
+</section>
+</section>
+</section>
+<section id="diferenciación-vertical" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="diferenciación-vertical"><span class="header-section-number">10.5</span> Diferenciación Vertical <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></h2>
+<p>Por último, se va a analizar el concepto de diferenciación vertical, donde las diferencias entre los productos no surgen de diversidad de las preferencias individuales a cerca de las características de un bien, sino que se trata de cualidades que todos los consumidores desean en el nivel más alto posible, siendo la calidad el caso clásico<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a><a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a>.</p>
+<p>La posible diferenciación surge de las divergencias respecto a la disposición a pagar por esa mayor calidad. Esta disposición al pago resume tanto las diferencias que surgen tanto de las intensidades de preferencia por la calidad, como de las que proceden de los diferentes niveles de renta.</p>
+<p>Por tanto, la diferenciación vertical halla su encaje dentro del enfoque de direcciones, pero el hecho de que todos los consumidores coincidan en la “dirección” preferida del bien le confiere unas características particulares.</p>
+<section id="modelo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelo">Modelo</h5>
+<p>Para analizar la diferenciación vertical se realizarán unas modificaciones al modelo de Hotelling anteriormente analizado:</p>
+<ul>
+<li><p>Los consumidores se sitúan en un intervalo <span class="math inline">\(\left[0,1\right]\)</span> según la intensidad de su preferencia por la calidad, <span class="math inline">\(x\)</span>, de modo que un valor más próximo a 1 indica una mayor disposición a pagar por cada unidad de calidad.</p></li>
+<li><p>Los consumidores están distribuidos uniformemente a lo largo de dicho intervalo.</p></li>
+<li><p>Por simplicidad se analizarán 2 empresas, <span class="math inline">\(A\)</span> y <span class="math inline">\(B\)</span>, donde la calidad del bien <span class="math inline">\(B\)</span> es superior a la de <span class="math inline">\(A\)</span>.</p></li>
+</ul>
+<p>La función de utilidad del consumidor situado en <span class="math inline">\(x\)</span> que consume un bien de la empresa <span class="math inline">\(i\)</span> dependen positivamente del bien consumido y negativamente del precio:</p>
+<p><span id="eq-a-10-19"><span class="math display">\[U_{x}\left(i\right)=\begin{cases}
+a\cdot x-p_{A} &amp; i=A\\
+b\cdot x-p_{B} &amp; i=B
+\end{cases} \tag{10.22}\]</span></span> donde la utilidad derivada de consumir el bien <span class="math inline">\(B\)</span> es mayor <span class="math inline">\(\left(b\cdot x&gt;a\cdot x\right)\)</span> por lo que la disposición al pago será también mayor. Además, se supondrá que la utilidad derivada deberá ser igual o superior a 0 para que el consumidor quiera comprar, existiendo así una “utilidad de reserva” que deja fuera del mercado a los consumidores con menor valoración, de forma que solo compran los situados en <span class="math inline">\(\left[z,1\right]\)</span>, con <span class="math inline">\(z&gt;0\)</span>.</p>
+</section>
+<section id="análisis-gráfico-4" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-4">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de utilidad, <span class="math inline">\(U\)</span>, y calidades, <span class="math inline">\(x\)</span>, como el de la <a href="#fig-10-diferenciacion-vertical" class="quarto-xref">Figura&nbsp;<span>10.7</span></a>, se representan las preferencias en el espacio 0 y 1, mediante las curvas de indiferencia, <span class="math inline">\(U_{A}\)</span> y <span class="math inline">\(U_{B}\)</span>, cuyos interceptos son los precios, <span class="math inline">\(p_{A}\)</span> y <span class="math inline">\(p_{B}\)</span>, y que tendrán pendiente positiva dado que el precio es un mal y la calidad un bien. Cuanto mayor sea la valoración de los individuos de las calidades mayor será la pendiente de la curva de indiferencia asociada, en este caso la de <span class="math inline">\(B\)</span> es superior a la de <span class="math inline">\(A\)</span>. El intervalo <span class="math inline">\(\left[0,z\right]\)</span> representa la utilidad de reserva, mientras que siendo el consumidor situado en <span class="math inline">\(x^{*}\)</span> es indiferente entre consumir una variedad u otra.</p>
+<div id="fig-10-diferenciacion-vertical" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Diferenciación vertical">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-diferenciacion-vertical-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.7: Diferenciación vertical
+</figcaption>
+<div aria-describedby="fig-10-diferenciacion-vertical-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-a-6-diferenciacion-vertical.svg" class="img-fluid figure-img" alt="Diferenciación vertical">
+</div>
+</figure>
+</div>
+<p>Los modelos de diferenciación vertical así definidos, como la modificación del modelo de Hotelling para incorporar diferencias de calidad propuesta por&nbsp;<span class="citation" data-cites="10_Shy1995">Shy (<a href="01-tema-a1.html#ref-10_Shy1995" role="doc-biblioref">1995</a>)</span>, proporcionan algunos resultados interesantes desde el punto de vista de la estrategia empresarial. Así, se considerará una situación donde dos empresas,&nbsp;<span class="math inline">\(A\)</span> y&nbsp;<span class="math inline">\(B,\)</span> producen sendos bienes sin ningún coste de producción, por simplicidad, por lo que se obtendrían funciones de reacción tales que la empresa que produjera un bien con una mayor calidad obtendría un beneficio mayor.</p>
+<p>Se plantea un juego de 2 etapas donde:</p>
+<ol type="1">
+<li><p>En la primera etapa se elige la calidad productiva, con ambas empresas teniendo incentivos a mover primero y elegir la calidad elevada, pues es con la que se obtienen mayores beneficios.</p></li>
+<li><p>En la segunda etapa se elige el precio de venta.</p></li>
+</ol>
+<p>Una vez establecidos los papeles, la empresa que produce una calidad inferior no tendrá incentivo a mejorarla, sino a mantener una diferenciación máxima –es decir, las empresas se situarían en los extremos, repartiéndose <span class="math inline">\(A\)</span> desde <span class="math inline">\(z\)</span> hasta <span class="math inline">\(x^{*}\)</span> y <span class="math inline">\(B\)</span> desde <span class="math inline">\(x^{*}\)</span> hasta 1– para evitar una lucha de precios, dando lugar a un equilibrio de Nash<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a>.</p>
+</section>
+<section id="vertical-vs-horizontal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="vertical-vs-horizontal">Vertical vs Horizontal</h5>
+<p>Este resultado de estos modelos de diferenciación vertical presenta 2 diferencias importantes respecto a los modelos de diferenciación horizontal:</p>
+<ol type="1">
+<li><p>El número de variedades no depende tanto del tamaño de mercado, sino de la heterogeneidad de los consumidores en su predisposición a pagar, es decir, la distribución de la renta. De hecho, en un mercado de diferenciación vertical con consumidores muy homogéneos en el que ya existen dos empresas, una tercera que ofreciera una calidad distinta no podría tener cabida, dando lugar a una situación de oligopolio natural.</p></li>
+<li><p>Las ganancias del comercio internacional no se derivan de la creciente gama de productos sino del estímulo –mayor rentabilidad asociada– que genera la mayor competencia del comercio internacional, que fuerza a las empresas a producir una mayor calidad a menores precios, aumentando así el gasto en I+D.</p></li>
+</ol>
+<p>No obstante, es preciso señalar que las diferencias entre los modelos de diferenciación vertical y horizontal se reducen si se rompe con el supuesto de costes variables nulos. Además, en ocasiones la distinción entre diferenciación vertical y horizontal se difumina<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a>.</p>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">10.6</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, a lo largo del tema se han analizado diferentes modelos de competencia monopolística, los cuales mejoran la concepción neoclásica al permitir la introducción entre bienes heterogéneos. La frontera entre diferenciación vertical y horizontal es difusa ya que, por ejemplo, en el comercio internacional si existe consenso en que la producción nacional es mejor que la extranjera la diferenciación será vertical pero si los consumidores prefieren consumir ambos productos la diferenciación será horizontal. Por lo tanto, la actividad comercial se ve favorecida por la heterogeneidad de las preferencias, aumentando la diferenciación del producto.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-el-modelo-de-ciudad-circular-de-salop" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-el-modelo-de-ciudad-circular-de-salop">10.A.1.&nbsp;&nbsp;El modelo de ciudad circular de Salop</h3>
+<p>En el modelo de Hotelling se había supuesto que solo hay dos empresas. No obstante, es importante considerar la posible entrada de empresas en el mercado, por lo que en vez de una “ciudad/playa lineal” es mas conveniente estudiar una “ciudad circular”<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a>.</p>
+<p>Salop considera una ciudad circular –por ejemplo, horarios de vuelos de un avión o la programación de televisión–, suponiendo que existen, no solo costes de transporte, sino también costes fijos de entrada, CF, y, por lo tanto, economías de escala.</p>
+<p>Así, se define un juego en 2 etapas:</p>
+<ol type="1">
+<li><p>Primero, las empresas deciden simultáneamente si entran o no. Las empresas que entran se situarán todas equidistantes las unas de las otras –es decir, no hay decisión sobre la localización–, de manera que la diferenciación máxima es exógenamente impuesta.</p></li>
+<li><p>Segundo, deciden simultáneamente sus precios, dada su localización y el numero de empresas en el círculo.</p></li>
+</ol>
+<p>El resultado del modelo de ciudad circular es:</p>
+<ul>
+<li><p>El número de empresas dependerá positivamente de los costes de transporte –es decir, de la heterogeneidad de gustos de los consumidores–, y negativamente de los costes de entrada: <span class="math inline">\(n=f(\underset{+}{t},\underset{-}{CF})\)</span>.</p></li>
+<li><p>El precio dependerá positivamente del coste marginal y de los costes de transporte –el aumento de los costes de transporte les da mayor poder de mercado a las empresas dado <span class="math inline">\(n\)</span> y eso les permite poner precios más altos. Los precios más altos permiten la entrada de más empresas–, y negativamente del número de empresas –es decir, de la competencia–: <span class="math inline">\(p=f(\underset{+}{CMg},\underset{+}{t},\underset{-}{n})\)</span>.</p></li>
+</ul>
+</section>
+<section id="a.2.-teoría-de-la-demanda-de-características-de-lancaster" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-teoría-de-la-demanda-de-características-de-lancaster">10.A.2.&nbsp;&nbsp;Teoría de la demanda de características de Lancaster</h3>
+<p>Dentro de los modelos de diferenciación horizontal, el economista australiano Kelvin Lancaster <span class="citation" data-cites="10_Lancaster1966">(<a href="01-tema-a1.html#ref-10_Lancaster1966" role="doc-biblioref">Lancaster 1966</a>)</span> propuso una nueva teoría de demanda del consumidor para superar 3 cuestiones que la teoría neoclásica no era capaz de explicar:</p>
+<ol type="1">
+<li><p>Por qué los consumidores son fieles a las marcas.</p></li>
+<li><p>Por qué se desarrollan nuevos productos.</p></li>
+<li><p>Por qué existe la publicidad.</p></li>
+</ol>
+<p>Lancaster parte del enfoque de que lo que demandan los consumidores no son bienes en sí mismos, sino las características presentes en ellos, que son las que en realidad les permiten satisfacer sus necesidades. Así, dichas características coexisten en un mismo bien en distintas proporciones.</p>
+<p>De esta forma, el consumidor se enfrenta a un problema de maximización de utilidad derivada de la cantidad de características <span id="eq-a-10-20"><span class="math display">\[\max\quad u\left(a_{1},\ldots,a_{n}\right) \tag{10.23}\]</span></span> sujeto al conjunto de características <span class="math inline">\(a\)</span>, donde hay <span class="math inline">\(n\)</span> características, y <span class="math inline">\(a_{i,j}\)</span> es la proporción de la característica <span class="math inline">\(i\)</span> que tiene del bien 1, ya que hay <span class="math inline">\(l\)</span> bienes <span id="eq-a-10-21"><span class="math display">\[\begin{aligned}
+a= &amp; a_{1,j}\cdot x_{1}+\ldots+a_{i,j}\cdot x_{j}\\
+m\geq &amp; p_{1}\cdot x_{1}+\ldots+p_{j}\cdot x_{j}
+\end{aligned} \tag{10.24}\]</span></span></p>
+<p>Gráficamente, se supondrá un plano de 2 características, <span class="math inline">\(a_{1}\)</span> y <span class="math inline">\(a_{2}\)</span>, como el de la <a href="#fig-10-modelo-de-lancaster" class="quarto-xref">Figura&nbsp;<span>10.8</span></a>, y se representarán los vectores de posibilidades de consumo, <span class="math inline">\(X\)</span>, <span class="math inline">\(Y\)</span> y <span class="math inline">\(Z\)</span>, que son las líneas que recogen las proporciones en que cada bien combina las dos características. Las combinaciones <span class="math inline">\(X^{\prime}\)</span>, <span class="math inline">\(Y^{\prime}\)</span> y <span class="math inline">\(Z^{\prime}\)</span> corresponden a los casos en que el consumidor gasta toda su renta en dichos bienes, mientras que las líneas que unen estos puntos representan combinaciones intermedias.</p>
+<p>En función de las preferencias del individuo, este elegirá una combinación u otra: los individuos que prefieran <span class="math inline">\(a_{1}\)</span> tendrán curvas de indiferencia parecidas a <span class="math inline">\(u\)</span> y maximizarán su utilidad escogiendo un punto como el <span class="math inline">\(E\)</span>, donde pueden obtener la combinación de <span class="math inline">\(a_{1}\)</span> y <span class="math inline">\(a_{2}\)</span> especificada en ese punto consumiendo solo los bienes <span class="math inline">\(Y\)</span> y <span class="math inline">\(Z\)</span>.</p>
+<p>Por otro lado, los consumidores cuyas preferencias estén representadas por la curva de indiferencia <span class="math inline">\(u^{\prime}\)</span> escogerán el punto <span class="math inline">\(E^{\prime}\)</span> y consumirán únicamente los bienes <span class="math inline">\(X\)</span> e <span class="math inline">\(Y\)</span>.</p>
+<p>Así, el modelo de demanda de características predice que las soluciones de esquina en las cuales los individuos consumen una cantidad nula de algunos bienes serán relativamente frecuentes.</p>
+<div id="fig-10-modelo-de-lancaster" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Lancaster">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-10-modelo-de-lancaster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.8: Modelo de Lancaster
+</figcaption>
+<div aria-describedby="fig-10-modelo-de-lancaster-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-lancaster.svg" class="img-fluid figure-img" alt="Modelo de Lancaster">
+</div>
+</figure>
+</div>
+<p>A continuación, se analizará como este modelo da respuesta a las 3 preguntas formuladas al principio.</p>
+<section id="fidelidad-a-las-marcas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="fidelidad-a-las-marcas">Fidelidad a las marcas</h4>
+<p>La teoría de la demanda de características explica por qué, ante un cambio en el precio de un producto, los consumidores pueden mantenerse fieles a su marca. En efecto, un aumento del precio de un bien daría lugar, por lo general, en un modelo neoclásico tradicional a la sustitución (siquiera parcial) de dicho bien por otro<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a>.</p>
+<p>En este modelo, sin embargo, ello no tiene por qué ser así como se observa en la <a href="#fig-modelo-de-lancaster-fidelidad" class="quarto-xref">Figura&nbsp;<span>10.9</span></a></p>
+<ol type="1">
+<li><p>Se supondrá que, inicialmente, lo máximo que puede consumir un individuo de los bienes <span class="math inline">\(X\)</span> e <span class="math inline">\(Y\)</span> es <span class="math inline">\(X^{*}\)</span> e <span class="math inline">\(Y^{*}\)</span>. Dada la curva de indiferencia <span class="math inline">\(u_{0}\)</span>, preferirá dedicar toda su renta a <span class="math inline">\(Y\)</span>.</p></li>
+<li><p>Si el precio de <span class="math inline">\(X\)</span> baja y la cantidad máxima consumible pasa a ser <span class="math inline">\(X^{*^{\prime}}\)</span>, el consumidor se mantiene fiel a la marca <span class="math inline">\(Y\)</span>.</p></li>
+<li><p>No obstante, si el precio baja aún más y la cantidad máxima consumible pasa a ser <span class="math inline">\(X^{*^{\prime\prime}}\)</span>, el consumidor cambiará de marca y pasará a consumir el bien <span class="math inline">\(X\)</span>, pues su consumo máximo se sitúa ahora en una curva de indiferencia superior, <span class="math inline">\(u_{1}\)</span>.</p></li>
+</ol>
+<div id="fig-modelo-de-lancaster-fidelidad" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Lancaster: fidelidad a las marcas">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-modelo-de-lancaster-fidelidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.9: Modelo de Lancaster: fidelidad a las marcas
+</figcaption>
+<div aria-describedby="fig-modelo-de-lancaster-fidelidad-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-lancaster-fidelidad.svg" class="img-fluid figure-img" alt="Modelo de Lancaster: fidelidad a las marcas">
+</div>
+</figure>
+</div>
+</section>
+<section id="desarrollo-de-nuevos-productos" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="desarrollo-de-nuevos-productos">Desarrollo de nuevos productos</h4>
+<p>Por otro lado, es posible que las preferencias del individuo no se ajusten plenamente a ninguna de las variedades existentes. Como se observa en la <a href="#fig-modelo-de-lancaster-desarrollo" class="quarto-xref">Figura&nbsp;<span>10.10</span></a>, ello se reflejaría en un equilibrio localizado en medio de algún segmento de la frontera eficiente como <span class="math inline">\(E\)</span>, de forma que el consumo conjunto satisfaría la demanda de características del individuo.</p>
+<p>Además, también explicaría la creación de una nueva variedad que contuviera dichas características en esa proporción y desbancara a los otros bienes, lo cual, a su vez, da pie a la teoría de la prospección de mercados –para averiguar exactamente lo que cada cliente demanda– y a la teoría de la segmentación –para ofrecer exactamente a cada cliente lo que demanda–. En el gráfico, el nuevo producto sería <span class="math inline">\(Y\)</span>, y el consumidor se situaría en <span class="math inline">\(Y'\)</span>.</p>
+<div id="fig-modelo-de-lancaster-desarrollo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Lancaster: desarrollo de nuevos productos">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-modelo-de-lancaster-desarrollo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;10.10: Modelo de Lancaster: desarrollo de nuevos productos
+</figcaption>
+<div aria-describedby="fig-modelo-de-lancaster-desarrollo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-10-lancaster-desarrollo-producto.svg" class="img-fluid figure-img" alt="Modelo de Lancaster: desarrollo de nuevos productos">
+</div>
+</figure>
+</div>
+</section>
+<section id="publicidad" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="publicidad">Publicidad</h4>
+<p>Teniendo en cuenta todo lo anterior, esta teoría justifica la importancia de dar a conocer las características de un producto mediante la publicidad<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a>.</p>
+</section>
+</section>
+<section id="a.3.-perspectiva-histórica-los-enfoques-de-direcciones-y-de-no-direcciones" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-perspectiva-histórica-los-enfoques-de-direcciones-y-de-no-direcciones">10.A.3.&nbsp;&nbsp;Perspectiva histórica: los enfoques de direcciones y de no direcciones</h3>
+<p>Para cerrar este apéndice, conviene situar los modelos analizados en su contexto histórico. Como señalan&nbsp;<span class="citation" data-cites="10_Eaton1989">Eaton y Lipsey (<a href="01-tema-a1.html#ref-10_Eaton1989" role="doc-biblioref">1989</a>)</span> en su repaso histórico de la literatura de diferenciación de productos, esta se ha desarrollado a lo largo de dos ramas paralelas: el enfoque de no direcciones, que sitúa las preferencias sobre el espacio de bienes, y el enfoque de direcciones, que las sitúa sobre el espacio de características.</p>
+<p>En la rama de no direcciones, Marshall parte del supuesto de bienes homogéneos y competencia perfecta, hasta que Sraffa señala la incoherencia entre las economías de escala no explotadas que se observan en la realidad y ese supuesto marshalliano. Robinson y Chamberlin responden en 1933-1934: el monopolio único de industria de Robinson resulta un callejón sin salida, mientras que el grupo numeroso de Chamberlin, con entrada libre y cada empresa produciendo por debajo de su escala eficiente mínima, triunfa al reconciliar competencia y economías de escala no explotadas –naciendo así el teorema del exceso de capacidad–. Kaldor cuestiona después el supuesto de simetría de Chamberlin y propone un modelo de oligopolios solapados con vecinos cercanos y lejanos, anticipando ya el enfoque de direcciones. El interés por esta rama revive en los años setenta, impulsado por la integración de la Comunidad Económica Europea y el auge del comercio intraindustrial:&nbsp;<span class="citation" data-cites="10_Spence1976a">Spence (<a href="01-tema-a1.html#ref-10_Spence1976a" role="doc-biblioref">1976a</a>)</span> y, después,&nbsp;<span class="citation" data-cites="10_Dixit1977">Dixit y Stiglitz (<a href="01-tema-a1.html#ref-10_Dixit1977" role="doc-biblioref">1977</a>)</span> formalizan el consumidor representativo que se ha empleado en este tema, generalizado posteriormente a consumidores heterogéneos manteniendo el supuesto de simetría.</p>
+<p>En la rama de direcciones, el punto de partida es la crítica de Bertrand al duopolio de bien homogéneo de Cournot, de la que parte&nbsp;<span class="citation" data-cites="10_Hotelling1929">Hotelling (<a href="01-tema-a1.html#ref-10_Hotelling1929" role="doc-biblioref">1929</a>)</span> al introducir la diferenciación –geográfica o de características– para obtener un equilibrio estable con precios por encima del coste marginal, en la línea de los modelos geográficos de localización de Christaller y Lösch. Lerner y Singer amplían después el modelo de Hotelling a más de dos empresas, y Smithies modifica el supuesto sobre la demanda. El interés por esta rama revive también en los años setenta a través de la teoría de la demanda:&nbsp;<span class="citation" data-cites="10_Lancaster1966">Lancaster (<a href="01-tema-a1.html#ref-10_Lancaster1966" role="doc-biblioref">1966</a>)</span>, junto con Baumol y Quandt, desarrollan la teoría de características que se ha analizado en el Apéndice 10.A.2, y el principio de diferenciación mínima –ya visto en el modelo de Hotelling– da paso a los modelos de entrada con previsión estratégica de la localización de los competidores.</p>
+<p>Así, los modelos analizados a lo largo de este tema recorren ambas ramas: Chamberlin y Dixit-Stiglitz pertenecen al enfoque de no direcciones, mientras que Hotelling, Salop y Lancaster pertenecen al enfoque de direcciones. El modelo de diferenciación vertical de Shaked y Sutton, por su parte, extiende este último enfoque añadiendo una dimensión de calidad sobre la que todos los consumidores coinciden en su valoración, en vez de una característica sobre la que las preferencias difieren.</p>
+</section>
+<section id="a.4.-otros-desarrollos-publicidad-y-proliferación-de-marcas" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-otros-desarrollos-publicidad-y-proliferación-de-marcas">10.A.4.&nbsp;&nbsp;Otros desarrollos: publicidad y proliferación de marcas</h3>
+<p>Cerrando ya esta perspectiva histórica, cabe detenerse en dos desarrollos concretos que el enunciado del tema menciona de forma expresa: la publicidad y la proliferación de marcas. Como se ha visto en el Apéndice 10.A.2, el modelo de Lancaster ya justificaba la publicidad como vía para dar a conocer las características de un producto.&nbsp;<span class="citation" data-cites="10_DorfmanSteiner1954">Dorfman y Steiner (<a href="01-tema-a1.html#ref-10_DorfmanSteiner1954" role="doc-biblioref">1954</a>)</span> formalizan esta intuición: la publicidad, al desplazar la demanda de la empresa y hacerla menos elástica, es otro instrumento de diferenciación además de la localización o la calidad.</p>
+<section id="el-modelo-de-publicidad-de-dorfman-y-steiner" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="el-modelo-de-publicidad-de-dorfman-y-steiner">El modelo de publicidad de Dorfman y Steiner</h4>
+<p>Se considera una empresa cuya demanda,&nbsp;<span class="math inline">\(q\left(p,A\right)\)</span>, depende del precio,&nbsp;<span class="math inline">\(p\)</span>, y del gasto en publicidad,&nbsp;<span class="math inline">\(A\)</span>, y cuyo coste de producción,&nbsp;<span class="math inline">\(C\left(q\right)\)</span>, es independiente de dicho gasto, que se trata como un desembolso adicional. El objetivo de la empresa será maximizar su beneficio <span id="eq-a-10-22"><span class="math display">\[\max_{\left\{ p,A\right\} }\quad\Pi=p\cdot q\left(p,A\right)-C\left(q\right)-A \tag{10.25}\]</span></span></p>
+<p>La CPO en precios reproduce el índice de Lerner habitual <span id="eq-a-10-23"><span class="math display">\[\dfrac{p-CMg}{p}=\dfrac{1}{\varepsilon_{p}} \tag{10.26}\]</span></span> donde&nbsp;<span class="math inline">\(\varepsilon_{p}\)</span> es la elasticidad-precio de la demanda. La CPO en publicidad, por su parte, establece que el beneficio marginal de un euro adicional de publicidad debe igualar su coste marginal, que es la unidad <span id="eq-a-10-24"><span class="math display">\[\left(p-CMg\right)\cdot\dfrac{\partial q}{\partial A}=1 \tag{10.27}\]</span></span></p>
+<p>Combinando ambas condiciones se obtiene la regla de Dorfman-Steiner <span id="eq-a-10-25"><span class="math display">\[\dfrac{A}{p\cdot q}=\dfrac{\varepsilon_{A}}{\varepsilon_{p}} \tag{10.28}\]</span></span> donde&nbsp;<span class="math inline">\(\varepsilon_{A}\)</span> es la elasticidad de la demanda respecto al gasto en publicidad. Es decir, el gasto óptimo en publicidad en relación con los ingresos totales será mayor cuanto más eficaz sea la publicidad desplazando la demanda –<span class="math inline">\(\varepsilon_{A}\)</span> alta– y cuanto menos sensible sea el consumidor al precio –<span class="math inline">\(\varepsilon_{p}\)</span> baja–<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a>.</p>
+</section>
+<section id="proliferación-de-marcas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="proliferación-de-marcas">Proliferación de marcas</h4>
+<p>Otro desarrollo relacionado es la proliferación de marcas como estrategia de disuasión de la entrada: una empresa que ya controla varios productos dentro de una industria puede lanzar nuevas variedades para ocupar los nichos de mercado más rentables, dificultando así que una empresa entrante encuentre un hueco viable&nbsp;<span class="citation" data-cites="10_Spence1976b">(<a href="01-tema-a1.html#ref-10_Spence1976b" role="doc-biblioref">Spence 1976b</a>)</span>.&nbsp;<span class="citation" data-cites="10_Schmalensee1978">Schmalensee (<a href="01-tema-a1.html#ref-10_Schmalensee1978" role="doc-biblioref">1978</a>)</span> formaliza esta lógica para el sector de los cereales de desayuno de Estados Unidos, objeto en los años setenta de una denuncia de la Federal Trade Commission contra sus principales fabricantes –Kellogg’s, General Mills, General Foods y Quaker Oats– por lanzar más de ochenta marcas nuevas sin apenas entrada de competidores, pese a no existir patentes que lo impidieran<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a>.</p>
+</section>
+<section id="el-test-ssnip-y-la-definición-del-mercado-relevante" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="el-test-ssnip-y-la-definición-del-mercado-relevante">El test SSNIP y la definición del mercado relevante</h4>
+<p>Por último, la existencia de productos diferenciados dificulta delimitar el mercado relevante: un mercado definido de forma demasiado estrecha –solo sustitutivos perfectos– dejaría fuera a competidores próximos, mientras que uno demasiado amplio –toda la economía– lo vaciaría de contenido. El criterio más utilizado en la práctica antitrust es el test SSNIP&nbsp;<span class="citation" data-cites="10_DOJ1982">(<a href="01-tema-a1.html#ref-10_DOJ1982" role="doc-biblioref">U.S. Department of Justice 1982</a>)</span> (<em>small but significant and non-transitory increase in price</em>): se pregunta si un hipotético monopolista que controlase todo el conjunto de bienes propuesto como mercado podría subir su precio de forma rentable un margen pequeño pero significativo –habitualmente, un 5&nbsp;<span class="math inline">\(\%\)</span>– de manera sostenida en el tiempo. Si la subida no fuera rentable porque los consumidores se desplazarían hacia bienes de fuera del mercado propuesto, este debe ampliarse hasta que lo sea.</p>
+<p>Formalmente, siguiendo a&nbsp;<span class="citation" data-cites="10_HarrisSimons1989">Harris y Simons (<a href="01-tema-a1.html#ref-10_HarrisSimons1989" role="doc-biblioref">1989</a>)</span>, se compara la pérdida crítica de ventas,&nbsp;<span class="math inline">\(CL\)</span>, es decir, el porcentaje de ventas que dejaría indiferente al monopolista hipotético ante la subida de precio propuesta, con la pérdida real de ventas que efectivamente se observaría,&nbsp;<span class="math inline">\(AL\)</span> <span id="eq-a-10-26"><span class="math display">\[CL=\dfrac{\delta}{m+\delta} \tag{10.29}\]</span></span> donde&nbsp;<span class="math inline">\(m=\left(p-CMg\right)/p\)</span> es el índice de Lerner de la empresa y&nbsp;<span class="math inline">\(\delta\)</span> es la subida de precio propuesta. Si la pérdida real es menor que la crítica,&nbsp;<span class="math inline">\(AL&lt;CL\)</span>, el mercado ya está bien delimitado; si, por el contrario,&nbsp;<span class="math inline">\(AL&gt;CL\)</span>, el mercado debe ampliarse<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a>.</p>
+</section>
+</section>
+<section id="a.5.-aplicaciones-del-modelo-de-dixit-y-stiglitz" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-aplicaciones-del-modelo-de-dixit-y-stiglitz">10.A.5.&nbsp;&nbsp;Aplicaciones del modelo de Dixit y Stiglitz</h3>
+<p>Cerrado ya el repaso de los desarrollos que menciona expresamente el enunciado, conviene detenerse por último en la relevancia del modelo de Dixit y Stiglitz fuera de la microeconomía pura. Este modelo constituye el instrumental básico de tres desarrollos posteriores de gran relevancia.</p>
+<section id="comercio-internacional" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="comercio-internacional">Comercio internacional</h5>
+<p><span class="citation" data-cites="10_Krugman1979">Krugman (<a href="01-tema-a1.html#ref-10_Krugman1979" role="doc-biblioref">1979</a>)</span> muestra que la apertura comercial incrementa el tamaño efectivo del mercado al que se enfrentan las empresas. Esto permite tanto un mayor número de variedades disponibles para los consumidores –lo que aumenta directamente su utilidad, sin necesidad de recurrir a la ventaja comparativa– como un mejor aprovechamiento de las economías de escala internas, al operar cada empresa en un tramo inferior de su curva de costes medios. El comercio intraindustrial genera así ganancias mutuas del comercio incluso entre países idénticos en dotaciones, tecnología y preferencias.</p>
+</section>
+<section id="nueva-economía-keynesiana" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="nueva-economía-keynesiana">Nueva Economía Keynesiana</h5>
+<p>En el modelo canónico de&nbsp;<span class="citation" data-cites="10_BlanchardKiyotaki1987">Blanchard y Kiyotaki (<a href="01-tema-a1.html#ref-10_BlanchardKiyotaki1987" role="doc-biblioref">1987</a>)</span>, la preferencia por la variedad otorga a las empresas poder de mercado en un contexto de competencia monopolística, lo que, combinado con rigideces nominales y reales, genera tres implicaciones macroeconómicas de primer orden: la no neutralidad del dinero –la inflación distorsiona los precios como señales efectivas de escasez–; el ajuste ineficiente a nivel agregado ante un shock, porque las empresas ajustan sus precios lenta y heterogéneamente por miedo a perder cuota de mercado frente a un ajuste demasiado brusco; y la efectividad de la política monetaria y fiscal para suavizar los ciclos económicos.</p>
+</section>
+<section id="crecimiento-endógeno" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="crecimiento-endógeno">Crecimiento endógeno</h5>
+<p><span class="citation" data-cites="10_Romer1990">Romer (<a href="01-tema-a1.html#ref-10_Romer1990" role="doc-biblioref">1990</a>)</span> muestra que la preferencia por la variedad en los bienes de capital o de conocimiento genera rendimientos crecientes que sostienen el crecimiento a largo plazo, endogeneizando el proceso de innovación tecnológica.</p>
+</section>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-10_Andrews1949" class="csl-entry" role="listitem">
+Andrews, P. W. S. 1949. <em><span>Manufacturing Business</span></em>. Macmillan.
+</div>
+<div id="ref-10_BlanchardKiyotaki1987" class="csl-entry" role="listitem">
+Blanchard, Olivier J., y Nobuhiro Kiyotaki. 1987. <span>«<span>Monopolistic Competition and the Effects of Aggregate Demand</span>»</span>. <em>The American Economic Review</em> 77 (4): 647-66.
+</div>
+<div id="ref-10_Cairnes1874" class="csl-entry" role="listitem">
+Cairnes, John Elliott. 1874. <em><span>Some Leading Principles of Political Economy Newly Expounded</span></em>. Macmillan.
+</div>
+<div id="ref-10_Chamberlin1933" class="csl-entry" role="listitem">
+Chamberlin, Edward Hastings. 1933. <em>Theory of monopolistic competition: A re-orientation of the theory of value</em>. Harvard University Press, Cambridge.
+</div>
+<div id="ref-10_DAspremont1979" class="csl-entry" role="listitem">
+<span class="nocase">d’Aspremont, C., J. Jaskold Gabszewicz, y J.-F. Thisse</span>. 1979. <span>«<span>On Hotelling’s <span>“Stability in Competition”</span></span>»</span>. <em>Econometrica</em> 47 (5): 1145-50.
+</div>
+<div id="ref-10_Dixit1977" class="csl-entry" role="listitem">
+Dixit, Avinash K., y Joseph E. Stiglitz. 1977. <span>«Monopolistic <span>C</span>ompetition and <span>O</span>ptimum <span>P</span>roduct <span>D</span>iversity»</span>. <em>The American Economic Review</em> 67 (3): 297-308. <a href="http://www.jstor.org/stable/1831401">http://www.jstor.org/stable/1831401</a>.
+</div>
+<div id="ref-10_DorfmanSteiner1954" class="csl-entry" role="listitem">
+Dorfman, Robert, y Peter O. Steiner. 1954. <span>«<span>Optimal Advertising and Optimal Quality</span>»</span>. <em>The American Economic Review</em> 44 (5): 826-36.
+</div>
+<div id="ref-10_Eaton1989" class="csl-entry" role="listitem">
+Eaton, B. Curtis, y Richard G. Lipsey. 1989. <span>«<span>Product differentiation</span>»</span>. Chap. 12 en <em>Handbook of Industrial Organization</em>, editado por Richard Schmalensee y Robert Willig, vol. 1. Handbook en Economics 10. North-Holland.
+</div>
+<div id="ref-10_Feas2019" class="csl-entry" role="listitem">
+Feás, Enrique. 2019. <span>«<span>¿A quién votaría Kelvin Lancaster?</span>»</span> <em>Vozpópuli</em>.
+</div>
+<div id="ref-10_HarrisSimons1989" class="csl-entry" role="listitem">
+Harris, Barry C., y Joseph J. Simons. 1989. <span>«<span>Focusing Market Definition: How Much Substitution is Necessary?</span>»</span> <em>Research in Law and Economics</em> 12: 207-26.
+</div>
+<div id="ref-10_Hotelling1929" class="csl-entry" role="listitem">
+Hotelling, Harold. 1929. <span>«<span>Stability in Competition</span>»</span>. <em>The Economic Journal</em> 39 (153): 41-57. <a href="http://www.jstor.org/stable/2224214">http://www.jstor.org/stable/2224214</a>.
+</div>
+<div id="ref-10_Kaldor1935" class="csl-entry" role="listitem">
+Kaldor, Nicholas. 1935. <span>«<span>Market Imperfection and Excess Capacity</span>»</span>. <em>Economica</em> 2 (5): 33-50.
+</div>
+<div id="ref-10_Krugman1979" class="csl-entry" role="listitem">
+Krugman, Paul R. 1979. <span>«<span>Increasing Returns, Monopolistic Competition, and International Trade</span>»</span>. <em>Journal of International Economics</em> 9 (4): 469-79.
+</div>
+<div id="ref-10_Lancaster1966" class="csl-entry" role="listitem">
+Lancaster, Kelvin J. 1966. <span>«<span>A New Approach to Consumer Theory</span>»</span>. <em>Journal of Political Economy</em> 74 (2): 132-57. <a href="http://www.jstor.org/stable/1828835">http://www.jstor.org/stable/1828835</a>.
+</div>
+<div id="ref-10_Machado2008" class="csl-entry" role="listitem">
+Machado, Matilde. 2008. <em><span>Vertical Differentiation</span></em>.
+</div>
+<div id="ref-10_Neven1985" class="csl-entry" role="listitem">
+Neven, Damien. 1985. <span>«<span>Two Stage <span>(</span>Perfect<span>)</span> Equilibrium in Hotelling’s Model</span>»</span>. <em>The Journal of Industrial Economics</em> 33 (3): 317. <a href="https://doi.org/10.2307/2098539">https://doi.org/10.2307/2098539</a>.
+</div>
+<div id="ref-10_Romer1990" class="csl-entry" role="listitem">
+Romer, Paul M. 1990. <span>«<span>Endogenous Technological Change</span>»</span>. <em>Journal of Political Economy</em> 98 (5, Part 2): S71-102.
+</div>
+<div id="ref-10_Salop1979" class="csl-entry" role="listitem">
+Salop, Steven C. 1979. <span>«<span>Monopolistic Competition with Outside Goods</span>»</span>. <em>The Bell Journal of Economics</em> 10 (1): 141-56.
+</div>
+<div id="ref-10_Schmalensee1978" class="csl-entry" role="listitem">
+Schmalensee, Richard. 1978. <span>«<span>Entry Deterrence in the Ready-to-Eat Breakfast Cereal Industry</span>»</span>. <em>The Bell Journal of Economics</em> 9 (2): 305-27.
+</div>
+<div id="ref-10_Shove1933" class="csl-entry" role="listitem">
+Shove, Gerald F. 1933. <span>«<span>The Imperfection of the Market</span>»</span>. <em>The Economic Journal</em> 43 (169): 113-25.
+</div>
+<div id="ref-10_Shy1995" class="csl-entry" role="listitem">
+Shy, Oz. 1995. <em><span>Industrial Organization: Theory and Applications</span></em>. The MIT Press.
+</div>
+<div id="ref-10_Spence1976a" class="csl-entry" role="listitem">
+Spence, Michael. 1976a. <span>«<span>Product Differentiation and Welfare</span>»</span>. <em>The American Economic Review</em> 66 (2): 407-14.
+</div>
+<div id="ref-10_Spence1976b" class="csl-entry" role="listitem">
+Spence, Michael. 1976b. <span>«<span>Product Selection, Fixed Costs, and Monopolistic Competition</span>»</span>. <em>The Review of Economic Studies</em> 43 (2): 217-35.
+</div>
+<div id="ref-10_Sraffa1926" class="csl-entry" role="listitem">
+Sraffa, Piero. 1926. <span>«<span>The Laws of Returns under Competitive Conditions</span>»</span>. <em>The Economic Journal</em> 36 (144): 535-50.
+</div>
+<div id="ref-10_Sweezy1939" class="csl-entry" role="listitem">
+Sweezy, Paul M. 1939. <span>«Demand Under Conditions of Oligopoly»</span>. <em>Journal of Political Economy</em> 47 (4): 568-73.
+</div>
+<div id="ref-10_Tirole1988" class="csl-entry" role="listitem">
+Tirole, Jean. 1988. <em><span>The Theory of Industrial Organization</span></em>. The MIT Press.
+</div>
+<div id="ref-10_DOJ1982" class="csl-entry" role="listitem">
+U.S. Department of Justice. 1982. <em><span>Merger Guidelines</span></em>.
+</div>
+<div id="ref-10_Wicksell1934" class="csl-entry" role="listitem">
+Wicksell, Knut. 1934. <em><span>Lectures on Political Economy, Volume I: General Theory</span></em>. George Routledge; Sons.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Un ejemplo de diferenciación vertical sería la compra de un televisor. En general, todo consumidor prefiere una mejor calidad de imagen y sonido, pero cada uno tiene distinta disposición a pagar por un televisor con una determinada imagen y sonido.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Una “industria” se puede definir desde dos puntos de vista:</p>
+<ul>
+<li><p>Criterio de oferta: una industria estará formada por aquellas empresas que utilizan tecnologías similares o producen un mismo bien o servicio. Éste sería el criterio utilizado por la Clasificación Nacional de Actividades Económicas 2009 (CNAE 2009).</p></li>
+<li><p>Criterio de demanda: una industria estará formada por aquellas empresas cuyos productos son considerados razonablemente sustitutivos por los consumidores.</p></li>
+</ul>
+<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn3"><p>Ver desarrollo completo en el anexo<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Uno de los supuestos cruciales detrás de la Paradoja de Bertrand es la homogeneidad del producto. De esta forma, el precio es la única variable de interés para los consumidores, por lo que con solo dos empresas que compitan en precios, el resultado será el competitivo. No obstante, este supuesto rara vez se da en la realidad: los productos se encuentran diferenciados por sus características o existe una distancia espacial entre los puntos de venta que provoca que los consumidores tengan cierta preferencia por una de las variedades ofertadas.</p>
+<p>En consecuencia, las empresas podrán fijar un precio por encima del Cmg. El precio de las diferentes variedades quedará determinado por la elección del grado de diferenciación por parte de las empresas del oligopolio.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>La tecnología de la empresa presenta <span class="math inline">\(CMe\)</span> decrecientes debido a la presencia de <span class="math inline">\(CF\)</span>. Esto provocará que el número de incumbentes sea finito y, debido a la condición de libre entrada de las empresas, los beneficios tenderán a 0.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Decisiones empresas: Precio (corto plazo), Localización (largo plazo).<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>La elasticidad de la demanda cruzada de la empresa es positiva pero no tiende a infinito como en competencia perfecta. Por esta razón si una empresa reduce su precio acapara la demanda pero no toda por la diferenciación.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Los costes de transporte cuadráticos se representan, como veíamos en el gráfico, mediante curvas convexas. Eso quiere decir que, a medida que la empresa se acerca al consumidor los costes de transporte disminuyen más que proporcionalmente; es decir, la heterogeneidad de gustos se atenúa mucho, el consumidor es menos cautivo de la empresa y ésta tiene menos poder de mercado, aumentando mucho la competencia en precios. Por eso decimos que con costes cuadráticos el efecto competición es muy intenso (más que el efecto demanda).<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>No obstante, trabajos posteriores como el de&nbsp;<span class="citation" data-cites="10_Neven1985">Neven (<a href="01-tema-a1.html#ref-10_Neven1985" role="doc-biblioref">1985</a>)</span> matizan este resultado: en el juego en dos etapas de localización y precios, el equilibrio nunca es de diferenciación mínima, pero no siempre es de diferenciación máxima, dependiendo de la curvatura de las preferencias de los consumidores.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>El planificador social escoge las localizaciones de las dos empresas, minimizando el coste de transporte medio de los consumidores, ya que el consumo es fijo. Esta forma de proceder es válida ya sea cuando las empresas: i) Ejercitan su poder de mercado como en el caso estudiado (máxima diferenciación) ii) se ven forzadas a fijar un precio igual al coste marginal (mínima diferenciación). Para unas ubicaciones dadas, y siempre que el mercado esté cubierto, la estructura de precios no altera la suma del excedente del consumidor y los beneficios en este modelo de demanda inelástica.</p>
+<p>Por la simetría del problema, el planificador social elegirá las ubicaciones de las dos empresas en el medio de cada mitad del segmento, cuando la densidad de consumidores es uniforme. Por lo tanto, en el resultado de mercado existe demasiada diferenciación desde el punto de vista social.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Ver anexo: la ciudad circular puede ser una analogía al mercado de centros comerciales alrededor de un anillo circular del centro urbano. La novedad de este modelo es que el número de empresas es endógeno y la localización exógena. Por lo tanto, lo que se estudia es la entrada de empresas dado que la localización ya ha sido tratada en el modelo de ciudad líneal.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Sin embargo, en la vida real no siempre se da la diferenciación. <span class="citation" data-cites="10_Tirole1988">Tirole (<a href="01-tema-a1.html#ref-10_Tirole1988" role="doc-biblioref">1988</a>)</span> señala 3 razones:</p>
+<ol type="1">
+<li><p>Las empresas tienen cierta tendencia a situarse donde está la demanda.</p></li>
+<li><p>La aglomeración de las empresas presenta ventajas: las economías de aglomeración permiten la especialización, la generación y aprovechamiento de externalidades positivas, y la disminución de los costes de almacenamiento y transporte empresariales para los bienes intermedios.</p></li>
+<li><p>Ausencia de competencia en precios: la diferenciación de un productos tiene por objetivo suavizar la competencia en precios. Si no se compite en precios –por ejemplo, podrían estar regulados–, entonces la diferenciación será mínima.</p></li>
+</ol>
+<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn13"><p>La intuición es que cada cafetería de un barrio es la única que ofrece su café, su local y su trato, y puede cobrar algo más que las demás sin perder a todos sus clientes, pero si abusa del precio estos se irán a la de enfrente.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Heroic assumption: An assumption that the speaker considers very unlikely to be true but temporarily accepts in order to make a hypothetical argument.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Inversamente, si sube el precio y el resto de empresas no la sigue, sus ventas se reducen a lo largo de la curva de demanda planeada, <span class="math inline">\(d\)</span>, más elástica, lo que provoca una mayor reducción de las ventas.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Cabe recordar que la forma de U de los costes deriva de asumir rendimientos mixtos.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>Chamberlin (1933) ofrece la primera exposición sistemática de esta doctrina, tal como reconoce el propio Kaldor (1935), cuyo análisis profundiza en sus implicaciones sobre la eficiencia de la libre competencia –llega a calificarla como una doctrina “intelectualmente sorprendente” e incluso “revolucionaria”, pues invierte el argumento tradicional de que la entrada libre de competidores conduce a un uso eficiente de los recursos–. El propio Kaldor señala antecedentes previos en&nbsp;<span class="citation" data-cites="10_Wicksell1934">Wicksell (<a href="01-tema-a1.html#ref-10_Wicksell1934" role="doc-biblioref">1934</a>)</span> y en&nbsp;<span class="citation" data-cites="10_Cairnes1874">Cairnes (<a href="01-tema-a1.html#ref-10_Cairnes1874" role="doc-biblioref">1874</a>)</span>, y la esboza ya&nbsp;<span class="citation" data-cites="10_Sraffa1926">Sraffa (<a href="01-tema-a1.html#ref-10_Sraffa1926" role="doc-biblioref">1926</a>)</span> en su célebre artículo sobre los rendimientos bajo competencia; destaca además el de&nbsp;<span class="citation" data-cites="10_Shove1933">Shove (<a href="01-tema-a1.html#ref-10_Shove1933" role="doc-biblioref">1933</a>)</span>, “The Imperfection of the Market”, como uno de los análisis más penetrantes publicados hasta entonces sobre esta cuestión.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Para deducir si el número de empresas es inferior o superior al óptimo tendremos que valorar dos efectos que operan en sentido contrario:</p>
+<ul>
+<li><p>No apropiación del excedente social (non appropiability of social surplus): las empresas no se pueden apropiar de todo el excedente consumidor asociado a la introducción de una nueva variedad. Esta externalidad positiva conduce a la introducción de menos variedades que el óptimo social.</p></li>
+<li><p>Robo de negocio (business stealing): La introducción de una nueva variedad reduce la demanda efectiva de cada empresa, lo que reduce sus beneficios. Esta externalidad negativa conduce a la introducción de demasiados bienes.</p></li>
+</ul>
+<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn19"><p>De esta manera:</p>
+<ul>
+<li><p>Si <span class="math inline">\(\theta=1\)</span>, entonces los bienes son sustitutivos perfectos, la elasticidad de sustitución es infinita (<span class="math inline">\(1/(1\text{–}      1)=\infty\)</span>) y no existe preferencia por la variedad (<span class="math inline">\(1\text{–}      1=0\)</span>).</p></li>
+<li><p>Si <span class="math inline">\(\theta=-\infty\)</span> los bienes son perfectamente complementarios.</p></li>
+</ul>
+<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn20"><p>Por tanto, la función de demanda resultante del programa de optimización es una función de demanda isoelástica del tipo <span class="math inline">\(q=a\cdot p^{\text{–}      b}\)</span>, donde la elasticidad-precio de la demanda, <span class="math inline">\(\varepsilon_{x_{i},p_{i}}\)</span>, es, como en toda demanda isoelástica, <span class="math inline">\(\text{–}      b\)</span>. Por lo tanto, la elasticidad-precio de la demanda en valor absoluto coincide en nuestro modelo con la elasticidad de sustitución de los bienes: <span class="math inline">\(1/(1\text{–}      \theta)\)</span>.</p>
+<p>Así, cuanto mayor es la preferencia del individuo por la variedad (<span class="math inline">\(\uparrow PV\)</span>), más se acerca a cero la elasticidad-precio de la demanda pues se hace menos negativa, <span class="math inline">\(-1/(\uparrow PV\)</span>), es decir, se vuelve más rígida y menos sensible, pues, al cambio en los precios.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>Como vemos, las conclusiones son análogas a las obtenidas en el modelo de Hotelling explicado en el enfoque direcciones.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Concretamente:</p>
+<ul>
+<li><p>En el modelo de comercio internacional de Krugman la preferencia por la variedad permite explicar el comercio intraindustrial, ya que al eliminar barreras se incrementa el número de variedades y también deriva en ganancias de eficiencia al operar bajo mayores economías de escala y alcanzar un tramo inferior de la curva de costes medios.</p></li>
+<li><p>En el modelo canónico de la Nueva Economía Keynesiana desarrollado por&nbsp;<span class="citation" data-cites="10_BlanchardKiyotaki1987">Blanchard y Kiyotaki (<a href="01-tema-a1.html#ref-10_BlanchardKiyotaki1987" role="doc-biblioref">1987</a>)</span>, ya que la preferencia por la variedad va a permitir introducir el poder de mercado de las empresas de competencia monopolística que unido a rigideces nominales y reales supondrá:</p>
+<ul>
+<li><p>La no neutralidad del dinero.</p></li>
+<li><p>Ajuste ineficiente a nivel agregado ante un shock.</p></li>
+<li><p>Efectividad real sobre la economía de la política fiscal y monetaria, lo que permitirá suavizar los ciclos económicos.</p></li>
+</ul></li>
+</ul>
+<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn23"><p>Este enfoque nos permite estudiar por qué un mercado puede llegar a segmentarse en función de la calidad y por qué puede ser óptimo para unas empresas elegir como objetivo una calidad inferior a la máxima. Este hecho se observa especialmente en el sector tecnológico, donde, a medida que la demanda de productos ha aumentado, más competidores han entrado, y más se ha segmentado el mercado en función de la calidad. Otro ejemplo serían las marcas de ropa.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>Ejemplos de esto pueden incluir atributos como la potencia del motor en un coche, la capacidad de almacenamiento en un dispositivo electrónico, o la velocidad de procesamiento en un ordenador<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>Implicaciones: En el equilibrio, ambas empresas buscarán mantener la máxima diferenciación posible (pues de este modo la competencia en precios será menor y esto beneficiará a ambas). Aunque la calidad se puede aumentar sin coste y es valorada positivamente por todos los consumidores, la empresa A prefiere producir a una calidad baja para diferenciarse más de su rival.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Por ejemplo, en el ámbito del comercio internacional se aprecian sesgos tanto a favor de los productos nacionales como de los importados. Si hubiera consenso en que respecto al producto <span class="math inline">\(i\)</span> los artículos nacionales son mejores (o peores) que los importados, se estaría ante un caso de diferenciación vertical. Por otro lado, si los consumidores prefieren consumir productos nacionales y parte prefieren consumir productos importados, la situación se acercaría a la diferenciación horizontal. El comercio internacional se vería favorecido en el último caso, de modo que un aumento en la heterogeneidad de preferencias equivale a un aumento de la diferenciación de productos.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>La ventaja de modelar la “ciudad” o el espacio de productos como un círculo es que ninguna posición es superior a las demás, no hay extremos ni centro. Al contrario de la ciudad lineal donde en el centro se tiene una mayor demanda. Aquí el espacio de los productos es completamente homogéneo.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>Esto no ocurre en el modelo neoclásico si las soluciones son de esquina.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>El propio modelo de Lancaster se ha aplicado también fuera del ámbito estrictamente económico:&nbsp;<span class="citation" data-cites="10_Feas2019">Feás (<a href="01-tema-a1.html#ref-10_Feas2019" role="doc-biblioref">2019</a>)</span> lo utiliza para analizar el comportamiento electoral, argumentando que los votantes no eligen tanto por una posición ideológica en el eje izquierda-derecha como por un conjunto reducido de características concretas –en el caso español, apunta como ejemplo “evitar que gobierne la izquierda o la derecha”, “firmeza frente al independentismo” y “regeneración política y lucha contra la corrupción”–, lo que explicaría trasvases de voto aparentemente contradictorios entre partidos ideológicamente distantes. El propio autor cierra su análisis invocando la teoría del segundo óptimo de Lancaster (desarrollada junto con Lipsey) a modo de advertencia: si un votante prioriza una única característica, el resultado no tiene por qué ser la segunda mejor opción posible en el resto de las dimensiones.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>La regla de Dorfman-Steiner es óptima desde el punto de vista individual de la empresa, pero no garantiza la eficiencia agregada de la industria: si todas las empresas aumentan simultáneamente su gasto en publicidad, el resultado puede asemejarse a un dilema del prisionero en el que los gastos se anulan mutuamente sin ganancia neta de cuota de mercado. Solo existe una justificación social clara para este gasto en la medida en que la publicidad aporte información genuina a los consumidores, y no se limite a una redistribución de la demanda entre empresas.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>El tribunal concluyó que no había evidencia suficiente de un uso deliberadamente anticompetitivo de esta estrategia, tratándose de una práctica de competencia legítima entre las empresas ya establecidas.<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>El test presenta una limitación conocida como la “falacia del celofán”: si el precio de partida ya incorpora poder de mercado –como ocurrió en el caso antitrust estadounidense del celofán, que da nombre a la falacia–, una subida adicional del 5&nbsp;<span class="math inline">\(\%\)</span> puede parecer no rentable simplemente porque el precio ya es demasiado alto, llevando a definir el mercado de forma artificialmente amplia.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./09-tema-a9.html" class="pagination-link" aria-label="Teoría del oligopolio. Análisis mediante la teoría de juegos">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./11-tema-a11.html" class="pagination-link" aria-label="Teorías microeconómicas del mercado de trabajo (I)">
+        <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

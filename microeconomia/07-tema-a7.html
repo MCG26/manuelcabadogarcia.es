@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="El modelo de competencia perfecta en equilibrio parcial: equilibrio a corto y largo plazo y propiedades de eficiencia de la estructura de mercado que sirve de referencia para las demás.">
+
+<title>Tema A7. El modelo de competencia perfecta | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./08-tema-a8.html" rel="next">
+<link href="./06-tema-a6.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A7. El modelo de competencia perfecta | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="El modelo de competencia perfecta en equilibrio parcial: equilibrio a corto y largo plazo y propiedades de eficiencia de la estructura de mercado que sirve de referencia para las demás.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A7. El modelo de competencia perfecta | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="El modelo de competencia perfecta en equilibrio parcial: equilibrio a corto y largo plazo y propiedades de eficiencia de la estructura de mercado que sirve de referencia para las demás.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A7. Análisis de mercados (I). El modelo de competencia perfecta. Análisis de equilibrio parcial: corto y largo plazo, dinámicas de ajuste y estabilidad del equilibrio. Análisis de eficiencia y bienestar.",
+ "alternateName": "El modelo de competencia perfecta",
+ "description": "El modelo de competencia perfecta en equilibrio parcial: equilibrio a corto y largo plazo y propiedades de eficiencia de la estructura de mercado que sirve de referencia para las demás.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/07-tema-a7.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./07-tema-a7.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">7.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#caracterización-del-modelo-de-competencia-perfecta" id="toc-caracterización-del-modelo-de-competencia-perfecta" class="nav-link" data-scroll-target="#caracterización-del-modelo-de-competencia-perfecta"><span class="header-section-number">7.2</span> Caracterización del modelo de competencia perfecta <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></a></li>
+  <li><a href="#equilibrio-de-la-empresa-y-de-la-industria" id="toc-equilibrio-de-la-empresa-y-de-la-industria" class="nav-link" data-scroll-target="#equilibrio-de-la-empresa-y-de-la-industria"><span class="header-section-number">7.3</span> Equilibrio de la empresa y de la industria <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></a>
+  <ul class="collapse">
+  <li><a href="#descripción-de-la-economía" id="toc-descripción-de-la-economía" class="nav-link" data-scroll-target="#descripción-de-la-economía">Descripción de la economía</a></li>
+  <li><a href="#obtención-de-la-curva-demanda" id="toc-obtención-de-la-curva-demanda" class="nav-link" data-scroll-target="#obtención-de-la-curva-demanda">Obtención de la curva demanda</a></li>
+  <li><a href="#equilibrio-a-muy-corto-plazo" id="toc-equilibrio-a-muy-corto-plazo" class="nav-link" data-scroll-target="#equilibrio-a-muy-corto-plazo">Equilibrio a muy corto plazo</a></li>
+  <li><a href="#equilibrio-a-corto-plazo" id="toc-equilibrio-a-corto-plazo" class="nav-link" data-scroll-target="#equilibrio-a-corto-plazo">Equilibrio a corto plazo</a></li>
+  <li><a href="#equilibrio-a-largo-plazo" id="toc-equilibrio-a-largo-plazo" class="nav-link" data-scroll-target="#equilibrio-a-largo-plazo">Equilibrio a largo plazo</a></li>
+  </ul></li>
+  <li><a href="#equilibrio-competitivo" id="toc-equilibrio-competitivo" class="nav-link" data-scroll-target="#equilibrio-competitivo"><span class="header-section-number">7.4</span> Equilibrio competitivo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></a>
+  <ul class="collapse">
+  <li><a href="#propiedades-deseables-del-equilibrio-competitivo" id="toc-propiedades-deseables-del-equilibrio-competitivo" class="nav-link" data-scroll-target="#propiedades-deseables-del-equilibrio-competitivo">Propiedades deseables del equilibrio competitivo</a></li>
+  </ul></li>
+  <li><a href="#estática-comparativa" id="toc-estática-comparativa" class="nav-link" data-scroll-target="#estática-comparativa"><span class="header-section-number">7.5</span> Estática comparativa<span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos 30 segundos">2'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#incremento-de-los-costes-fijos" id="toc-incremento-de-los-costes-fijos" class="nav-link" data-scroll-target="#incremento-de-los-costes-fijos">Incremento de los costes fijos</a></li>
+  <li><a href="#incremento-de-los-costes-variables" id="toc-incremento-de-los-costes-variables" class="nav-link" data-scroll-target="#incremento-de-los-costes-variables">Incremento de los costes variables</a></li>
+  <li><a href="#variaciones-en-los-impuestos" id="toc-variaciones-en-los-impuestos" class="nav-link" data-scroll-target="#variaciones-en-los-impuestos">Variaciones en los impuestos</a></li>
+  </ul></li>
+  <li><a href="#relajación-de-supuestos" id="toc-relajación-de-supuestos" class="nav-link" data-scroll-target="#relajación-de-supuestos"><span class="header-section-number">7.6</span> Relajación de supuestos <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="3 minutos">3'</span></a>
+  <ul class="collapse">
+  <li><a href="#curvas-de-costes-sin-rendimientos-mixtos" id="toc-curvas-de-costes-sin-rendimientos-mixtos" class="nav-link" data-scroll-target="#curvas-de-costes-sin-rendimientos-mixtos">Curvas de costes sin rendimientos mixtos</a></li>
+  <li><a href="#economías-de-escala-externas-a-la-empresa-pero-internas-a-la-industria" id="toc-economías-de-escala-externas-a-la-empresa-pero-internas-a-la-industria" class="nav-link" data-scroll-target="#economías-de-escala-externas-a-la-empresa-pero-internas-a-la-industria">Economías de escala externas a la empresa pero internas a la industria</a></li>
+  <li><a href="#el-modelo-de-la-telaraña" id="toc-el-modelo-de-la-telaraña" class="nav-link" data-scroll-target="#el-modelo-de-la-telaraña">El modelo de la telaraña</a></li>
+  </ul></li>
+  <li><a href="#conclusiones-2" id="toc-conclusiones-2" class="nav-link" data-scroll-target="#conclusiones-2"><span class="header-section-number">7.7</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-levantamiento-de-otros-supuestos" id="toc-a.1.-levantamiento-de-otros-supuestos" class="nav-link" data-scroll-target="#a.1.-levantamiento-de-otros-supuestos">7.A.1.&nbsp;&nbsp;Levantamiento de otros supuestos</a></li>
+  <li><a href="#a.2.-eficiencia-con-incertidumbre-arrow-y-hahn-1971" id="toc-a.2.-eficiencia-con-incertidumbre-arrow-y-hahn-1971" class="nav-link" data-scroll-target="#a.2.-eficiencia-con-incertidumbre-arrow-y-hahn-1971">7.A.2.&nbsp;&nbsp;Eficiencia con incertidumbre (Arrow y Hahn, 1971)</a></li>
+  <li><a href="#a.3.-ventajas-de-la-competencia-perfecta" id="toc-a.3.-ventajas-de-la-competencia-perfecta" class="nav-link" data-scroll-target="#a.3.-ventajas-de-la-competencia-perfecta">7.A.3.&nbsp;&nbsp;Ventajas de la competencia perfecta</a></li>
+  <li><a href="#a.4.-controles-legales-de-precios" id="toc-a.4.-controles-legales-de-precios" class="nav-link" data-scroll-target="#a.4.-controles-legales-de-precios">7.A.4.&nbsp;&nbsp;Controles legales de precios</a></li>
+  <li><a href="#a.5.-relación-entre-el-equilibrio-parcial-y-el-equilibrio-general" id="toc-a.5.-relación-entre-el-equilibrio-parcial-y-el-equilibrio-general" class="nav-link" data-scroll-target="#a.5.-relación-entre-el-equilibrio-parcial-y-el-equilibrio-general">7.A.5.&nbsp;&nbsp;Relación entre el equilibrio parcial y el equilibrio general</a></li>
+  <li><a href="#a.6.-formalización-de-la-eficiencia-el-excedente-total-como-problema-de-maximización" id="toc-a.6.-formalización-de-la-eficiencia-el-excedente-total-como-problema-de-maximización" class="nav-link" data-scroll-target="#a.6.-formalización-de-la-eficiencia-el-excedente-total-como-problema-de-maximización">7.A.6.&nbsp;&nbsp;Formalización de la eficiencia: el excedente total como problema de maximización</a></li>
+  <li><a href="#a.7.-una-generalización-mercados-disputables-y-algoritmos-de-precios" id="toc-a.7.-una-generalización-mercados-disputables-y-algoritmos-de-precios" class="nav-link" data-scroll-target="#a.7.-una-generalización-mercados-disputables-y-algoritmos-de-precios">7.A.7.&nbsp;&nbsp;Una generalización: mercados disputables y algoritmos de precios</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Análisis de mercados (I). El modelo de competencia perfecta. Análisis de equilibrio parcial: corto y largo plazo, dinámicas de ajuste y estabilidad del equilibrio. Análisis de eficiencia y bienestar.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">7.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En las últimas dos décadas, la concentración empresarial ha aumentado significativamente, con mercados dominados por grandes empresas, llamadas "superestrellas". La globalización y la digitalización han impulsado este fenómeno, con empresas como Amazon y Google aprovechando las economías de escala y los efectos de red<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. Así, estos factores crean altas barreras de entrada y pueden conducir a mercados donde el ganador se lleva todo.</p>
+<p>Esto genera un debate entre economistas sobre si la competencia ha disminuido: mientras algunos argumentan que la menor competencia reduce la innovación, otros sostienen que la concentración es el resultado de una intensa competencia que culmina con unas pocas empresas en la cima.</p>
+<p>En el marco de la Teoría Económica, a la hora de analizar las imperfecciones de mercado se toma como punto de referencia el modelo de competencia perfecta en un contexto de equilibrio parcial (ceteris paribus)<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>.</p>
+<p>El modelo lo desarrolla&nbsp;<span class="citation" data-cites="7_Marshall1890">Marshall (<a href="01-tema-a1.html#ref-7_Marshall1890" role="doc-biblioref">1890</a>)</span> a finales del siglo XIX y es de gran importancia tanto desde el punto de vista práctico, ya que se aproxima a la realidad de algunos mercados –como el de las materias primas y los de valores–, y el teórico, ya que es el modelo de referencia para comparar con otras estructuras, siendo clave para las autoridades de la competencia.</p>
+<p>Por consiguiente, el objetivo de esta exposición será el análisis de este modelo a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Caracterización del modelo de competencia perfecta</p></li>
+<li><p>Equilibrio de la empresa y de la industria.</p></li>
+<li><p>Equilibrio competitivo.</p></li>
+<li><p>Estática comparativa.</p></li>
+<li><p>Relajación de supuestos.</p></li>
+</ol>
+</section>
+<section id="caracterización-del-modelo-de-competencia-perfecta" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="caracterización-del-modelo-de-competencia-perfecta"><span class="header-section-number">7.2</span> Caracterización del modelo de competencia perfecta <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></h2>
+<p>Los supuestos normalmente asociados a la competencia perfecta en el mercado de bienes son:</p>
+<ol type="1">
+<li><p>Muchos compradores y muchos vendedores, es decir, atomizado (o pequeño tamaño de la empresa en relación al mercado), lo que implica que todos actúan como precio-aceptantes.</p></li>
+<li><p>Producto homogéneo, por lo que el único factor relevante para la elección por parte de los consumidores será el precio.</p></li>
+<li><p>Información perfecta<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, es decir, todos los agentes que participan en el mercado disponen de toda la información relevante.</p></li>
+<li><p>Todas las empresas tienen la misma tecnología a largo plazo, igualdad de acceso a factores productivos, y libertad de entrada y de salida<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p></li>
+<li><p>Rendimientos mixtos, lo que genera una curva de costes medios en forma de U.</p></li>
+<li><p>Perfecta divisibilidad de bienes y de factores productivos, lo que implica que las funciones de producción y de costes son continuas.</p></li>
+<li><p>Perfecta movilidad de factores productivos, cuyo mercado también se encuentra en competencia perfecta.</p></li>
+<li><p>Costes constantes, es decir, que el precio de los factores productivos se mantiene constante para cualquier nivel de demanda de factor<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p></li>
+<li><p>Ausencia de externalidades, de bienes públicos y de intervención del sector público (no hay fallos de mercado)</p></li>
+<li><p>Empresas racionales. Buscan la maximización de beneficios.</p></li>
+</ol>
+<p>Se trata de supuestos bastante restrictivos; al final de la exposición levantaremos los supuestos de rendimientos mixtos, y el de precio constante de los factores productivos.</p>
+<section id="equilibrio-de-competencia-perfecta" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="equilibrio-de-competencia-perfecta">Equilibrio de competencia perfecta</h5>
+<p>Así, bajo estos supuestos el equilibrio de competencia perfecta se define como una situación en la que existe un precio de un bien y un nivel de producción tal que los mercados se vacían –Cantidad demandada = Cantidad ofertada–, los consumidores maximizan su utilidad y los productores su beneficio dada una tecnología y precio de los factores de producción.</p>
+</section>
+<section id="el-papel-de-los-precios" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-papel-de-los-precios">El papel de los precios</h5>
+<p>A su vez, el precio cumple un papel fundamental en el mercado</p>
+<ul>
+<li><p>Transmitiendo toda la información relevante</p></li>
+<li><p>Mostrando el valor marginal del bien</p></li>
+<li><p>Racionando, es decir, son indicadores de escasez.</p></li>
+</ul>
+</section>
+<section id="oferta-de-las-empresas-y-de-la-industria" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="oferta-de-las-empresas-y-de-la-industria">Oferta de las empresas y de la industria</h5>
+<p>Para determinar el equilibrio será preciso determinar la oferta de las empresas individuales y, a partir de ellas, la de la industria. La industria se define como la agregación de todas las empresas que elaboran el mismo bien y la suma de las ofertas de todas las empresas constituyen la oferta de la industria <span id="eq-a-07-1"><span class="math display">\[S=\sum\limits_{i=1}^{n}s_{i} \tag{7.1}\]</span></span></p>
+</section>
+</section>
+<section id="equilibrio-de-la-empresa-y-de-la-industria" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="equilibrio-de-la-empresa-y-de-la-industria"><span class="header-section-number">7.3</span> Equilibrio de la empresa y de la industria <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="9 minutos">9'</span></h2>
+<p>Con todo lo anterior se puede estudiar el equilibrio de la industria y de la empresa en diferentes horizontes temporales. Pero antes describiremos brevemente la economía y la forma de obtener la demanda</p>
+<section id="descripción-de-la-economía" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="descripción-de-la-economía">Descripción de la economía</h3>
+<p>Consideramos una economía formada por un conjunto de consumidores (<span class="math inline">\(I\)</span>), de empresas (<span class="math inline">\(J\)</span>) y de mercancías (<span class="math inline">\(L\)</span>).</p>
+<ul>
+<li><p>Las preferencias del consumidor <span class="math inline">\(i\)</span> sobre las cestas de consumo <span class="math inline">\(x_{i}=\left(x_{1i},\ldots,x_{Li}\right)\)</span> pueden ser representadas por una función de utilidad de buen comportamiento.</p></li>
+<li><p>Los agentes disponen inicialmente de una dotación <span class="math inline">\(w_{mi}\)</span> del bien numerario<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> que las empresas podrán tomar y transformar en otros bienes.</p></li>
+<li><p>Cada empresa <span class="math inline">\(j\)</span> dispone de un conjunto de posibilidades de producción <span class="math inline">\(Y_{j}\in\mathbb{R}^{LJ}\)</span>. Donde cada elemento de <span class="math inline">\(Y_{j}\)</span> es un vector de producción <span class="math inline">\(y_{i}=\left(y_{1i},\ldots,y_{Li}\right)\in\mathbb{R}^{L}\)</span>, donde los elementos con signo negativo representan inputs y los elementos con signo positivo representan el output. Un plan de producción es factible si puede obtenerse transformando las dotaciones iniciales a través del uso de la tecnología.</p></li>
+<li><p>El precio del bien numerario queda normalizado a 1. El precio del bien de mercado analizado es <span class="math inline">\(p\)</span>.</p></li>
+</ul>
+</section>
+<section id="obtención-de-la-curva-demanda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="obtención-de-la-curva-demanda">Obtención de la curva demanda</h3>
+<p>El consumidor tiene unas preferencias sobre el bien l y el numerario representables por una función de utilidad cuasilineal respecto del dinero (FU de Marshall cuasilineal). Esta función presenta ER y ES cruzados nulos.</p>
+<p>El consumidor maximiza su utilidad sujeto a una restricción presupuestaria. En el punto óptimo la restricción de la renta se satura y la <span class="math inline">\(UMg\)</span> del consumo de un bien se iguala al <span class="math inline">\(CMg\)</span> de adquirirlo (su precio) multiplicado por el multiplicador de Lagrange, que representa la <span class="math inline">\(UMg\)</span> de la renta. Esto es, se cumple la segunda Ley de Gossen.</p>
+<p>A partir de la CPO obtenemos la cantidad óptima de <span class="math inline">\(x_{i}\)</span> a consumir. Esta puede ser expresada en función de los parámetros de los que depende (en este caso solo de su propio precio), obteniendo la demanda marshalliana del bien <span class="math inline">\(x_{i}(p_{i})\)</span>, que es decreciente y positiva. Esta demanda será independiente de <span class="math inline">\(w_{mi}\)</span> debido al carácter cuasilineal de las preferencias.</p>
+<section id="curva-de-demanda-agregada" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-demanda-agregada">Curva de demanda agregada</h5>
+<p>Debido al carácter cuasi-lineal de las preferencias será posible obtener una función de demanda agregada <span id="eq-a-07-2"><span class="math display">\[x\left(p\right)=\sum_{i}x_{i}\left(p\right) \tag{7.2}\]</span></span> a través de la suma horizontal de las diferentes curvas de demanda individuales, debido a la inexistencia de efectos renta. Por tanto, mantendrá las propiedades de las funciones individuales. Esta función de demanda agregada será continua y no creciente para todo <span class="math inline">\(p&gt;0\)</span>.</p>
+</section>
+<section id="función-inversa-de-la-demanda-de-mercado" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="función-inversa-de-la-demanda-de-mercado">Función inversa de la demanda de mercado</h5>
+<p>La función inversa de la demanda de mercado se obtiene despejando el precio en la función de demanda agregada, <span class="math inline">\(x\left(p\right)\)</span>: en lugar de indicar qué cantidad se demanda a cada precio, indica qué precio corresponde a cada cantidad. Se escribe así: <span id="eq-a-07-3"><span class="math display">\[P(x)=x^{-1}(x) \tag{7.3}\]</span></span> donde el exponente <span class="math inline">\(-1\)</span> no es una potencia, sino que denota la función inversa de la demanda <span class="math inline">\(x\left(p\right)\)</span>, y la <span class="math inline">\(x\)</span> entre paréntesis es una cantidad concreta del bien. Su interpretación económica es interesante: nos dice el precio resultante de una demanda agregada de <span class="math inline">\(x\)</span>. Es decir, a este precio los consumidores demandan una cantidad del bien <span class="math inline">\(l\)</span> tal que la demanda agregada es <span class="math inline">\(x\)</span>. Es especialmente relevante que, a nivel individual, el beneficio marginal en términos del numerario se iguala al precio, por lo que el valor de esta función puede ser interpretado como el beneficio marginal social del bien <span class="math inline">\(l\)</span><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>.</p>
+<p>A continuación, pasamos a analizar el equilibrio dependiendo del horizonte temporal. La curva de oferta la derivaremos conforme vayamos resolviendo el problema del productor. La diferencia entre el análisis a cp y a lp está en la capacidad de las empresas de decidir sobre la utilización de todos los ffpp. Los mayores grados de libertad que permite el lp provocan que la curva de costes a lp sea siempre inferior o igual a la de cp.</p>
+</section>
+</section>
+<section id="equilibrio-a-muy-corto-plazo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equilibrio-a-muy-corto-plazo">Equilibrio a muy corto plazo</h3>
+<p>En el muy corto plazo o “periodo de mercado”:</p>
+<ol type="1">
+<li><p>La dotación de factores es fija, por lo que la producción está dada, es decir, la oferta es totalmente inelástica.</p></li>
+<li><p>No existe libertad de entrada ni salida, por lo que el número de empresas es fijo.</p></li>
+</ol>
+<p>En esta situación, el precio no es más que un mecanismo para racionar la demanda, ya que distribuye la cantidad producida entre los consumidores. En consecuencia, la demanda determina por sí sola el precio, y la oferta, la cantidad de equilibrio de mercado.</p>
+<section id="análisis-gráfico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico">Análisis gráfico</h5>
+<p>Gráficamente, en dos planos de precios y cantidad como el de la <a href="#fig-7-eq-competitivo-a-muy-c-p" class="quarto-xref">Figura&nbsp;<span>7.1</span></a> se representa la curva de demanda y oferta de la industria y la empresa:</p>
+<ul>
+<li><p>En el caso de la industria, la demanda tiene pendiente negativa porque la cantidad demandada aumenta conforme disminuye el precio mientras que la oferta se obtiene mediante la agregación horizontal de las ofertas individuales<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>.</p></li>
+<li><p>Para la empresa individual, considera la demanda a la que se enfrenta como una línea horizontal pues es precio-aceptante –forma que puede vender toda la cantidad que desee al precio de mercado y nada a un precio superior<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>– y la oferta es fija por ser la dotación de todos los factores fija.</p></li>
+</ul>
+<div id="fig-7-eq-competitivo-a-muy-c-p" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio competitivo a muy corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-eq-competitivo-a-muy-c-p-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.1: Equilibrio competitivo a muy corto plazo
+</figcaption>
+<div aria-describedby="fig-7-eq-competitivo-a-muy-c-p-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-eq-competitivo-a-muy-cp.svg" class="img-fluid figure-img" alt="Equilibrio competitivo a muy corto plazo">
+</div>
+</figure>
+</div>
+<p>Ejemplos de estos mercados lonja de pescado, energía solar, mercado de fruta o productos agrícolas en los que lo único que puede pasar es que baje el precio si baja la demanda.</p>
+</section>
+</section>
+<section id="equilibrio-a-corto-plazo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equilibrio-a-corto-plazo">Equilibrio a corto plazo</h3>
+<p>El corto plazo es el horizonte temporal en el que:</p>
+<ol type="1">
+<li><p>La dotación de algún factor productivo es fija, pero las dotaciones del resto son variables. La cantidad producida ya no es fija –puede variar aumentando o disminuyendo el empleo de factores variables– y se distinguirán entre costes fijos y variables</p></li>
+<li><p>No existe libertad de entrada y de salida, por lo que el número de empresas es fijo y pueden convivir empresas con beneficios y pérdidas.</p></li>
+</ol>
+<p>El objetivo de la empresa es el de maximizar beneficios, es decir, la diferencia entre ingresos –valor de mercado de la cantidad vendida– y costes totales –suma de costes fijos y variables–: <span id="eq-a-07-4"><span class="math display">\[\max\quad\pi=P\cdot q-CT \tag{7.4}\]</span></span> donde <span class="math inline">\(P(Q)\)</span> es la curva de demanda de la empresa (constante por ser precio aceptante), que, como veremos en la condición de primer orden, es totalmente horizontal (es decir, elasticidad infinita). Es decir, en competencia perfecta, el precio es una variable exógena (mientras que en monopolio es una variable endógena).</p>
+<p>Cuya CPO indica que el precio es igual al coste marginal.</p>
+<p><span id="eq-a-07-5"><span class="math display">\[\dfrac{\partial\mathcal{\pi}}{\partial q}=0\Rightarrow P=CMg=IMg \tag{7.5}\]</span></span> de esta forma, si <span class="math inline">\(P&gt;CMg\)</span>, la empresa puede aumentar su producción en 1 unidad y aumentar su beneficio en <span class="math inline">\(P\text{–}      CMg\)</span>; si <span class="math inline">\(P&lt;CMg\)</span>, la empresa puede disminuir su producción en 1 unidad y aumentar su beneficio en <span class="math inline">\(CMg\text{–}      P\)</span>.</p>
+<p>Su CSO impone que se maximizará beneficios en la parte creciente de la curva de costes marginales, <span class="math inline">\(CMg\)</span>. <span id="eq-a-07-6"><span class="math display">\[\dfrac{\partial^{2}\mathcal{\pi}}{\partial^{2}q}&lt;0\Rightarrow\:\dfrac{\partial CMg}{\partial q}&gt;0 \tag{7.6}\]</span></span></p>
+<p>Así, a CSO impone que el <span class="math inline">\(CMg\)</span> sea creciente (es decir, función de producción estrictamente cóncava –rendimientos decrecientes–). Esta condición no es baladí, porque si la producción presenta rendimientos mixtos, la CPO se puede dar en dos puntos: con <span class="math inline">\(CMg\)</span> decreciente y con <span class="math inline">\(CMg\)</span> creciente, como ahora veremos. La CSO debe cumplirse para que el beneficio obtenido sea un máximo y no un mínimo.</p>
+<section id="análisis-gráfico-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-1">Análisis gráfico</h5>
+<p>Gráficamente, el equilibrio se puede analizar desde un enfoque de ingresos y costes totales y un enfoque marginal.</p>
+<ul>
+<li><p>Ingresos y costes totales: en un plano de ingresos, <span class="math inline">\(I\)</span>,costes, <span class="math inline">\(C\)</span>, y cantidad producida por la empresa, <span class="math inline">\(q\)</span>, como el de la <a href="#fig-7-eq-competitivo-de-la-empresa-a-cp" class="quarto-xref">Figura&nbsp;<span>7.2</span></a>:</p>
+<ul>
+<li><p>Se representa la curva de ingresos totales, <span class="math inline">\(IT\)</span>, y la curva de costes totales, <span class="math inline">\(CT\)</span>, que es siempre creciente, primero a ritmo decreciente y después, por la ley de rendimientos marginales decrecientes, a ritmo creciente.</p></li>
+<li><p>Como el objetivo del empresario es la maximización del beneficio, esto lo logrará en aquel punto de producción en el que la distancia entre los ingresos y los costes es máxima en <span class="math inline">\(A\)</span>, obteniendo beneficios extraordinarios.</p></li>
+<li><p>En los puntos donde ingresos y costes totales se cortan, la empresa obtendría beneficios normales siendo los puntos que están fuera del intervalo entre ellos aquellos donde la empresa conseguiría pérdidas, siendo el punto <span class="math inline">\(D\)</span> aquel donde sería máxima la pérdida.</p></li>
+</ul></li>
+<li><p>Enfoque marginal: desde un enfoque marginal, en un plano adyacente de precios, <span class="math inline">\(P\)</span>, costes, <span class="math inline">\(C\)</span>, y cantidad producida por la empresa, <span class="math inline">\(q\)</span>, se trasladan los puntos obtenidos.:</p>
+<ul>
+<li><p>A partir de la función de costes totales y teniendo en cuenta que el coste total medio, <span class="math inline">\(CTMe\)</span>, se deriva a partir del valor de la pendiente de los radio vectores a sus distintos puntos, se considerará el volumen de producción donde el coste total medio es mínimo, <span class="math inline">\(B\)</span>.</p></li>
+<li><p>Además, si se considera sobre dicha función el valor marginal, que se estima por el valor de la pendiente de la tangente en sus diferentes puntos y aquel volumen de producción donde el coste marginal es mínimo, se trazará la curva de coste marginal, <span class="math inline">\(CMg\)</span>, que atravesará al coste total medio en su punto mínimo <span class="math inline">\(B\)</span>. A su vez, atravesará a la curva de costes medios variables –la cual se obtiene restando los costes fijos a los totales– en el punto <span class="math inline">\(C\)</span>.</p></li>
+<li><p>Por otro lado, en el mercado competitivo al ser la empresa precio-aceptante, se enfrentará a una curva de precio, que es a su vez la demanda percibida por el empresario, <span class="math inline">\(d\)</span>, su curva de ingreso medio, <span class="math inline">\(IMe\)</span>, y marginal, <span class="math inline">\(IMg\)</span>. Esta será completamente horizontal, estando determinado su valor por la pendiente de la función de ingresos totales, <span class="math inline">\(IT\)</span>, de la empresa.</p></li>
+</ul></li>
+</ul>
+<div id="fig-7-eq-competitivo-de-la-empresa-a-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio competitivo de la empresa a corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-eq-competitivo-de-la-empresa-a-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.2: Equilibrio competitivo de la empresa a corto plazo
+</figcaption>
+<div aria-describedby="fig-7-eq-competitivo-de-la-empresa-a-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-eq-competitivo-a-cp.svg" class="img-fluid figure-img" alt="Equilibrio competitivo de la empresa a corto plazo">
+</div>
+</figure>
+</div>
+</section>
+<section id="umbrales-de-rentabilidad-y-cierre" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="umbrales-de-rentabilidad-y-cierre">Umbrales de rentabilidad y cierre</h5>
+<p>A continuación, se comentarán una serie de puntos muy relevantes para el análisis:</p>
+<ul>
+<li><p>En el punto A los beneficios son extraordinarios, dado que están por encima de los <span class="math inline">\(CTMe\)</span>.</p></li>
+<li><p>En el punto B, mínimo del coste total medio, los beneficios son nulos, por lo que se le llama umbral de beneficios u óptimo de explotación. Por encima de ese precio la empresa obtiene beneficios extraordinarios.</p></li>
+<li><p>En el tramo del coste marginal de B a C, la empresa tendrá beneficio negativo. No obstante, la empresa cubre el coste medio variable y parte de los costes fijos, por lo que seguirá produciendo cantidades positivas.</p></li>
+<li><p>En el punto C, sin embargo, la empresa solo cubre los costes variables pero no los fijos siendo este el punto mínimo de explotación en el que la empresa es indiferente entre cerrar y producir.</p></li>
+<li><p>En el punto D el precio también iguala al coste marginal, pero en su tramo decreciente, por lo que no se cumple la condición de segundo orden y la pérdida es máxima. La empresa nunca elegirá producir en ese punto.</p></li>
+</ul>
+</section>
+<section id="curva-de-oferta-de-la-empresa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-oferta-de-la-empresa">Curva de oferta de la empresa</h5>
+<p>Así, la curva de oferta de la empresa a corto plazo se obtiene por estática comparativa a partir de los sucesivos puntos de intersección entre su curva de <span class="math inline">\(CMg\)</span> y sus sucesivas curvas de demanda, horizontales al nivel de cada precio de mercado. Además, la curva de oferta coincide con el tramo creciente de la curva de costes marginales a partir del mínimo de explotación C. Para precios inferiores la empresa cierra y ofrece una cantidad nula.</p>
+</section>
+<section id="curva-de-oferta-de-la-industria" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-oferta-de-la-industria">Curva de oferta de la industria</h5>
+<p>Por otro lado, la curva de oferta de la industria a corto plazo es la suma horizontal de las curvas de oferta individuales, es decir, la suma de las cantidades que cada empresa desea vender a cada precio, siempre que el precio de los factores no varíe con la producción de la industria<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>.</p>
+</section>
+<section id="equilibrio" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="equilibrio">Equilibrio</h5>
+<p>Para determinar el equilibrio se introducen en el análisis los consumidores que son iguales e idénticos por lo que la curva de demanda del mercado es la suma horizontal de las demandas individuales.</p>
+<p>Gráficamente, en un plano de precios y cantidades como el de la <a href="#fig-7-equilibrio-competitivo-a-corto-plazo" class="quarto-xref">Figura&nbsp;<span>7.3</span></a>, el equilibrio en el corto plazo se produce en la intersección entre oferta y demanda, que será compatible con la existencia de beneficios o pérdidas a corto plazo. Además, el mercado se vacía y el precio transmite toda la información relevante sobre el bien.</p>
+<div id="fig-7-equilibrio-competitivo-a-corto-plazo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio competitivo a corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-equilibrio-competitivo-a-corto-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.3: Equilibrio competitivo a corto plazo
+</figcaption>
+<div aria-describedby="fig-7-equilibrio-competitivo-a-corto-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-equilibrio-de-mercado-a-cp.svg" class="img-fluid figure-img" alt="Equilibrio competitivo a corto plazo">
+</div>
+</figure>
+</div>
+</section>
+<section id="conclusiones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="conclusiones">Conclusiones</h5>
+<p>En resumen:</p>
+<ul>
+<li><p>En el corto plazo pueden convivir empresas que obtengan beneficios extraordinarios (beneficio económico superior a 0) o pérdidas.</p></li>
+<li><p>En el equilibrio los consumidores maximizan su utilidad, las empresas maximizan beneficios y el mercado se vacía (esto es las decisiones de consumidores y empresas son compatibles). Consecuencia del equilibrio competitivo es que la restricción presupuestaria se cumple con igualdad<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>.</p></li>
+<li><p>Las condiciones de viabilidad económica (es decir, las condiciones para que la empresa prefiera seguir produciendo a cerrar) en el corto plazo son:</p>
+<ul>
+<li><p><span class="math inline">\(IT\ge CV\)</span>,</p></li>
+<li><p><span class="math inline">\(P\ge \text{M{í}n}\,\,CVMe\)</span>.</p></li>
+<li><p>Que, si pierde dinero, pierda menos que los costes fijos.</p></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="equilibrio-a-largo-plazo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equilibrio-a-largo-plazo">Equilibrio a largo plazo</h3>
+<p>Por otro lado, en el largo plazo:</p>
+<ol type="1">
+<li><p>La dotación de todos los factores es variable, es decir, la cantidad producida puede variar aumentando o disminuyendo el empleo de cualquier factor y no habrá distinción entre costes fijos y costes variables. La empresa podrá modificar el tamaño de planta.</p></li>
+<li><p>Existe libertad de entrada y salida de empresas, lo que implica que el número de empresas ya no es fijo y que no obtendrán ni beneficios ni pérdidas, es decir, los beneficios económicos son nulos.</p></li>
+</ol>
+<p>La dotación variable de todos los factores implica que la combinación de factores productivos elegidos es técnica y económicamente eficiente por parte de la empresa, lo que hará que operen en el tamaño óptimo de planta</p>
+<section id="análisis-gráfico-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico-2">Análisis gráfico</h5>
+<p>Gráficamente en un plano de precios y cantidades como el de la <a href="#fig-7-equilibrio-competitivo-a-largo-plazo" class="quarto-xref">Figura&nbsp;<span>7.4</span></a>:</p>
+<ul>
+<li><p>Dada la dotación variable de todos los factores, la empresa operará con el tamaño óptimo de planta, es decir, en el mínimo de los costes medios a largo plazo, <span class="math inline">\(CMe_{lp}\)</span>, donde estos se igualan a los costes marginales a largo plazo, <span class="math inline">\(CMg_{lp}\)</span>, y ambos coinciden con sus respectivas curvas a corto plazo, todo ello al precio <span class="math inline">\(P^{*}\)</span>.</p></li>
+<li><p>Respecto a la existencia de libre entrada y salida de empresas, en un plano adyacente de precios y producción se representa la demanda y la oferta de mercado con un equilibrio asociado, <span class="math inline">\(E_{0}\)</span>.</p></li>
+<li><p>Si, por cualquier razón, se incrementa la demanda del mercado, <span class="math inline">\(D^{\prime}\)</span>, y aumenta el precio de equilibrio a <span class="math inline">\(P^{\prime}\)</span>, esto generará beneficios positivos en las empresas instaladas, pues el nuevo precio está por encima de los costes medios, para una producción <span class="math inline">\(Q_{1}\)</span> y un equilibrio <span class="math inline">\(E_{1}\)</span>.</p></li>
+<li><p>Pero como hay libertad de entrada, nuevas empresas entrarán en el mercado atraídas por dichos beneficios positivos, aumentando la producción agregada, lo que se refleja gráficamente con un desplazamiento a la derecha de la curva de oferta del mercado, <span class="math inline">\(S^{\prime}\)</span>, hasta que los beneficios se anulan, es decir, hasta que el precio coincida con el mínimo del coste medio y cada empresa vuelva a lanzar al mercado la cantidad óptima, en <span class="math inline">\(E_{2}\)</span>.</p></li>
+<li><p>Por tanto, en el largo plazo todas las empresas operan en la dimensión óptima (<span class="math inline">\(P=CMg_{lp}=CMe_{lp}\)</span>), y obtienen beneficios económicos nulos<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>.</p></li>
+</ul>
+<div id="fig-7-equilibrio-competitivo-a-largo-plazo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio competitivo a largo plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-equilibrio-competitivo-a-largo-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.4: Equilibrio competitivo a largo plazo
+</figcaption>
+<div aria-describedby="fig-7-equilibrio-competitivo-a-largo-plazo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-equilibrio-competitivo-a-largo-plazo.svg" class="img-fluid figure-img" alt="Equilibrio competitivo a largo plazo">
+</div>
+</figure>
+</div>
+</section>
+<section id="curva-de-oferta-a-largo-plazo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-oferta-a-largo-plazo">Curva de oferta a largo plazo</h5>
+<p>Nótese también que la curva de oferta a largo plazo del mercado es horizontal debido al supuesto de costes constantes, es decir, que cuando la industria demanda más factores productivos para aumentar su producción, el precio de los factores productivos permanece constante.</p>
+<p>Al ser la curva de oferta del mercado a largo plazo totalmente horizontal, el precio viene determinado por la oferta –es decir, por la tecnología–, y el mantenimiento de este precio queda garantizado por la competencia. Por su parte, la cantidad producida y el número de empresas queda determinado por la demanda.</p>
+<p>Las curvas de oferta y demanda se pueden desplazar por diferentes motivos (aquellas variaciones que no estén en los ejes, es decir, que no sean precio ni cantidad).</p>
+</section>
+<section id="conclusiones-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="conclusiones-1">Conclusiones</h5>
+<p>En resumen, estas son las implicaciones de que las dotaciones de todos los factores productivos sean variables:</p>
+<ul>
+<li><p>La combinación de factores productivos elegidos es técnica y económicamente eficiente.</p></li>
+<li><p>La curva de <span class="math inline">\(CMg\)</span> es más elástica que en el corto plazo<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>.</p></li>
+</ul>
+<p>Acabamos de adelantar que en competencia perfecta la producción en el largo plazo es eficiente, por lo que pasamos a estudiar la optimalidad.</p>
+</section>
+</section>
+</section>
+<section id="equilibrio-competitivo" class="level2" data-number="7.4">
+<h2 data-number="7.4" class="anchored" data-anchor-id="equilibrio-competitivo"><span class="header-section-number">7.4</span> Equilibrio competitivo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></h2>
+<p>Los rasgos generales del equilibrio competitivo al producirse en el mínimo de los costes medios:</p>
+<ol type="1">
+<li><p>No hay excesos de capacidad.</p></li>
+<li><p>Los beneficios económicos son cero.</p></li>
+<li><p>Los consumidores adquieren el producto al mínimo precio posible.</p></li>
+<li><p>La maximización de beneficios de las empresas es compatible con la maximización de la utilidad de los consumidores, por lo que los mercados se vacían.</p></li>
+<li><p>Primer teorema del bienestar: en ausencia de fallos de mercado, la competencia perfecta conduce a una asignación que es óptima en el sentido de Pareto, esto es, que ningún agente puede mejorar sin empeorar a otro<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>.</p></li>
+</ol>
+<p>A continuación mostraremos la eficiencia asignativa y productiva del equilibrio competitivo</p>
+<section id="eficiencia-asignativa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="eficiencia-asignativa">Eficiencia asignativa</h5>
+<p>Hay eficiencia asignativa cuando se produce la cantidad de cada bien en la que el valor que los consumidores conceden a la última unidad coincide con lo que cuesta producirla<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>. Para demostrar que el equilibrio competitivo la alcanza, introducimos primero los conceptos del excedente del consumidor (EC) y el excedente del productor (EP).</p>
+<ul>
+<li><p>EC: Diferencia entre lo que el consumidor estaría dispuesto a pagar por una unidad del bien, y lo que paga finalmente<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>.</p></li>
+<li><p>EP: diferencia entre el precio al que el productor vende finalmente una unidad del bien y el precio mínimo al que estaría dispuesto a venderla, que en competencia perfecta es su coste marginal<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>.</p></li>
+<li><p>Sumando ambos excedentes obtendríamos el excedente social (ES).</p></li>
+</ul>
+<p>Gráficamente, en un plano de precios y cantidades como el de la <a href="#fig-7-eficiencia-asignativa-de-cp" class="quarto-xref">Figura&nbsp;<span>7.5</span></a>, representando las curvas de oferta y demanda, de cuya intersección se derivará el precio y la cantidad de equilibrio. Así:</p>
+<ul>
+<li><p>EC: El consumidor estaría dispuesto a pagar por una unidad el precio correspondiente al cruce entre la curva de demanda y el eje de precios. No obstante pagará el correspondiente al equilibrio.</p></li>
+<li><p>EP: El productor estaría dispuesto a producir una unidad por un importe cercano a 0 (para este caso). No obstante recibirá el precio correspondiente al equilibrio.</p></li>
+</ul>
+<div id="fig-7-eficiencia-asignativa-de-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Eficiencia asignativa de la competencia perfecta">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-eficiencia-asignativa-de-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.5: Eficiencia asignativa de la competencia perfecta
+</figcaption>
+<div aria-describedby="fig-7-eficiencia-asignativa-de-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-eficiencia-asignativa-de-cp.svg" class="img-fluid figure-img" alt="Eficiencia asignativa de la competencia perfecta">
+</div>
+</figure>
+</div>
+<p>Eficiencia del equilibrio: Implicaciones de <span class="math inline">\(P=CMg\)</span>:</p>
+<ul>
+<li><p>El valor que el consumidor concede a la última unidad del bien, medido por su disposición a pagar, se iguala al coste marginal de producirla.</p></li>
+<li><p>El excedente social es máximo en competencia perfecta.</p></li>
+<li><p>Además es óptimo de Pareto dado que no existe posibilidad de reasignar los recursos de tal forma que se mejore el bienestar de un agente social sin empeorar el de los demás (1TFB).</p></li>
+</ul>
+</section>
+<section id="eficiencia-productiva" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="eficiencia-productiva">Eficiencia productiva</h5>
+<p>Hay eficiencia productiva cuando la cantidad total se obtiene al menor coste posible. En el largo plazo competitivo todas las empresas producen en el mínimo de su curva de <span class="math inline">\(CMe_{lp}\)</span>, que es el mismo para todas porque comparten la misma tecnología, de modo que ninguna otra forma de repartir la producción entre empresas reduciría el coste total.</p>
+</section>
+<section id="propiedades-deseables-del-equilibrio-competitivo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="propiedades-deseables-del-equilibrio-competitivo">Propiedades deseables del equilibrio competitivo</h3>
+<p>Por otro lado, las 3 propiedades deseables del equilibrio son: existencia, unicidad y estabilidad. A continuación, se ilustrarán estos tres conceptos con la función de exceso de demanda en un contexto de equilibrio parcial.</p>
+<section id="existencia" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="existencia">Existencia</h4>
+<p>Comenzando con la existencia, se refiere al concepto de equilibrio, es decir, a que la oferta y la demanda del mercado se corten en algún punto.</p>
+<p>El equilibrio existe si hay algún precio al que la cantidad demandada y la ofrecida coinciden. Como las funciones de oferta y demanda son continuas para todo <span class="math inline">\(p&gt;0\)</span>, basta con que haya un precio con exceso de oferta y otro con exceso de demanda para que se crucen en algún punto. Si además la demanda es estrictamente decreciente y la oferta estrictamente creciente, ese cruce es único.</p>
+<p>Vamos a definir una función de exceso de demanda como <span id="eq-a-07-7"><span class="math display">\[Z\left(P\right)=D\left(P\right)-S\left(P\right) \tag{7.7}\]</span></span> , de forma que si esta función es continua y toma un valor negativo para algún precio P’ y un valor positivo para algún precio P’’, entonces necesariamente existirá un equilibrio competitivo.</p>
+</section>
+<section id="unicidad" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="unicidad">Unicidad</h4>
+<p>Se refiere a que el equilibrio sea único, es decir, a que las curvas de oferta y demanda se corten en un punto y en ninguno más.</p>
+</section>
+<section id="estabilidad" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="estabilidad">Estabilidad</h4>
+<p>Se refiere a que el equilibrio sea estable, es decir, a que, ante una perturbación, se vuelva al mismo equilibrio a través de un proceso de ajuste (<em>tâtonnement</em>).</p>
+<p>El equilibrio será estable si:</p>
+<ul>
+<li><p>Una vez en el equilibrio no hay fuerzas que lo aparten de él (no hay fuerzas centrífugas).</p></li>
+<li><p>Fuera del equilibrio, hay fuerzas internas que lo llevan a él (hay fuerzas centrípetas).</p></li>
+</ul>
+<p>Podemos distinguir entre:</p>
+<ul>
+<li><p>Estabilidad local, cuando se tiende al equilibrio si la posición tras la perturbación está cercana al equilibrio inicial.</p></li>
+<li><p>Estabilidad global, cuando se tiende al equilibrio con independencia de la posición tras la perturbación.</p></li>
+</ul>
+<p>Podemos contemplar dos formas de analizar la estabilidad del equilibrio:</p>
+<ul>
+<li><p>La walrasiana, que mide el desequilibrio por el exceso de demanda, es decir, la cantidad demandada menos la ofrecida, <span class="math inline">\(Z\left(P\right)=D\left(P\right)-S\left(P\right)\)</span>, siendo el mecanismo de ajuste la variación del precio: este sube cuando hay exceso de demanda y baja cuando hay exceso de oferta. El equilibrio es estable si el exceso de demanda es positivo para precios inferiores al de equilibrio y negativo para precios superiores<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>.</p></li>
+<li><p>La marshalliana, que mide el desequilibrio por la diferencia entre el precio de demanda y el precio de oferta, <span class="math inline">\(P_{D}-P_{S}\)</span>, para cada cantidad, siendo el mecanismo de ajuste la variación de la cantidad: los productores la aumentan cuando <span class="math inline">\(P_{D}&gt;P_{S}\)</span> y la reducen cuando <span class="math inline">\(P_{D}&lt;P_{S}\)</span>. El equilibrio es estable si esa diferencia es positiva para cantidades inferiores a la de equilibrio y negativa para cantidades superiores<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>.</p></li>
+</ul>
+<p>Hasta aquí hemos visto que el equilibrio existe, es único y es estable. Ahora bien, ¿qué ocurre cuando cambian los costes o se introduce un impuesto? Para responder a esto hace falta un análisis de estática comparativa.</p>
+</section>
+</section>
+</section>
+<section id="estática-comparativa" class="level2" data-number="7.5">
+<h2 data-number="7.5" class="anchored" data-anchor-id="estática-comparativa"><span class="header-section-number">7.5</span> Estática comparativa<span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos 30 segundos">2'30"</span></h2>
+<p>Una vez establecido el equilibrio competitivo se van a analizar los efectos ante cambios en los costes, que dependerán si afectan a los costes fijos o a los costes variables.</p>
+<section id="incremento-de-los-costes-fijos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="incremento-de-los-costes-fijos">Incremento de los costes fijos</h3>
+<p>Este sería el caso del establecimiento de un impuesto de cuantía fija por ejercer la actividad, como el Impuesto sobre Actividades Económicas (IAE):</p>
+<ul>
+<li><p>En el corto plazo la oferta no variará, simplemente se producirá un desplazamiento del umbral de beneficios, ya que los costes fijos no afectan a los costes variables medios, que determinan el mínimo de explotación.</p></li>
+<li><p>En el largo plazo la curva de costes marginales no se desplaza, al no variar las pendientes de las curvas de costes totales a largo plazo. Lo que sí se producirá será un incremento de la curva de costes medios, <span class="math inline">\(CMe^{\prime}\)</span>, provocando una contracción de la oferta. Como consecuencia, aumentará el precio y la cantidad vendida por cada empresa, y se reducirá el número de empresas de la industria<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a>.</p></li>
+</ul>
+<div id="fig-a-07-a-7-aumento-de-los-costes-fijos" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Aumento de los costes fijos">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-07-a-7-aumento-de-los-costes-fijos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.6: Aumento de los costes fijos
+</figcaption>
+<div aria-describedby="fig-a-07-a-7-aumento-de-los-costes-fijos-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-aumento-de-los-costes-fijos.svg" class="img-fluid figure-img" alt="Aumento de los costes fijos">
+</div>
+</figure>
+</div>
+</section>
+<section id="incremento-de-los-costes-variables" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="incremento-de-los-costes-variables">Incremento de los costes variables</h3>
+<p>Este sería el caso del establecimiento de un impuesto sobre ventas:</p>
+<ul>
+<li><p>Así, un aumento en los costes variables aumenta el coste marginal lo que a su vez desplaza hacia arriba la curva de coste medio, desplazando la curva de oferta agregada hacia arriba, dando lugar a una menor cantidad de mercado y a un mayor precio<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a>.</p></li>
+<li><p>Sin embargo, no se puede decir nada sobre la cantidad producida por cada empresa y, por lo tanto, tampoco sobre el número de empresas ya que dependerá del desplazamiento de la curva de coste marginal.</p></li>
+</ul>
+<div id="fig-a-07-a-7-aumento-de-los-costes-variables" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Aumento de los costes variables">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-07-a-7-aumento-de-los-costes-variables-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.7: Aumento de los costes variables
+</figcaption>
+<div aria-describedby="fig-a-07-a-7-aumento-de-los-costes-variables-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-aumento-de-los-costes-variables.svg" class="img-fluid figure-img" alt="Aumento de los costes variables">
+</div>
+</figure>
+</div>
+</section>
+<section id="variaciones-en-los-impuestos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="variaciones-en-los-impuestos">Variaciones en los impuestos</h3>
+<p>El análisis anterior tiene una aplicación directa en el estudio de los efectos de los impuestos. En el caso de un impuesto unitario sobre la producción este se considera un coste variable en la medida en que depende del nivel de producción. Por ello, se desplaza hacia arriba la curva de coste marginal.</p>
+<p>Como se observó anteriormente, esto reducirá la cantidad total producida y aumentará el precio, pero en principio no se podría determinar qué ocurriría con la producción de cada empresa y con el número de empresas. Sin embargo, en el caso de impuestos, este se reparte entre productores y consumidores en función de las elasticidades relativas de la oferta y la demanda. Así, cuanto más elástica sea la oferta y más inelástica la demanda, mayor parte pagarán los consumidores<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a>.</p>
+<p>Por ello, como en el largo plazo la curva de oferta del mercado es totalmente elástica, el impuesto se trasladará íntegramente a los consumidores, es decir, íntegramente al precio. Esto hará que la curva de coste marginal se desplace en paralelo hacia arriba en la cuantía del impuesto, por lo que la producción óptima de la empresa individual continuará siendo la misma.</p>
+<p>Así, una producción de mercado menor y una producción por empresa constante implican un menor número de empresas.</p>
+<table class="caption-top table">
+<caption>Resumen de la estática comparativa</caption>
+<colgroup>
+<col style="width: 26%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 3%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 10%">
+</colgroup>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"></td>
+<td colspan="2" style="text-align: center;">Traducción</td>
+<td style="text-align: center;"></td>
+<td colspan="4" style="text-align: center;">Efectos</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"></td>
+<td style="text-align: center;"><span class="math inline">\(CF\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(CV\)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(Q\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(P\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(n\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(q\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aumento de los costes fijos</td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(\downarrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\downarrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aumento de los costes variables</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(\downarrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;">?</td>
+<td style="text-align: center;">?</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Impuesto sobre la producción</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><span class="math inline">\(\downarrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\uparrow\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\downarrow\)</span></td>
+<td style="text-align: center;">=</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="relajación-de-supuestos" class="level2" data-number="7.6">
+<h2 data-number="7.6" class="anchored" data-anchor-id="relajación-de-supuestos"><span class="header-section-number">7.6</span> Relajación de supuestos <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="3 minutos">3'</span></h2>
+<p>Hasta el momento se ha supuesto que los costes tienen forma de U y que los precios de los factores están dados que junto con el supuesto de información perfecta garantizan las condiciones de existencia, unicidad y estabilidad del equilibrio competitivo. A continuación, se va a replantear el modelo ya que existen casos en los que estos supuestos no se cumplen.</p>
+<section id="curvas-de-costes-sin-rendimientos-mixtos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="curvas-de-costes-sin-rendimientos-mixtos">Curvas de costes sin rendimientos mixtos</h3>
+<p>Si no existen rendimientos mixtos, entonces los costes a largo plazo no tendrán forma de U. Se analizarán los rendimientos constantes, crecientes y decrecientes a escala como se observa en la <a href="#fig-7-rendimientos-a-escala" class="quarto-xref">Figura&nbsp;<span>7.8</span></a>.</p>
+<section id="rendimientos-constantes-a-escala" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="rendimientos-constantes-a-escala">Rendimientos constantes a escala</h4>
+<p>Los rendimientos constantes a escala se representan mediante una curva de coste marginal constante, lo que da lugar a una curva de coste medio constante –esto es, a economías constantes a escala– y a una curva de oferta horizontal. Existe un precio tal que la oferta agregada es igual a la demanda agregada con beneficio igual a 0. La cantidad quedará totalmente determinada por la demanda y los mercados se vaciarán.</p>
+<p>No será posible determinar la producción de cada empresa ni el número de empresas.</p>
+</section>
+<section id="rendimientos-crecientes-a-escala" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="rendimientos-crecientes-a-escala">Rendimientos crecientes a escala</h4>
+<p>Los rendimientos crecientes a escala se representan mediante una curva de coste marginal decreciente, lo que da lugar a una curva de coste medio decreciente –esto es, a economías de escala–.</p>
+<p>De esta forma no se cumple la condición de segundo orden del problema de optimización, esto es, que el equilibrio se dé en el tramo creciente del coste marginal. Por lo tanto, la regla competitiva de fijar <span class="math inline">\(P=CMg\)</span> generará pérdidas, y las empresas saldrán del mercado hasta que quede un solo productor –monopolio natural– que sea capaz de elevar el precio a, al menos, el nivel del coste medio, para no obtener pérdidas.</p>
+<p>La solución sería la existencia de un único productor –monopolio natural–, por lo que no habrá competencia.</p>
+</section>
+<section id="rendimientos-decrecientes-a-escala" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="rendimientos-decrecientes-a-escala">Rendimientos decrecientes a escala</h4>
+<p>Los rendimientos decrecientes a escala se representan mediante una curva de coste marginal creciente, lo que da lugar a una curva de coste medio creciente –esto es, a deseconomías de escala–.</p>
+<p>Así, el coste marginal siempre estará por encima del coste medio, por lo que la regla competitiva de fijar <span class="math inline">\(P=CMg\)</span> generará beneficios, y entrarán infinitas empresas al mercado.</p>
+<p>Este caso representa una situación poco lógica en la que el equilibrio se produce con un número infinito de empresas y cada una de ellas lanza al mercado una producción infinitesimalmente pequeña.</p>
+<div id="fig-7-rendimientos-a-escala" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Rendimientos a escala">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-rendimientos-a-escala-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.8: Rendimientos a escala
+</figcaption>
+<div aria-describedby="fig-7-rendimientos-a-escala-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-rendimientos-a-escala.svg" class="img-fluid figure-img" alt="Rendimientos a escala">
+</div>
+</figure>
+</div>
+<section id="conclusión" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="conclusión">Conclusión</h5>
+<p>En competencia perfecta los <span class="math inline">\(CMe_{l/p}\)</span> deben tener forma de U. Si no, los resultados no son consistentes con los supuestos del modelo: la forma de U permite obtener un tamaño óptimo de planta lo que, a su vez, permite calcular el número óptimo de empresas en el mercado (lo que determina cuál es la estructura de mercado adecuada). En la Teoría de la Organización Industrial se ha debatido la cuestión de la forma de los <span class="math inline">\(CMe_{l/p}\)</span>. Quienes no defienden la forma de U son aquellos autores que creen que hay distintas estructuras de mercado óptimas, que todas lo pueden ser.</p>
+</section>
+</section>
+</section>
+<section id="economías-de-escala-externas-a-la-empresa-pero-internas-a-la-industria" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="economías-de-escala-externas-a-la-empresa-pero-internas-a-la-industria">Economías de escala externas a la empresa pero internas a la industria</h3>
+<p>Por otro lado, existen economías de escala externas a la empresa pero internas a la industria cuando el coste medio de cada empresa disminuye al aumentar la producción del conjunto de la industria, y no la suya propia. Si el coste medio aumenta, se habla de deseconomías de escala externas.</p>
+<p>Las economías de escala externas permiten abandonar el supuesto de costes constantes, es decir, que el precio de los factores productivos es constante –es decir, la oferta agregada de factor productivo es totalmente elástica–. Levantar este supuesto permite obtener una curva de oferta del mercado del bien a largo plazo que no sea horizontal.</p>
+<section id="cuasiofertas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="cuasiofertas">Cuasiofertas</h5>
+<p>Ahora la oferta agregada del bien ya no puede calcularse sumando ofertas individuales independientes, sino sumando las cuasiofertas de las empresas, es decir, lo que cada empresa ofrecería a cada precio dado un nivel de producción de la industria. Según su origen, las economías externas pueden ser:</p>
+<ul>
+<li><p>Pecuniarias: se deben a la interacción que puede existir entre el nivel de producción de la industria y el nivel de precios de los factores productivos (si la oferta de factores no es perfectamente elástica, al aumentar la demanda de ff.pp aumenta su precio).</p></li>
+<li><p>Tecnológicas: aparecen cuando el rendimiento de una tecnología dada se ve afectado por el nivel de producción de la industria. Explican por qué un grupo de empresas puede ser más eficiente que una sola, y sus fuentes, ya señaladas por Marshall, son:</p>
+<ul>
+<li><p>Aprovechamiento de proveedores especializados que al abastecer a varias empresas pueden especializarse en bienes o factores productivos más específicos, por ejemplo, <em>just in time</em>, aumenta el número de proveedores…</p></li>
+<li><p>Creación de un mercado laboral especializado: Aumenta la flexibilidad laboral. Si el trabajador pierde su puesto de trabajo tiene otras oportunidades.</p></li>
+<li><p>Externalidades tecnológicas: Spill-overs, difusión informal de know how, acceso rápido a nuevas tecnologías y difusión de conocimiento.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="deseconomías-de-escala-externas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="deseconomías-de-escala-externas">Deseconomías de escala externas</h4>
+<p>Ante deseconomías de escala externas la industria es de coste creciente, es decir, el precio de los factores productivos aumenta cuando aumenta la producción agregada. Este caso es frecuente, y puede explicarse porque, por ejemplo, la industria utiliza factores productivos escasos (no ilimitados).</p>
+<p>Gráficamente, como se observa en la <a href="#fig-7-oferta-industria-coste-creciente" class="quarto-xref">Figura&nbsp;<span>7.9</span></a>, se va a representar en un plano de precios y cantidad producida la oferta y la demanda en el corto plazo, determinando su intersección el equilibrio <span class="math inline">\(E_{0}\)</span>:</p>
+<ul>
+<li><p>En este contexto si la industria presenta costes crecientes un aumento en la demanda desplaza la demanda hacia la derecha, <span class="math inline">\(D^{\prime}\)</span>, el precio aumentará hasta <span class="math inline">\(P^{\prime}\)</span>, produciéndose beneficios extraordinarios que atraerán a nuevas empresas al mercado.</p></li>
+<li><p>Sin embargo, en este caso los precios de los factores aumentarán cuando su demanda aumente por lo que la curva de costes medios a largo plazo de todas las empresas, tanto instaladas como entrantes, se desplazará hacia arriba así como la curva de costes marginales que también se desplazará hacia arriba, cambiando pues la estructura de costes de la empresa<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a>.</p></li>
+<li><p>Así, la entrada de nuevas empresas se producirá hasta que el precio coincida con el mínimo del nuevo coste medio (esto es, la curva de oferta agregada se desplazará a la derecha, pero no tanto, por lo que cortará a la demanda a un precio mayor que el inicial), y cada empresa lanzará al mercado una nueva cantidad óptima.</p></li>
+<li><p>Es decir, de nuevo, en el largo plazo todas las empresas operan en la nueva dimensión óptima <span class="math inline">\(\left(P=CMg_{lp}=CMe_{lp}\right)\)</span>, y vuelven a obtener beneficios nulos.</p></li>
+<li><p>Esto hará que la curva de oferta agregada a largo plazo tenga pendiente positiva.</p></li>
+</ul>
+<div id="fig-7-oferta-industria-coste-creciente" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Oferta a largo plazo de una industria con coste creciente">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-7-oferta-industria-coste-creciente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.9: Oferta a largo plazo de una industria con coste creciente
+</figcaption>
+<div aria-describedby="fig-7-oferta-industria-coste-creciente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-oferta-lp-industria-coste-creciente.svg" class="img-fluid figure-img" alt="Oferta a largo plazo de una industria con coste creciente">
+</div>
+</figure>
+</div>
+</section>
+<section id="economías-de-escala-externas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="economías-de-escala-externas">Economías de escala externas</h4>
+<p>Estamos ante una industria de coste decreciente, en la que el precio de los factores productivos disminuye cuando aumenta la producción agregada.</p>
+<ul>
+<li><p>Este caso es menos frecuente, y podría darse en la práctica por la existencia de un clúster de empresas<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a> donde se dan economías de aglomeración (especialización del trabajo, menores costes de transporte y de almacenamiento, y externalidades positivas).</p></li>
+<li><p>Como ejemplos podríamos mencionar Silicon Valley, Hollywood o Wall Street en Estados Unidos o, en el caso español, el clúster de la cerámica de Castellón.</p></li>
+</ul>
+<p>El razonamiento es igual que el anterior, solo que ahora la curva de coste marginal se desplaza hacia abajo, lo que genera una curva de oferta agregada a largo plazo con pendiente negativa.</p>
+<div id="fig-a-07-a-7-oferta-lp-industria-c-decreciente" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Oferta a largo plazo de una industria con coste decreciente">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-07-a-7-oferta-lp-industria-c-decreciente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.10: Oferta a largo plazo de una industria con coste decreciente
+</figcaption>
+<div aria-describedby="fig-a-07-a-7-oferta-lp-industria-c-decreciente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-oferta-lp-industria-c-decreciente.svg" class="img-fluid figure-img" alt="Oferta a largo plazo de una industria con coste decreciente">
+</div>
+</figure>
+</div>
+<p>Además, las economías de escala externas se han utilizado frecuentemente como argumento a favor de la protección de la industria naciente: sería deseable proteger la industria nacional para que ésta aumente la producción y, con ella, disminuyan los costes medios de las empresas hasta que sean competitivas internacionalmente.</p>
+</section>
+</section>
+<section id="el-modelo-de-la-telaraña" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="el-modelo-de-la-telaraña">El modelo de la telaraña</h3>
+<p>Por último, hasta ahora se ha supuesto que la información es perfecta en el sentido de que consumidores y productores reaccionan simultánea e inmediatamente a los shocks. Sin embargo, en algunos mercados los agentes pueden no conocer de inmediato los nuevos precios –o conocerlos pero no actuar hasta saber si se trata de variaciones transitorias o permanentes en el precio–, por lo que el ajuste puede no ser instantáneo, y los productores pueden necesitar más tiempo para ajustar su capacidad productiva a los nuevos precios –es el caso, por ejemplo, de la agricultura o la construcción–. En estos casos, la oferta no dependerá del precio en curso, sino del precio del período anterior.</p>
+<p>Este modelo recibe el nombre de telaraña<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a> porque conduce a oscilaciones del equilibrio que serán convergentes, divergentes o constantes en función de las elasticidades relativas de la oferta y la demanda.</p>
+<p>El supuesto clave de este modelo es que los productores forman expectativas ingenuas sobre el precio: esperan que el precio en <span class="math inline">\(t\)</span> sea igual al del periodo anterior, <span class="math inline">\(t-1\)</span>. El problema en este modelo es el ajuste ante shocks de demanda, dado que no será instantáneo. Este mecanismo no presenta problema si el mercado ya se encuentra en equilibrio, de tal forma que <span class="math display">\[D(p_{t})=s(p^{e}_{t})=s(p^{*}_{t})\]</span></p>
+<p>No obstante, si se produce un shock de demanda, comenzará un proceso de ajuste hasta converger al nuevo precio de equilibrio.</p>
+<div id="fig-a-07-a-7-telarana-convergente" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de la telaraña con fluctuaciones convergentes">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-07-a-7-telarana-convergente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;7.11: Modelo de la telaraña con fluctuaciones convergentes
+</figcaption>
+<div aria-describedby="fig-a-07-a-7-telarana-convergente-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-07-a-7-telarana-convergente.svg" class="img-fluid figure-img" alt="Modelo de la telaraña con fluctuaciones convergentes">
+</div>
+</figure>
+</div>
+<p>Diferentes casos:</p>
+<ul>
+<li><p>En el caso convergente, los precios tienden al equilibrio en el largo plazo. Gráficamente, en un plano de precios y cantidades, se representa el equilibrio para una oferta y una demanda y un plano adyacente de precios y tiempo un equilibrio inicial <span class="math inline">\(P_{0}\)</span> en <span class="math inline">\(t_{0}\)</span>, Si se desplaza la demanda hacia la derecha, con esa cantidad ofertada el precio aumenta a <span class="math inline">\(P_{1}\)</span>, y a ese precio la cantidad ofertada aumentará a <span class="math inline">\(Q_{1}\)</span>, pero cuando <span class="math inline">\(Q_{1}\)</span> sale al mercado el precio baja a <span class="math inline">\(P_{2}\)</span>. Las fluctuaciones de precios se van reduciendo progresivamente y en el largo plazo se acaba alcanzando el equilibrio.<br>
+Esto ocurre cuando la oferta es menos elástica que la demanda (es decir, es algo más vertical que la demanda).</p></li>
+<li><p>Si el modelo es divergente entonces los precios se desvían del equilibrio en el largo plazo. El razonamiento sería inverso al anterior y ocurre cuando la oferta es más elástica que la demanda (es decir, es algo más horizontal que la demanda).</p></li>
+<li><p>Por otro lado, en el caso de oscilaciones constantes los precios oscilan alrededor del equilibrio con una amplitud que no cambia, sin llegar a alcanzarlo. Esto ocurre cuando la oferta es igual de elástica que la demanda.</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusiones-2" class="level2" data-number="7.7">
+<h2 data-number="7.7" class="anchored" data-anchor-id="conclusiones-2"><span class="header-section-number">7.7</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, la competencia perfecta es la estructura de mercado de referencia en términos de eficiencia porque, en ausencia de fallos de mercado, su equilibrio es óptimo en el sentido de Pareto, tal como establece el Primer Teorema de la Economía del Bienestar. Una vez alcanzado el equilibrio competitivo, ningún agente tiene incentivos a modificar su comportamiento, lo que convierte a este modelo en el referente normativo por excelencia dentro del análisis económico.</p>
+<p>No obstante, en la práctica, son escasos los mercados que cumplen con los estrictos supuestos de este modelo. A pesar de ello, se considera deseable por sus implicaciones en eficiencia asignativa.</p>
+<p>Sin embargo, desde una perspectiva dinámica, presenta limitaciones importantes: al no existir beneficios extraordinarios en el largo plazo, los incentivos a innovar y diferenciarse se ven reducidos, lo que puede frenar el progreso tecnológico y la evolución del mercado.</p>
+<p>Esta restricción se supera mediante estructuras de mercado más flexibles, como la competencia monopolística, donde la diferenciación de productos y la posibilidad de obtener beneficios extraordinarios en el corto plazo fomentan la inversión en innovación y creatividad empresarial.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-levantamiento-de-otros-supuestos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-levantamiento-de-otros-supuestos">7.A.1.&nbsp;&nbsp;Levantamiento de otros supuestos</h3>
+<p>Aparte de estos supuestos, la teoría económica se ha interesado en el levantamiento de otros:</p>
+<ul>
+<li><p>Pocos productores. Los modelos de monopolio y oligopolio muestran cómo las empresas pueden tener poder de mercado si no existen muchos productores, lo que conduce a una situación socialmente ineficiente.</p></li>
+<li><p>Producto heterogéneo. El modelo de competencia monopolística estudia el caso de productos heterogéneos.</p></li>
+<li><p>Información imperfecta. Los modelos de Economía de la información permiten estudiar los casos en que los compradores o vendedores no disponen de información completa o simétrica.</p></li>
+<li><p>Presencia de externalidades y de bienes públicos. Los modelos de la Economía del bienestar nos permiten ver cómo varían las conclusiones cuando introducimos externalidades y bienes públicos.</p></li>
+</ul>
+</section>
+<section id="a.2.-eficiencia-con-incertidumbre-arrow-y-hahn-1971" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-eficiencia-con-incertidumbre-arrow-y-hahn-1971">7.A.2.&nbsp;&nbsp;Eficiencia con incertidumbre (Arrow y Hahn, 1971)</h3>
+<p>De acuerdo con el resultado de Arrow y Debreu, recogido en el manual de&nbsp;<span class="citation" data-cites="7_ArrowHahn1971">Arrow y Hahn (<a href="01-tema-a1.html#ref-7_ArrowHahn1971" role="doc-biblioref">1971</a>)</span>, el mecanismo competitivo produce asignaciones eficientes de recursos también en un mundo con incertidumbre, es decir, con información incompleta pero simétrica sobre el estado de la naturaleza, siempre que se cumplan las siguientes condiciones:</p>
+<ul>
+<li><p>Si los agentes se comportan como maximizadores de la utilidad esperada.</p></li>
+<li><p>Si asignan a cada estado de la naturaleza probabilidades subjetivas e independientes de sus propios actos (no existen comportamientos estratégicos)</p></li>
+<li><p>Y existe un sistema completo de mercados para cubrirse de todas las posibles contingencias.</p></li>
+</ul>
+<p>La intuición del resultado consiste en redefinir los propios bienes en función del estado de la naturaleza en que se consumen –una manzana hoy y una manzana mañana si llueve son, a efectos del modelo, dos bienes distintos–, lo que permite tratar la incertidumbre dentro del mismo marco de bienes contingentes que sustenta el Primer Teorema del Bienestar. La tercera condición, el sistema completo de mercados, es la más restrictiva: exige que exista un mercado para cada combinación posible de bien y estado de la naturaleza, de forma que los agentes puedan asegurarse frente a cualquier contingencia mediante los llamados títulos contingentes&nbsp;<span class="citation" data-cites="7_Arrow1964Securities">(<a href="01-tema-a1.html#ref-7_Arrow1964Securities" role="doc-biblioref">Arrow 1964</a>)</span>. Si ese mercado es incompleto, el resultado deja de garantizarse.</p>
+</section>
+<section id="a.3.-ventajas-de-la-competencia-perfecta" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-ventajas-de-la-competencia-perfecta">7.A.3.&nbsp;&nbsp;Ventajas de la competencia perfecta</h3>
+<p>Pese a que ciertamente muy pocos mercados pueden considerarse como perfectamente competitivos debe quedar claro que el análisis del equilibrio (parcial) en competencia perfecta es especialmente útil por:</p>
+<ol type="1">
+<li><p>Ser la base de la teoría de mercados, pues sirve como marco de referencia ante situaciones más realistas en las que existen fallos de mercado –la pérdida de eficiencia asociada al poder de mercado de un monopolio, por ejemplo, se mide precisamente como desviación respecto de este óptimo competitivo–,</p></li>
+<li><p>Se aproxima a la realidad de algunos mercados, como los de commodities y valores –el trigo, el petróleo o los mercados bursátiles, donde numerosos participantes negocian un producto prácticamente homogéneo–.</p></li>
+<li><p>Permite introducir argumentos gráficos e inequívocos para la medición de las ganancias de bienestar generadas por el intercambio: al cumplirse exactamente&nbsp;<span class="math inline">\(P=CMg\)</span> en el equilibrio, el excedente del consumidor y del productor pueden leerse directamente como áreas del gráfico de oferta y demanda, sin necesidad de instrumentos analíticos más sofisticados.</p></li>
+<li><p>El enfoque de equilibrio parcial permite aislar cualquier fenómeno existente en un mercado de la interrelación con otros mercados, permitiendo una interpretación más clara de los efectos de fallos de mercados, y de las medidas que podrían ayudar a solventarlos.</p></li>
+</ol>
+</section>
+<section id="a.4.-controles-legales-de-precios" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-controles-legales-de-precios">7.A.4.&nbsp;&nbsp;Controles legales de precios</h3>
+<p>El equilibrio competitivo desarrollado a lo largo del tema presupone que los precios pueden ajustarse libremente hasta vaciar el mercado. En la práctica, sin embargo, es frecuente que la autoridad económica fije por ley un rango admisible de precios&nbsp;<span class="math inline">\(\bar{P}\)</span>, ya sea mediante un precio mínimo –<span class="math inline">\(\bar{P}=\{p\geq p_{min}\}\)</span>– o un precio máximo –<span class="math inline">\(\bar{P}=\{0\leq p\leq p_{max}\}\)</span>–, motivados típicamente por presiones de grupos de interés o por objetivos redistributivos.</p>
+<p>Una cantidad y un precio&nbsp;<span class="math inline">\((\bar{x},\bar{p})\)</span> constituyen un equilibrio con controles de precios si: el precio satisface el control legal,&nbsp;<span class="math inline">\(\bar{p}\in\bar{P}\)</span>; el precio minimiza la diferencia entre oferta y demanda agregadas dentro del rango permitido; y la cantidad de equilibrio es la menor entre la cantidad ofertada y la demandada al precio&nbsp;<span class="math inline">\(\bar{p}\)</span>.</p>
+<p>Cuando el control no es vinculante –el precio de equilibrio competitivo ya se encuentra dentro del rango permitido–, el resultado coincide exactamente con el del equilibrio competitivo sin restricciones. Cuando sí es vinculante, el precio de mercado coincide con el propio límite legal: por ejemplo, ante un precio máximo inferior al de equilibrio competitivo, cualquier precio ligeramente inferior al máximo seguiría generando exceso de demanda, y el proceso de puja entre consumidores insatisfechos llevaría el precio hasta el propio límite legal, momento en el que la restricción impide seguir realizando intercambios mutuamente beneficiosos. Dado que el intercambio sigue siendo voluntario, la cantidad finalmente transaccionada es la menor entre la que desean adquirir los consumidores y la que desean ofrecer las empresas al precio controlado; el razonamiento simétrico se aplica a un precio mínimo vinculante, superior al de equilibrio.</p>
+<p>Más allá de la pérdida de excedente total respecto del óptimo competitivo, cuando el control de precios es vinculante aparece además un problema de racionamiento: al no ser la cantidad ofertada –con un precio máximo– suficiente para satisfacer toda la demanda potencial, no queda determinado, dentro del propio modelo, cómo se reparte la producción disponible entre los consumidores dispuestos a adquirirla al precio controlado. Esa asignación final depende de detalles institucionales adicionales –colas, racionamiento administrativo, mercados paralelos–, que en la práctica suelen generar pérdidas de bienestar todavía mayores que las derivadas del mero desajuste entre oferta y demanda<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a>.</p>
+</section>
+<section id="a.5.-relación-entre-el-equilibrio-parcial-y-el-equilibrio-general" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-relación-entre-el-equilibrio-parcial-y-el-equilibrio-general">7.A.5.&nbsp;&nbsp;Relación entre el equilibrio parcial y el equilibrio general</h3>
+<p>A lo largo de este tema el análisis se ha centrado en el enfoque de equilibrio parcial, que aísla la determinación de precios y cantidades en un único mercado. Conviene precisar, para cerrar el tema, que este enfoque no es una alternativa completamente distinta del equilibrio general walrasiano&nbsp;<span class="citation" data-cites="7_Walras1874">(<a href="01-tema-a1.html#ref-7_Walras1874" role="doc-biblioref">Walras 1874</a>)</span>, sino un caso particular de este bajo dos supuestos adicionales: la existencia de un bien numerario y preferencias cuasilineales respecto de él.</p>
+<p>En un marco de equilibrio general con numerario, la renta inicial de cada consumidor se entiende como su dotación de numerario más su participación en los beneficios de las empresas de las que es propietario. El equilibrio general determina simultáneamente el precio del bien de interés, <span class="math inline">\(p_{x}\)</span> (el del numerario, <span class="math inline">\(p_{m}\)</span>, está normalizado a 1), el consumo de cada agente de ambos bienes, y la producción del bien no numerario, de modo que cada consumidor maximiza su utilidad sujeto a su restricción presupuestaria completa –incluyendo su participación en los beneficios empresariales–, cada empresa maximiza beneficios, y los mercados de ambos bienes se vacían simultáneamente. Cuando las preferencias son cuasilineales, resolver este sistema completo resulta equivalente a resolver únicamente el problema de equilibrio parcial del mercado del bien&nbsp;<span class="math inline">\(x\)</span> desarrollado en el cuerpo del tema: la demanda de <span class="math inline">\(x\)</span> carece de efecto renta, por lo que no depende de la riqueza de los consumidores, y el mercado del numerario se vacía automáticamente por la ley de Walras.</p>
+<p>La elección entre uno u otro enfoque no es, por tanto, una cuestión de rigor –ambos son formalmente correctos bajo sus respectivos supuestos–, sino de conveniencia analítica según el fenómeno que se quiera estudiar. El equilibrio parcial resulta preferible cuando el mercado analizado representa una proporción reducida del gasto total de los consumidores y sus conexiones con el resto de la economía son débiles –por ejemplo, en el análisis de medidas antimonopolio en un sector concreto–. El equilibrio general resulta necesario, en cambio, cuando los efectos de la política analizada se transmiten con fuerza a otros mercados –por ejemplo, los efectos de una política impositiva sobre el mercado de trabajo, con repercusiones directas sobre el mercado de la vivienda–.</p>
+<p>La justificación habitual del equilibrio parcial –que el mercado analizado es “pequeño” respecto del resto de la economía– no es, sin embargo, la única posible. Existe una justificación alternativa, de naturaleza puramente tecnológica y válida con independencia del tamaño relativo del mercado: el teorema de no sustitución. Si el numerario es el único factor primario –no producido– de la economía, si el resto de bienes producidos distintos del bien&nbsp;<span class="math inline">\(x\)</span> se obtienen con rendimientos constantes a escala a partir del numerario y de otros bienes producidos, y si no existe producción conjunta, entonces los precios del resto de bienes de la economía permanecen constantes con independencia de lo que ocurra en el mercado de&nbsp;<span class="math inline">\(x\)</span> –no por ser este pequeño, sino porque la propia estructura tecnológica de la economía impide que las perturbaciones en&nbsp;<span class="math inline">\(x\)</span> se transmitan a los precios relativos de los demás bienes–<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a>.</p>
+</section>
+<section id="a.6.-formalización-de-la-eficiencia-el-excedente-total-como-problema-de-maximización" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-formalización-de-la-eficiencia-el-excedente-total-como-problema-de-maximización">7.A.6.&nbsp;&nbsp;Formalización de la eficiencia: el excedente total como problema de maximización</h3>
+<p>La eficiencia del equilibrio competitivo demostrada gráficamente en el cuerpo del tema admite una formalización analítica equivalente. La asignación óptima de consumo y producción se obtiene resolviendo el problema de maximización del excedente total,</p>
+<p><span class="math display">\[\max_{x}\int^{x}_{0}P(s)\,ds-C(x)\]</span> cuya condición de primer orden es&nbsp;<span class="math inline">\(P(x^{*})=C'(x^{*})\)</span> –exactamente la condición que caracteriza al equilibrio competitivo (<span class="math inline">\(P=CMg\)</span>)–. Esto confirma, por vía analítica, que el equilibrio de mercado y el óptimo social coinciden: el precio de demanda inversa actúa como el beneficio marginal social de cada unidad adicional, y el coste marginal como su coste marginal social, de modo que igualarlos maximiza el excedente conjunto de consumidores y productores.</p>
+</section>
+<section id="a.7.-una-generalización-mercados-disputables-y-algoritmos-de-precios" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-una-generalización-mercados-disputables-y-algoritmos-de-precios">7.A.7.&nbsp;&nbsp;Una generalización: mercados disputables y algoritmos de precios</h3>
+<p>El desarrollo posterior de la teoría de los mercados disputables&nbsp;<span class="citation" data-cites="7_Baumol1982">(<a href="01-tema-a1.html#ref-7_Baumol1982" role="doc-biblioref">Baumol 1982</a>)</span> ha reforzado el interés por los resultados del modelo de competencia perfecta, al mostrar que no es necesario que se cumplan literalmente todos sus supuestos –en particular, la existencia de un número elevado de empresas– para que los beneficios de una industria se mantengan en el nivel competitivo. Lo relevante no es la competencia efectiva, sino la competencia potencial: la amenaza de que nuevas empresas puedan entrar rápidamente y sin costes hundidos disciplina el comportamiento de las empresas ya instaladas, aunque estas sean pocas.</p>
+<p>Esta generalización mantiene vigencia incluso en la economía digital de plataformas y los algoritmos dinámicos de fijación de precios: si los consumidores tienen acceso a información perfecta sobre precios, las empresas deben fijar el precio competitivo para poder vender. Sin embargo, esos mismos algoritmos también tienen capacidad de incrementar el grado de colusión tácita entre empresas y de discriminar perfectamente el precio pagado por cada consumidor&nbsp;<span class="citation" data-cites="7_EzrachiStucke2016">(<a href="01-tema-a1.html#ref-7_EzrachiStucke2016" role="doc-biblioref">Ezrachi y Stucke 2016</a>)</span>, lo que podría acabar constituyendo, en sí mismo, una nueva barrera de entrada a la industria.</p>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-7_Arrow1951Koopmans" class="csl-entry" role="listitem">
+Arrow, Kenneth J. 1951. <span>«Alternative Proof of the Substitution Theorem for <span>L</span>eontief Models in the General Case»</span>. En <em>Activity Analysis of Production and Allocation</em>, editado por Tjalling C. Koopmans. Wiley.
+</div>
+<div id="ref-7_Arrow1964Securities" class="csl-entry" role="listitem">
+Arrow, Kenneth J. 1964. <span>«The Role of Securities in the Optimal Allocation of Risk-Bearing»</span>. <em>The Review of Economic Studies</em> 31 (2): 91-96.
+</div>
+<div id="ref-7_ArrowHahn1971" class="csl-entry" role="listitem">
+Arrow, Kenneth J., y Frank H. Hahn. 1971. <em>General Competitive Analysis</em>. Holden-Day.
+</div>
+<div id="ref-7_Baumol1982" class="csl-entry" role="listitem">
+Baumol, William J. 1982. <span>«Contestable Markets: An Uprising in the Theory of Industry Structure»</span>. <em>The American Economic Review</em> 72 (1): 1-15.
+</div>
+<div id="ref-7_Ezekiel1938" class="csl-entry" role="listitem">
+Ezekiel, Mordecai. 1938. <span>«The Cobweb Theorem»</span>. <em>The Quarterly Journal of Economics</em> 52 (2): 255-80.
+</div>
+<div id="ref-7_EzrachiStucke2016" class="csl-entry" role="listitem">
+Ezrachi, Ariel, y Maurice E. Stucke. 2016. <em>Virtual Competition: The Promise and Perils of the Algorithm-Driven Economy</em>. Harvard University Press.
+</div>
+<div id="ref-7_JehleReny2011" class="csl-entry" role="listitem">
+Jehle, Geoffrey A., y Philip J. Reny. 2011. <em>Advanced Microeconomic Theory</em>. 3rd ed. Pearson.
+</div>
+<div id="ref-7_Koutsoyiannis1979" class="csl-entry" role="listitem">
+Koutsoyiannis, A. 1979. <em>Modern Microeconomics</em>. 2nd ed. Macmillan.
+</div>
+<div id="ref-7_Marshall1890" class="csl-entry" role="listitem">
+Marshall, Alfred. 1890. <em>Principles of Economics</em>. Macmillan.
+</div>
+<div id="ref-7_MasColellWhinstonGreen1995" class="csl-entry" role="listitem">
+Mas-Colell, Andreu, Michael D. Whinston, y Jerry R. Green. 1995. <em>Microeconomic Theory</em>. Oxford University Press.
+</div>
+<div id="ref-7_Nicholson2005" class="csl-entry" role="listitem">
+Nicholson, Walter. 2005. <em>Teor<span>ı́</span>a microecon<span>ó</span>mica. Principios b<span>á</span>sicos y ampliaciones</em>. Editorial Paraninfo.
+</div>
+<div id="ref-7_PindyckRubinfeld2009" class="csl-entry" role="listitem">
+Pindyck, Robert S., y Daniel L. Rubinfeld. 2009. <em>Microeconom<span>ı́</span>a</em>. 7.ª ed. Pearson Educaci<span>ó</span>n.
+</div>
+<div id="ref-7_Varian2010" class="csl-entry" role="listitem">
+Varian, Hal R. 2010. <em>Microeconom<span>ı́</span>a intermedia: un enfoque actual</em>.
+</div>
+<div id="ref-7_Walras1874" class="csl-entry" role="listitem">
+Walras, Léon. 1874. <em><span>É</span>l<span>é</span>ments d’<span>é</span>conomie politique pure ou th<span>é</span>orie de la richesse sociale</em>. L. Corbaz.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>En economía, un efecto de red (también llamado externalidad de red o economías de escala del lado de la demanda) es el fenómeno por el cual el valor o la utilidad que un usuario obtiene de un bien o servicio depende del número de usuarios de productos compatibles. Los efectos de red suelen ser sistemas de retroalimentación positiva, por lo que los usuarios obtienen cada vez más valor de un producto a medida que más usuarios se unen a la misma red.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Equilibrio parcial: i) El mercado de un bien constituye una pequeña parte de toda la economía, ii) la oferta y demanda de cada bien depende solo del precio del propio bien. Los efectos renta y sustitución cruzados con los demás mercados son despreciables. El gasto en los otros bienes se puede tratar como uno solo, el numerario. La manera más simple de modelar estos supuestos es asumir que en la economía existen dos bienes, y el gasto en todas las mercancías distintas a la que resulta de interés se trata como una única mercancía compuesta (numerario) y las preferencias de los consumidores son cuasilineales respecto al numerario.</p>
+<p>El enfoque de equilibrio parcial también es válido para estudiar mercados con varios productos muy similares, como es el caso de los modelos de diferenciación de producto y competencia monopolística.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>De los supuestos de producto homogéneo e información perfecta se deriva la Ley de Precio único. La ley del precio único en economía afirma que, en ausencia de barreras comerciales y en una economía con precios que pueden variar libremente en función de la demanda y la oferta (modelo elástico), si se comparan los precios de un mismo bien de dos países diferentes en términos de una misma moneda, entonces esos precios, en equilibrio, tendrán que ser iguales.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>En el corto plazo puede haber empresas con diferente tecnología, sin embargo en el largo plazo será igual para todas y serán aquellas que sobrevivan en el mercado.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Es decir, estamos suponiendo que la curva de oferta agregada del factor productivo es totalmente elástica. Se podría decir que estamos asumiendo economías de escala externas constantes: los costes de la empresa no varían cuando aumenta la producción de la industria (es decir, los precios de los factores productivos no aumentan cuando la industria, para aumentar su producción, demanda más factores productivos).</p>
+<p>Nótese que este supuesto de “costes constantes” no quiere decir “costes marginales constantes”. Lo que estamos suponiendo con el supuesto es que el precio de los factores productivos se mantiene constante, pero el coste marginal está compuesto por algo más que el precio de los factores: también está afectado por la productividad marginal del factor: <span class="math display">\[CMg=\dfrac{\bar{W}_{i}}{PMg_{x_{i}}}\]</span> y si hubiese dos factores productivos (digamos, trabajo y capital), entonces el coste marginal sería: <span class="math display">\[CMg=\dfrac{W}{PMg_{L}}+\dfrac{R}{PMg_{K}}\]</span><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>El bien numerario es el bien cuyo precio se normaliza a 1 para expresar en sus unidades los precios de todos los demás. En el modelo de equilibrio parcial representa el gasto agregado en todos los bienes distintos del analizado.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>La eficiencia en la distribución del consumo del bien está asegurada por el hecho de que el beneficio marginal del consumo del bien no numerario es igual para todos los consumidores.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>La agregación horizontal de las ofertas individuales solo es un método válido si asumimos que, al aumentar la producción, los precios de los factores productivos que emplean las empresas no varían (es decir, si suponemos que la oferta de factores es totalmente elástica). Si estos precios aumentaran, no solo lo harían para la última unidad sino para todas las unidades, desplazando la curva de oferta hacia la izquierda e imposibilitando la agregación.</p>
+<p>Además el coste de ajuste de todos los factores es infinito, es decir, no se puede variar el nivel de producción que se oferta al mercado variando la cantidad empleada de los factores.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Sí que podría vender a un precio inferior, pero no le interesará porque, como se detallará más adelante, estaría vendiendo por debajo de los costes, lo que le reportaría pérdidas.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>La oferta de mercado es de nuevo la suma horizontal de las ofertas a c/p de las empresas del mercado: es la suma de las cantidades ofrecidas por cada empresario para cada precio, para lo cual es necesario que la oferta de factores sea totalmente elástica (si aumenta la demanda de un determinado factor no varía su precio). Tiene pendiente positiva. Si varían los precios de los factores o la tecnología, se desplaza la curva de oferta a una nueva posición.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Dadas las interpretaciones previas de la curva inversa de demanda agregada, así como de la curva inversa de oferta agregada, el equilibrio parcial competitivo puede ser interpretado como aquel nivel de producción donde el beneficio marginal social del bien <span class="math inline">\(l\)</span> es igual a su coste marginal.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Nótese que cuando hablamos de beneficios nulos, nos referimos a los beneficios económicos, no solo a los contables. Los beneficios económicos se obtienen restando a los beneficios contables el coste de oportunidad, es decir, restándoles la cantidad que la empresa deja de ganar por dedicar los medios a la producción de dicho bien y no a la mejor alternativa. De ahí que una empresa pueda tener beneficios contables positivos pero beneficios económicos nulos.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>Esto es relevante porque, como veíamos, en competencia perfecta el tramo creciente de la curva de coste marginal a partir del mínimo de explotación es precisamente la curva de oferta. El fenómeno de la mayor rigidez es una consecuencia de la dotación fija de algún factor productivo en el corto plazo, y es precisamente lo que explica el Teorema de Le Châtelier-Samuelson: las funciones de oferta de la empresa precio-aceptante en el corto plazo son más rígidas que en el largo plazo (y tanto más rígidas cuanto mayor sea el número de factores considerados fijos) debido a que la capacidad de adaptación de la empresa en el corto plazo es menor al tener algunas dotaciones fijas.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>El Segundo teorema del bienestar completa este resultado: cualquier asignación óptima de Pareto puede alcanzarse como equilibrio competitivo mediante una redistribución previa de la renta entre los agentes, lo que permite separar los objetivos de eficiencia y de equidad. Su desarrollo completo corresponde al tema de Economía del bienestar.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>La intuición es que, si la última pizza producida vale para quien la come 12 euros y cuesta 8 producirla, conviene producir otra, y si vale 6 y cuesta 8, sobra. Solo cuando ambas cifras coinciden la cantidad es la adecuada.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>El EC es una medida monetaria de la ganancia de utilidad del consumidor, pero solo coincide exactamente con la variación compensatoria y la variación equivalente –las medidas rigurosas del cambio de bienestar– cuando no hay efecto renta sobre el bien, es decir, bajo preferencias cuasilineales (ver Apéndice, 7.A.5). Sin ese supuesto, el EC es solo una aproximación.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>La intuición es que, si a un agricultor le cuesta 0,60 euros producir un kilo de naranjas y el mercado se lo paga a 1 euro, su excedente en ese kilo es de 0,40 euros. El EP no debe confundirse con el beneficio:&nbsp;<span class="math inline">\(EP=IT-CVT\)</span>, mientras que el beneficio es&nbsp;<span class="math inline">\(\pi=IT-CT=EP-CF\)</span>. Ambos coinciden únicamente si no hay costes fijos, lo que ocurre siempre en el largo plazo.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>La intuición es la de una subasta: si a un precio dado faltan unidades, los compradores pujan al alza, y si sobran, los vendedores rebajan el precio para colocarlas.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>La intuición es que, si los compradores están dispuestos a pagar por la última unidad más de lo que les cuesta producirla a los vendedores, a estos les compensa producir más, y esa expansión continúa hasta que ambos precios coinciden.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>Nótese que la curva de oferta agregada, S, no la dibujamos horizontal al estar en el corto plazo (pues estamos hablando de costes fijos).<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>En el corto plazo, se desplaza hacia arriba el <span class="math inline">\(CVMe\)</span> por lo que habrá empresas que cesen su actividad.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Además del reparto de la carga entre oferta y demanda, el impuesto reduce el excedente total respecto del equilibrio sin distorsionar: esta pérdida irrecuperable de eficiencia se representa gráficamente como el triángulo de Harberger, el área comprendida entre las curvas de oferta y demanda entre la cantidad transaccionada con y sin impuesto.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>Nótese que la nueva dimensión óptima de la empresa puede ser menor, igual o mayor que la anterior, en función de cómo se desplace hacia arriba la curva de coste marginal.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>Un clúster empresarial es una concentración geográfica de compañías, organizaciones e instituciones relacionadas en un campo en particular que puede estar presente en una región, estado o nación.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>El término “telaraña” (cobweb) fue acuñado por Kaldor (1934) y popularizado por&nbsp;<span class="citation" data-cites="7_Ezekiel1938">Ezekiel (<a href="01-tema-a1.html#ref-7_Ezekiel1938" role="doc-biblioref">1938</a>)</span>, quien lo formalizó a partir de los trabajos independientes de Ricci, Tinbergen y Schultz en torno a 1930.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>El control de alquileres en numerosas ciudades europeas es el ejemplo de manual más citado de precio máximo vinculante con racionamiento no resuelto por el propio mecanismo de mercado.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>El resultado fue descubierto de forma independiente por Samuelson y Georgescu-Roegen en 1949 y publicado por ambos en 1951 en el mismo volumen editado por Koopmans, en el contexto de la teoría de Leontief de insumo-producto: Samuelson demostró el caso de dos bienes, Koopmans el de tres, y la generalización al caso de&nbsp;<span class="math inline">\(N\)</span> bienes se debe a Arrow&nbsp;<span class="citation" data-cites="7_Arrow1951Koopmans">(<a href="01-tema-a1.html#ref-7_Arrow1951Koopmans" role="doc-biblioref">Arrow 1951</a>)</span>.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./06-tema-a6.html" class="pagination-link" aria-label="Teoría de los costes">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./08-tema-a8.html" class="pagination-link" aria-label="Teoría del monopolio y su regulación">
+        <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

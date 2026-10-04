@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="El enfoque neoclásico del mercado de trabajo: oferta y demanda de trabajo, equilibrio en competencia perfecta, con monopolio y monopsonio, sindicatos, análisis intertemporal y capital humano.">
+
+<title>Tema A11. Teorías microeconómicas del mercado de trabajo (I) | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./12-tema-a12-pendiente.html" rel="next">
+<link href="./10-tema-a10.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A11. Teorías microeconómicas del mercado de trabajo (I) | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="El enfoque neoclásico del mercado de trabajo: oferta y demanda de trabajo, equilibrio en competencia perfecta, con monopolio y monopsonio, sindicatos, análisis intertemporal y capital humano.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A11. Teorías microeconómicas del mercado de trabajo (I) | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="El enfoque neoclásico del mercado de trabajo: oferta y demanda de trabajo, equilibrio en competencia perfecta, con monopolio y monopsonio, sindicatos, análisis intertemporal y capital humano.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A11. Teorías microeconómicas del mercado de trabajo (I). La teoría neoclásica del mercado de trabajo. Análisis intertemporal de la oferta de trabajo. Teoría del capital humano.",
+ "alternateName": "Teorías microeconómicas del mercado de trabajo (I)",
+ "description": "El enfoque neoclásico del mercado de trabajo: oferta y demanda de trabajo, equilibrio en competencia perfecta, con monopolio y monopsonio, sindicatos, análisis intertemporal y capital humano.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/11-tema-a11.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./11-tema-a11.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">11.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#la-teoría-neoclásica-del-mercado-de-trabajo" id="toc-la-teoría-neoclásica-del-mercado-de-trabajo" class="nav-link" data-scroll-target="#la-teoría-neoclásica-del-mercado-de-trabajo"><span class="header-section-number">11.2</span> La teoría neoclásica del mercado de trabajo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="8 minutos">8'</span></a>
+  <ul class="collapse">
+  <li><a href="#supuestos" id="toc-supuestos" class="nav-link" data-scroll-target="#supuestos">Supuestos</a></li>
+  <li><a href="#oferta-de-trabajo" id="toc-oferta-de-trabajo" class="nav-link" data-scroll-target="#oferta-de-trabajo">Oferta de trabajo</a></li>
+  <li><a href="#demanda-de-trabajo" id="toc-demanda-de-trabajo" class="nav-link" data-scroll-target="#demanda-de-trabajo">Demanda de trabajo</a></li>
+  <li><a href="#equilibrio" id="toc-equilibrio" class="nav-link" data-scroll-target="#equilibrio">Equilibrio</a></li>
+  <li><a href="#competencia-imperfecta-en-los-mercados-de-bienes-y-de-trabajo" id="toc-competencia-imperfecta-en-los-mercados-de-bienes-y-de-trabajo" class="nav-link" data-scroll-target="#competencia-imperfecta-en-los-mercados-de-bienes-y-de-trabajo">Competencia imperfecta en los mercados de bienes y de trabajo</a></li>
+  </ul></li>
+  <li><a href="#análisis-intertemporal-de-la-oferta-de-trabajo" id="toc-análisis-intertemporal-de-la-oferta-de-trabajo" class="nav-link" data-scroll-target="#análisis-intertemporal-de-la-oferta-de-trabajo"><span class="header-section-number">11.3</span> Análisis intertemporal de la oferta de trabajo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos">5'</span></a>
+  <ul class="collapse">
+  <li><a href="#la-oferta-de-trabajo-a-lo-largo-del-ciclo-vital" id="toc-la-oferta-de-trabajo-a-lo-largo-del-ciclo-vital" class="nav-link" data-scroll-target="#la-oferta-de-trabajo-a-lo-largo-del-ciclo-vital">La oferta de trabajo a lo largo del ciclo vital</a></li>
+  <li><a href="#la-sustitución-intertemporal-lucas-y-rapping-1969" id="toc-la-sustitución-intertemporal-lucas-y-rapping-1969" class="nav-link" data-scroll-target="#la-sustitución-intertemporal-lucas-y-rapping-1969">La sustitución intertemporal: Lucas y Rapping (1969)</a></li>
+  <li><a href="#la-elasticidad-de-frisch-y-macurdy-1981" id="toc-la-elasticidad-de-frisch-y-macurdy-1981" class="nav-link" data-scroll-target="#la-elasticidad-de-frisch-y-macurdy-1981">La elasticidad de Frisch y MaCurdy (1981)</a></li>
+  <li><a href="#evidencia-empírica-y-papel-en-el-ciclo-real" id="toc-evidencia-empírica-y-papel-en-el-ciclo-real" class="nav-link" data-scroll-target="#evidencia-empírica-y-papel-en-el-ciclo-real">Evidencia empírica y papel en el ciclo real</a></li>
+  </ul></li>
+  <li><a href="#teoría-del-capital-humano" id="toc-teoría-del-capital-humano" class="nav-link" data-scroll-target="#teoría-del-capital-humano"><span class="header-section-number">11.4</span> Teoría del capital humano <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos 30 segundos">5'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#la-educación-como-inversión-schultz-1961-y-becker-1964" id="toc-la-educación-como-inversión-schultz-1961-y-becker-1964" class="nav-link" data-scroll-target="#la-educación-como-inversión-schultz-1961-y-becker-1964">La educación como inversión: Schultz (1961) y Becker (1964)</a></li>
+  <li><a href="#formación-general-y-formación-específica" id="toc-formación-general-y-formación-específica" class="nav-link" data-scroll-target="#formación-general-y-formación-específica">Formación general y formación específica</a></li>
+  <li><a href="#la-ecuación-de-mincer-1974" id="toc-la-ecuación-de-mincer-1974" class="nav-link" data-scroll-target="#la-ecuación-de-mincer-1974">La ecuación de Mincer (1974)</a></li>
+  <li><a href="#rendimientos-de-la-educación-y-problemas-de-estimación" id="toc-rendimientos-de-la-educación-y-problemas-de-estimación" class="nav-link" data-scroll-target="#rendimientos-de-la-educación-y-problemas-de-estimación">Rendimientos de la educación y problemas de estimación</a></li>
+  <li><a href="#la-señalización-como-alternativa-y-otras-críticas" id="toc-la-señalización-como-alternativa-y-otras-críticas" class="nav-link" data-scroll-target="#la-señalización-como-alternativa-y-otras-críticas">La señalización como alternativa y otras críticas</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">11.5</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="40 segundos">40"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-gary-becker" id="toc-a.1.-gary-becker" class="nav-link" data-scroll-target="#a.1.-gary-becker">11.A.1.&nbsp;&nbsp;Gary Becker</a></li>
+  <li><a href="#a.2.-monopolio-bilateral" id="toc-a.2.-monopolio-bilateral" class="nav-link" data-scroll-target="#a.2.-monopolio-bilateral">11.A.2.&nbsp;&nbsp;Monopolio bilateral</a></li>
+  <li><a href="#a.3.-estática-comparativa-en-la-demanda-de-trabajo-a-largo-plazo" id="toc-a.3.-estática-comparativa-en-la-demanda-de-trabajo-a-largo-plazo" class="nav-link" data-scroll-target="#a.3.-estática-comparativa-en-la-demanda-de-trabajo-a-largo-plazo">11.A.3.&nbsp;&nbsp;Estática comparativa en la demanda de trabajo a largo plazo</a></li>
+  <li><a href="#a.4.-diferencias-salariales-compensatorias" id="toc-a.4.-diferencias-salariales-compensatorias" class="nav-link" data-scroll-target="#a.4.-diferencias-salariales-compensatorias">11.A.4.&nbsp;&nbsp;Diferencias salariales compensatorias</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I). La teoría neoclásica del mercado de trabajo. Análisis intertemporal de la oferta de trabajo. Teoría del capital humano.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">11.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>El mercado de trabajo es componente fundamental de la economía, pues influye directamente en el bienestar de las familias y en la productividad de un país. Aunque en teoría debería ajustarse de manera fluida, la realidad nos muestra que el desempleo persiste y las brechas salariales son comunes.</p>
+<p>¿Por qué el mercado laboral no siempre logra el equilibrio? ¿Qué factores impiden que los salarios se adapten para que todos los que deseen trabajar encuentren un empleo?</p>
+<p>De esta forma, las diferencias en las tasas de desempleo entre países y las variaciones salariales entre individuos con habilidades similares nos obligan a ir más allá de las explicaciones más simples, haciendo necesario el análisis del comportamiento de los agentes que participan en él mediante la Microeconomía. Esto nos llevará a entender cómo las imperfecciones y o los procesos de negociación moldean este mercado.</p>
+<p>Por ello, el objetivo de la exposición será el análisis de las teorías microeconómicas del mercado de trabajo a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Teoría neoclásica, donde el mercado de trabajo funciona de manera similar a otros mercados.</p></li>
+<li><p>Extensiones neoclásicas, donde se relajarán algunos supuestos.</p></li>
+<li><p>Extensiones neokeynesianas, centrada en las rigideces salariales.</p></li>
+</ol>
+</section>
+<section id="la-teoría-neoclásica-del-mercado-de-trabajo" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="la-teoría-neoclásica-del-mercado-de-trabajo"><span class="header-section-number">11.2</span> La teoría neoclásica del mercado de trabajo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="8 minutos">8'</span></h2>
+<p>La teoría neoclásica analiza el mercado de trabajo de forma análoga al mercado de cualquier otro bien, por lo que el nivel de empleo, que es la cantidad, y el salario, que es el precio, quedan determinados por la interacción entre oferta y demanda. Esta visión, que <span class="citation" data-cites="11_Hicks1932">Hicks (<a href="01-tema-a1.html#ref-11_Hicks1932" role="doc-biblioref">1932</a>)</span> sistematizó a partir de la teoría de la productividad marginal, sigue siendo el punto de referencia frente al que se miden las imperfecciones del mercado de trabajo.</p>
+<section id="supuestos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="supuestos">Supuestos</h3>
+<p>La teoría neoclásica parte de los siguientes supuestos:</p>
+<ol type="1">
+<li><p>Competencia perfecta en el mercado de bienes y de factores productivos.</p></li>
+<li><p>Plena flexibilidad de precios y salarios.</p></li>
+<li><p>Perfecta movilidad del trabajo.</p></li>
+<li><p>Homogeneidad del factor trabajo.</p></li>
+<li><p>Información perfecta.</p></li>
+<li><p>Ausencia de externalidades.</p></li>
+<li><p>Racionalidad de las empresas y los individuos, es decir, buscan maximizar su bienestar.</p></li>
+</ol>
+<p>De estos supuestos se deriva, como se verá, la existencia de un equilibrio único, estable y eficiente, en el que los salarios reales se igualan a la productividad marginal del trabajo y el mercado se vacía de manera instantánea, por lo que no hay desempleo involuntario, siendo la flexibilidad del salario el mecanismo autocorrector que asegura el ajuste automático. Para llegar a él se estudian primero la oferta de trabajo, que nace de las decisiones de los individuos, y después la demanda, que nace de las de las empresas.</p>
+</section>
+<section id="oferta-de-trabajo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="oferta-de-trabajo">Oferta de trabajo</h3>
+<p>La oferta de trabajo es el número de horas que un individuo está dispuesto a trabajar a cada salario. Se deriva de la maximización de su utilidad, en la que elige entre consumo y ocio sujeto a una restricción presupuestaria y a otra temporal.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>El problema al que se enfrenta el trabajador es la maximización de la utilidad<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> que le reportan el consumo, <span class="math inline">\(C\)</span>, y el ocio, <span class="math inline">\(O\)</span>:</p>
+<p><span class="math display">\[\max_{C,O}\;U\left(C,O\right)\]</span> sujeto a dos restricciones. La presupuestaria exige que el gasto en consumo, valorado al precio del bien, <span class="math inline">\(P_{C}\)</span>, no supere la suma de la renta no salarial, <span class="math inline">\(M\)</span>, y de la renta salarial, que es el salario nominal, <span class="math inline">\(W\)</span>, multiplicado por las horas trabajadas, <span class="math inline">\(L\)</span>. La temporal reparte la dotación de tiempo total, <span class="math inline">\(\bar{L}\)</span>, entre ocio y trabajo: <span class="math display">\[\begin{align*}
+P_{C}\cdot C &amp; \leq M+W\left(\bar{L}-O\right)\\
+O+L &amp; =\bar{L}
+\end{align*}\]</span> Como cada hora de ocio supone renunciar al salario que se habría ganado con ella, el salario real, <span class="math inline">\(w=W/P_{C}\)</span>, es el coste de oportunidad del ocio, es decir, su precio.</p>
+<p>Las CPO del problema establecen que el trabajador ofrecerá trabajo hasta que la relación marginal de sustitución entre ocio y consumo, <span class="math inline">\(RMS_{O,C}\)</span>, es decir, el consumo al que está dispuesto a renunciar por una hora más de ocio, se iguale al salario real, <span class="math inline">\(w\)</span>: <span class="math display">\[RMS_{O,C}=\dfrac{UMg_{O}}{UMg_{C}}=\dfrac{W}{P_{C}}=w\]</span> Así, el equilibrio se produce allí donde la tasa a la que el individuo intercambia internamente ocio por consumo se iguala a la tasa objetiva a la que lo hace el mercado.</p>
+<p>Gráficamente, en un plano de ocio, <span class="math inline">\(O\)</span>, en el eje horizontal y consumo, <span class="math inline">\(C\)</span>, en el vertical, como el de la <a href="#fig-11-determinacion-de-la-oferta-de-trabajo" class="quarto-xref">Figura&nbsp;<span>11.1</span></a>, se representan la restricción, que es a la vez presupuestaria y temporal, y las curvas de indiferencia, que recogen las combinaciones de ocio y consumo que generan el mismo nivel de utilidad. El equilibrio se alcanza en el punto de tangencia entre la restricción y la curva de indiferencia más alejada del origen, <span class="math inline">\(E_{0}\)</span>.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+<div id="fig-11-determinacion-de-la-oferta-de-trabajo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Determinación de la oferta de trabajo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-determinacion-de-la-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.1: Determinación de la oferta de trabajo
+</figcaption>
+<div aria-describedby="fig-11-determinacion-de-la-oferta-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-determinacion-de-la-oferta-de-trabajo.svg" class="img-fluid figure-img" alt="Determinación de la oferta de trabajo">
+</div>
+</figure>
+</div>
+<p>Para obtener la oferta de trabajo individual, <span class="math inline">\(L^{S}\)</span>, se realiza un ejercicio de estática comparativa con el salario real, <span class="math inline">\(w\)</span>. Al subir este, la restricción pivota sobre el punto de dotación, en el que no se trabaja, y el nuevo equilibrio, <span class="math inline">\(E_{1}\)</span>, se sitúa sobre una curva de indiferencia que representa una mayor utilidad. Sin embargo, para determinar el efecto sobre el ocio hay que distinguir entre el efecto sustitución y el efecto renta.</p>
+<p>Para ver esto gráficamente, se utilizará la variación compensatoria en el sentido de Hicks, es decir, desplazando la nueva restricción presupuestaria hasta que sea tangente con la curva de indiferencia inicial en el punto <span class="math inline">\(S\)</span>. Por lo tanto:</p>
+<ul>
+<li><p>Efecto sustitución, de <span class="math inline">\(E_{0}\)</span> a <span class="math inline">\(S\)</span>, que siempre reduce el ocio: al aumentar el salario aumenta el coste de oportunidad del ocio, por lo que disminuyen las horas de ocio, <span class="math inline">\(\downarrow O\)</span>, y aumenta la oferta de trabajo, <span class="math inline">\(\uparrow L^{S}\)</span>.</p></li>
+<li><p>Efecto renta<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, de <span class="math inline">\(S\)</span> a <span class="math inline">\(E_{1}\)</span>: al aumentar el salario aumenta la renta salarial, <span class="math inline">\(W\left(\bar{L}-O\right)\)</span>, y con ella el consumo de todos los bienes normales, entre ellos el ocio, <span class="math inline">\(\uparrow O\)</span>, lo que reduce la oferta de trabajo, <span class="math inline">\(\downarrow L^{S}\)</span>.</p></li>
+</ul>
+<p>Por lo tanto, si el ocio es un bien normal, el efecto renta y el efecto sustitución tienen signos contrarios y la pendiente de la oferta de trabajo depende de la cuantía relativa de ambos.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>Sin embargo, como la teoría no determina cuál de los dos efectos predomina, la oferta de trabajo puede ser creciente o decreciente, por lo que es necesario recurrir a los trabajos empíricos.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<p>Ya <span class="citation" data-cites="11_Robbins1930">Robbins (<a href="01-tema-a1.html#ref-11_Robbins1930" role="doc-biblioref">1930</a>)</span> mostró que el efecto de una subida salarial sobre las horas trabajadas es teóricamente ambiguo, porque depende de la elasticidad de la demanda de renta en términos de esfuerzo: si es inferior a la unidad, el individuo responde a un salario más alto trabajando menos, y la curva de oferta se vuelve hacia atrás. En el plano empírico, Ragnar Frisch <span class="citation" data-cites="11_Frisch1932">(<a href="01-tema-a1.html#ref-11_Frisch1932" role="doc-biblioref">1932</a>)</span> dedujo, a partir de sus estimaciones de la utilidad marginal de la renta, una oferta de trabajo en forma de “S” invertida, como la de la <a href="#fig-11-2-curva-de-oferta" class="quarto-xref">Figura&nbsp;<span>11.2</span></a>, en un plano de salarios y cantidad de trabajo.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> En un primer tramo la oferta de trabajo es decreciente, en un segundo tramo creciente y, según conjeturaba el propio Frisch, en un tercer tramo podría volver a ser decreciente.</p>
+<div id="fig-11-2-curva-de-oferta" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curva de Oferta de Trabajo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-2-curva-de-oferta-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.2: Curva de Oferta de Trabajo
+</figcaption>
+<div aria-describedby="fig-11-2-curva-de-oferta-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-curva-de-oferta-de-trabajo.svg" class="img-fluid figure-img" alt="Curva de Oferta de Trabajo">
+</div>
+</figure>
+</div>
+<p>Por norma general, y para el resto del análisis, se supondrá que el individuo participa en el mercado de trabajo y que su oferta tiene pendiente creciente, lo que exige que:</p>
+<ul>
+<li><p>El salario de equilibrio sea mayor que el salario de reserva, que es el salario más bajo por el que un trabajador está dispuesto a aceptar un trabajo.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p></li>
+<li><p>El ocio y el consumo sean bienes normales, para que los efectos sustitución y renta se muevan en los sentidos habituales.</p></li>
+<li><p>El efecto sustitución sea mayor que el efecto renta en valor absoluto: <span class="math inline">\(\left|ES\right|&gt;\left|ER\right|\)</span>.</p></li>
+</ul>
+<p>En general, se acepta que el tramo relevante de la oferta de trabajo individual es el creciente. La oferta de trabajo de mercado se obtiene por agregación horizontal de los tramos crecientes de las ofertas individuales y responde al salario por dos vías: el margen intensivo, es decir, las horas de quienes ya trabajan, y el margen extensivo, es decir, la entrada en el mercado de quienes, al subir el salario, ven superado su salario de reserva.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></p>
+<p>La incorporación de la mujer al mercado de trabajo ilustra la importancia del margen extensivo. <span class="citation" data-cites="11_Goldin2006">Goldin (<a href="01-tema-a1.html#ref-11_Goldin2006" role="doc-biblioref">2006</a>)</span> la describe como una “revolución silenciosa”: desde finales de los años setenta, las mujeres pasaron de ser trabajadoras secundarias, que entraban y salían del mercado según las necesidades del hogar, a planificar carreras profesionales propias, con más formación y mayor apego al empleo. Su efecto sobre el producto a largo plazo es, sin embargo, ambiguo: <span class="citation" data-cites="11_Evans2026">Evans (<a href="01-tema-a1.html#ref-11_Evans2026" role="doc-biblioref">2026</a>)</span> sostiene que la incorporación de la mujer al trabajo productivo eleva el PIB, pero que, si los hombres no aceptan relaciones más igualitarias, la caída de la fecundidad puede frenar el crecimiento.</p>
+<p>Respecto a la empresa, en un mercado de factores perfectamente competitivo puede contratar tantos trabajadores como desee al salario de mercado, de modo que la oferta de trabajo a la que se enfrenta es perfectamente elástica a ese salario, como se observa en la <a href="#fig-11-oferta-de-trabajo-a-la-que-se-enfrenta-la-empresa" class="quarto-xref">Figura&nbsp;<span>11.3</span></a>.</p>
+<div id="fig-11-oferta-de-trabajo-a-la-que-se-enfrenta-la-empresa" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Oferta de trabajo a la que se enfrenta la empresa">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-oferta-de-trabajo-a-la-que-se-enfrenta-la-empresa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.3: Oferta de trabajo a la que se enfrenta la empresa
+</figcaption>
+<div aria-describedby="fig-11-oferta-de-trabajo-a-la-que-se-enfrenta-la-empresa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-ls-a-la-que-se-enfrenta-la-empresa.svg" class="img-fluid figure-img" alt="Oferta de trabajo a la que se enfrenta la empresa">
+</div>
+</figure>
+</div>
+</section>
+<section id="demanda-de-trabajo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="demanda-de-trabajo">Demanda de trabajo</h3>
+<p>La demanda de trabajo es una demanda derivada, es decir, la empresa demanda trabajo porque hay demanda del bien que este ayuda a producir, y varía con ella. Por ello, se obtiene del proceso optimizador de la empresa, que maximiza sus beneficios sujeta a una restricción tecnológica, como se vio en los Temas 5 y 6.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+<section id="corto-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="corto-plazo">Corto plazo</h4>
+<p>A corto plazo, la dotación de algún factor de producción es fija. Se supondrá que el factor fijo es el capital, <span class="math inline">\(\bar{K}\)</span>, por lo que el productor maximiza solo respecto al trabajo. Además, al haber competencia perfecta en todos los mercados, la empresa es precio-aceptante: el precio del bien, <span class="math inline">\(P\)</span>, y el salario nominal, <span class="math inline">\(W\)</span>, son exógenos.</p>
+<p>El programa de optimización será el siguiente: <span id="eq-a-11-1"><span class="math display">\[\max\quad\pi=P\cdot F\left(\bar{K},L\right)-R\left(\bar{K}\right)\cdot\bar{K}-W\cdot L \tag{11.1}\]</span></span> donde <span class="math inline">\(K\)</span> y <span class="math inline">\(L\)</span> son los factores productivos utilizados (imperfectamente sustitutivos), y <span class="math inline">\(R\)</span> y <span class="math inline">\(W\)</span>, sus precios nominales.</p>
+<p>De acuerdo con la CPO, la empresa demandará trabajo hasta que su productividad marginal se iguale al salario real o, lo que es lo mismo, hasta que el valor de la productividad marginal, <span class="math inline">\(P\cdot PMg_{L}\)</span>, es decir, el ingreso que genera un trabajador adicional, se iguale al salario nominal: <span class="math display">\[P\cdot PMg_{L}=W\;\Rightarrow\;PMg_{L}=w\]</span></p>
+<p>Gráficamente, en un plano de salario y trabajo como el de la <a href="#fig-11-3-demanda-de-trabajo" class="quarto-xref">Figura&nbsp;<span>11.4</span></a>, como la <span class="math inline">\(PMg_{L}\)</span> es decreciente, la empresa solo contratará más trabajadores si el salario baja. La curva del valor de la productividad marginal, <span class="math inline">\(P\cdot PMg_{L}\)</span>, es, por tanto, la demanda de trabajo a corto plazo de la empresa, y tiene pendiente negativa.</p>
+<div id="fig-11-3-demanda-de-trabajo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Demanda de trabajo en el corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-3-demanda-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.4: Demanda de trabajo en el corto plazo
+</figcaption>
+<div aria-describedby="fig-11-3-demanda-de-trabajo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-demanda-de-trabajo-a-corto-plazo.svg" class="img-fluid figure-img" alt="Demanda de trabajo en el corto plazo">
+</div>
+</figure>
+</div>
+<p>Por su parte, la CSO se cumple porque la productividad marginal del trabajo es decreciente.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+</section>
+<section id="largo-plazo" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="largo-plazo">Largo plazo</h4>
+<p>A largo plazo, la dotación de todos los factores es variable, por lo que ahora el productor maximiza respecto al trabajo y al capital.</p>
+<p>Las CPO establecen que:<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<ul>
+<li><p>Minimización de costes: en el largo plazo la empresa minimiza costes para cada nivel de producción, es decir, elige su tamaño de planta óptimo, intercambiando factores hasta que su relación marginal de sustitución técnica, <span class="math inline">\(RMST\)</span>, se iguala a la tasa a la que puede hacerlo en el mercado, que es la pendiente de la isocoste, <span class="math inline">\(W/R\)</span>: <span class="math display">\[RMST=\dfrac{PMg_{L}}{PMg_{K}}=\dfrac{W}{R}\]</span></p></li>
+<li><p>Maximización de beneficios: señala que la empresa contratará factores productivos hasta que sus productividades marginales sean iguales a sus costes reales (o, de igual manera, hasta que los valores de sus productividades marginales sean iguales a sus costes nominales)<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a> <span id="eq-a-11-2"><span class="math display">\[\begin{aligned}
+PMg_{L}=w\\
+PMg_{K}=r
+\end{aligned} \tag{11.2}\]</span></span></p></li>
+</ul>
+<p>La CSO se cumple si la función de producción es estrictamente cóncava, lo que implica rendimientos a escala decrecientes.</p>
+<p>Ahora se observa cómo, en el largo plazo, la demanda de un factor depende no solo de su productividad y de su coste, sino también de la productividad y del coste del otro factor. Por eso la demanda individual a largo plazo ya no coincide con la curva del valor de la productividad marginal.</p>
+<p>Esto se puede observar con una caída del salario, <span class="math inline">\(\downarrow W\)</span>, tal y como se observa en la <a href="#fig-11-ld-en-el-lp" class="quarto-xref">Figura&nbsp;<span>11.5</span></a>:</p>
+<ul>
+<li><p>Como se ha visto, la curva del valor de la productividad marginal (<span class="math inline">\(P\cdot PMg_{L}\)</span>) describe la demanda de trabajo cuando el nivel de capital es fijo.</p></li>
+<li><p>Si el salario disminuye, se va a demandar más trabajo para que se cumpla <span class="math inline">\(\downarrow W=P\cdot\downarrow PMgL\)</span>.</p></li>
+<li><p>El aumento del trabajo va a aumentar la <span class="math inline">\(PMg_{K}\)</span>, por lo que, ahora que el capital es variable, se va a demandar también más capital para que disminuya la <span class="math inline">\(PMg_{K}\)</span> y se pueda cumplir <span class="math inline">\(R=P\cdot\uparrow\downarrow PMgK.\)</span></p></li>
+<li><p>Al demandarse más capital, la <span class="math inline">\(PMg_{L}\)</span> aumenta y, por tanto, la curva de demanda de trabajo se desplaza.</p></li>
+</ul>
+<div id="fig-11-ld-en-el-lp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Demanda de trabajo a largo plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-ld-en-el-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.5: Demanda de trabajo a largo plazo
+</figcaption>
+<div aria-describedby="fig-11-ld-en-el-lp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-ld-a-largo-plazo.svg" class="img-fluid figure-img" alt="Demanda de trabajo a largo plazo">
+</div>
+</figure>
+</div>
+<p>Del proceso anterior se extraen tres conclusiones:</p>
+<ol type="1">
+<li><p>Una disminución del salario aumenta la demanda de trabajo y de capital, <span class="math inline">\(\downarrow W\Rightarrow\uparrow L,\uparrow K\)</span>.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p></li>
+<li><p>La demanda individual en el largo plazo ya no coincide con la curva de <span class="math inline">\(P\cdot PMg_{L}\)</span>.</p></li>
+<li><p>La demanda individual a largo plazo es más elástica que la de corto plazo, precisamente por la mayor flexibilidad de la empresa para combinar los factores, lo que se conoce como principio de Le Chatelier-Samuelson.</p></li>
+</ol>
+<p>La elasticidad de la demanda de trabajo depende, según las reglas de Marshall que formalizó <span class="citation" data-cites="11_Hicks1932">Hicks (<a href="01-tema-a1.html#ref-11_Hicks1932" role="doc-biblioref">1932</a>)</span>, de cuatro factores. Es mayor cuanto más fácil es sustituir trabajo por otros factores, cuanto más elástica es la demanda del bien que se produce, cuanto mayor es el peso del trabajo en los costes totales, siempre que la demanda del bien sea más elástica que la sustitución entre factores, y cuanto más elástica es la oferta de los demás factores <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, cap. 3</a>)</span>. De estas reglas depende, por ejemplo, cuánto empleo se pierde cuando se encarece el trabajo con una subida de las cotizaciones sociales.</p>
+</section>
+<section id="demanda-agregada" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="demanda-agregada">Demanda agregada</h4>
+<p>El análisis de la demanda agregada se realiza en el corto plazo por simplicidad, ya que en el largo plazo la demanda de trabajo depende de más factores que su productividad marginal y su coste.</p>
+<section id="importante" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="importante">Importante</h5>
+<p>La demanda de trabajo agregada no es la suma horizontal de las demandas individuales. Cuando cambia el salario, varía la demanda de trabajo de las empresas y, con ella, la producción agregada y el precio del producto. Cada empresa, al contratar y producir más, hace bajar el precio del bien para todas las demás sin tenerlo en cuenta. Este efecto, que se transmite a través de los precios, se denomina externalidad pecuniaria:</p>
+<ul>
+<li><p>Así, ante una disminución del salario, las empresas contratarán más trabajadores y producirán más, lo que desplazará a la derecha la curva de oferta de mercado del bien y reducirá su precio.</p></li>
+<li><p>A causa de dicha reducción, el valor de la productividad marginal (<span class="math inline">\(P\cdot PMgL\)</span>, o demanda de trabajo) se desplaza a la izquierda, por lo que tras una reducción del salario se pasa de <span class="math inline">\(A\)</span> a <span class="math inline">\(C\)</span> en lugar de <span class="math inline">\(A\)</span> a <span class="math inline">\(B\)</span>.</p></li>
+</ul>
+<p>Por tanto, para obtener la demanda de trabajo de una industria deben agregarse las cantidades que demandaría cada empresa teniendo en cuenta el cambio del precio del bien al variar el salario, es decir, las cuasi-demandas.</p>
+<p>Esto hace que la demanda agregada de trabajo sea más inelástica que la que se obtendría si no variase el precio del bien. La intuición es que, al reducirse el salario, también cae el precio del bien, por lo que las empresas tienen menos incentivos a contratar más trabajadores.</p>
+<div id="fig-11-da-de-l-en-cp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Demanda agregada de trabajo a corto plazo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-da-de-l-en-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.6: Demanda agregada de trabajo a corto plazo
+</figcaption>
+<div aria-describedby="fig-11-da-de-l-en-cp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-da-de-l-a-cp.svg" class="img-fluid figure-img" alt="Demanda agregada de trabajo a corto plazo">
+</div>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="equilibrio" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="equilibrio">Equilibrio</h3>
+<p>Halladas las curvas de oferta y demanda agregadas de trabajo, el equilibrio neoclásico, es decir, el salario y el nivel de empleo, se produce en la intersección de ambas curvas, como se observa en la <a href="#fig-11-eq-de-l-en-neo" class="quarto-xref">Figura&nbsp;<span>11.7</span></a>.</p>
+<div id="fig-11-eq-de-l-en-neo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio del mercado de trabajo neoclásico">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-eq-de-l-en-neo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.7: Equilibrio del mercado de trabajo neoclásico
+</figcaption>
+<div aria-describedby="fig-11-eq-de-l-en-neo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-equilibrio-neoclasico.svg" class="img-fluid figure-img" alt="Equilibrio del mercado de trabajo neoclásico">
+</div>
+</figure>
+</div>
+<p>Se da, pues, un equilibrio único, estable y eficiente, en el que los salarios reales se igualan a la productividad marginal del trabajo y el mercado se vacía de manera instantánea. No hay desempleo involuntario, aunque sí puede haber desempleo voluntario o friccional, y la flexibilidad del salario es el mecanismo autocorrector que asegura el ajuste automático. La implicación de política es clara: el mercado no necesita intervención, y cualquier rigidez que impida bajar el salario, como un salario mínimo por encima del de equilibrio, solo puede generar paro.</p>
+<p>Sin embargo, estas conclusiones no se ajustan a la evidencia empírica, en la que no hay ni pleno empleo ni ajuste automático. Por ello, a continuación se relaja el supuesto de competencia perfecta, y los dos bloques siguientes levantarán el de un horizonte de un solo período y el de trabajo homogéneo.</p>
+</section>
+<section id="competencia-imperfecta-en-los-mercados-de-bienes-y-de-trabajo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="competencia-imperfecta-en-los-mercados-de-bienes-y-de-trabajo">Competencia imperfecta en los mercados de bienes y de trabajo</h3>
+<p>Cuando existe competencia imperfecta, los resultados difieren de los obtenidos en un entorno competitivo. Se estudia primero qué ocurre cuando el poder de mercado lo tiene la empresa, como monopolista en el mercado del bien o como monopsonista en el de trabajo, y después cuando lo tienen los trabajadores organizados en un sindicato.</p>
+<section id="poder-de-mercado-de-la-empresa-monopolio-y-monopsonio" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="poder-de-mercado-de-la-empresa-monopolio-y-monopsonio">Poder de mercado de la empresa: monopolio y monopsonio</h4>
+<p>Un monopsonio es un mercado con un único comprador. En el de trabajo, la empresa monopsonista es la única demandante de trabajo y se enfrenta, por ello, a toda la curva de oferta del mercado, que es creciente, en lugar de tomar el salario como dado, como ya se vio en el Tema 8.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a> Puede ocurrir porque la empresa sea la única de la zona, porque esté muy especializada o porque todas las empresas se hayan agrupado en una patronal que lidera las negociaciones con los trabajadores.</p>
+<p>Además, hay que distinguir si la empresa tiene también poder de monopolio en el mercado de bienes, porque la demanda de trabajo es una demanda derivada que depende de su oferta de producto. De ahí que los resultados del monopsonista varíen según sea o no monopolista en el mercado del bien.</p>
+<p>Se analiza la demanda de trabajo a corto plazo, con la función de producción <span class="math inline">\(F\left(\bar{K},L\right)\)</span>, de manera genérica, para particularizarla después según la empresa sea precio-aceptante o tenga poder de mercado en uno o en ambos mercados.</p>
+<p>Las CPO establecen que el ingreso marginal del factor, <span class="math inline">\(IMgF\)</span>, que en el Tema 8 se denomina ingreso del producto marginal, <span class="math inline">\(IMg\cdot PMg_{L}\)</span>, se iguala al gasto marginal del factor, <span class="math inline">\(GMgF\)</span>. En la condición intervienen la elasticidad-precio de la demanda del bien, <span class="math inline">\(\varepsilon_{Q^{D},P}\)</span>, y la elasticidad de la oferta de trabajo respecto al salario, <span class="math inline">\(\varepsilon_{L^{S},W}\)</span>: <span class="math display">\[P\cdot PMg_{L}\left(1-\dfrac{1}{\left|\varepsilon_{Q^{D},P}\right|}\right)=W\left(1+\dfrac{1}{\left|\varepsilon_{L^{S},W}\right|}\right)\]</span></p>
+<p>Gráficamente, en un plano de salarios y trabajo como el de la <a href="#fig-11-poder-de-monopsonio-empresa" class="quarto-xref">Figura&nbsp;<span>11.8</span></a>, se pueden analizar los principales casos:</p>
+<div id="fig-11-poder-de-monopsonio-empresa" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Poder de monopsonio de la empresa">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-poder-de-monopsonio-empresa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.8: Poder de monopsonio de la empresa
+</figcaption>
+<div aria-describedby="fig-11-poder-de-monopsonio-empresa-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-poder-de-monopsonio-de-la-empresa.svg" class="img-fluid figure-img" alt="Poder de monopsonio de la empresa">
+</div>
+</figure>
+</div>
+<ul>
+<li><p>Con competencia perfecta en el mercado de bienes, la empresa se enfrenta a una demanda totalmente elástica (<span class="math inline">\(\varepsilon_{Q^{D},P}=\infty\)</span>), mientras que con competencia perfecta en el mercado de trabajo, la empresa se enfrenta a una oferta totalmente elástica (<span class="math inline">\(\varepsilon_{L^{S},W}=\infty\)</span>). El equilibrio estará en el punto 1.</p></li>
+<li><p>Ingreso marginal del factor: variación en el ingreso al contratar una unidad adicional de factor. Con poder de monopolio en el mercado del bien, la curva de <span class="math inline">\(IMgF\)</span>, que es la demanda de trabajo de la empresa, queda por debajo de la de competencia perfecta porque <span class="math display">\[IMgF^{*}=P\cdot PMg_{L}\left(1-\dfrac{1}{\left|\varepsilon_{Q^{D},P}\right|}\right)&lt;P\cdot PMg_{L}\]</span> por lo que, si la empresa es monopolista en bienes y precio-aceptante en trabajo, el equilibrio estará en el punto 2. La intuición es que, al tener la empresa poder de monopolio en el mercado del bien, un aumento de su oferta reduce el precio de todas las unidades, por lo que el valor que le genera un trabajador adicional es menor que si hubiese competencia perfecta en el mercado del bien, <span class="math inline">\(P\cdot PMg_{L}\)</span>, y su demanda de trabajo es menor. Además, se da la conocida como explotación de monopolio: en el punto 2 el trabajador cobra su ingreso marginal, <span class="math inline">\(IMgF^{*}\)</span>, que es inferior al valor de su productividad marginal, <span class="math inline">\(P\cdot PMg_{L}\)</span>, y tanto el salario como el empleo son menores que en el equilibrio de competencia.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p></li>
+<li><p>Gasto marginal del factor: variación en el coste de contratar una unidad adicional de factor. Con poder de monopsonio, la curva de <span class="math inline">\(GMgF\)</span> queda por encima de la curva de oferta de trabajo, que es la de gasto medio, porque <span class="math display">\[GMgF^{*}=W\left(1+\dfrac{1}{\left|\varepsilon_{L^{S},W}\right|}\right)&gt;W\]</span> y ambas solo coinciden en competencia perfecta, cuando la oferta es horizontal. Por ello, si la empresa es precio-aceptante en bienes y monopsonista en trabajo, el equilibrio estará en el punto 3. La intuición es que, para contratar a un trabajador más, el monopsonista tiene que subir el salario a todos los que ya emplea, por lo que cada trabajador adicional le cuesta más que el salario que cobra. El salario, sin embargo, se lee siempre sobre la curva de oferta, que indica lo mínimo que hay que pagar para atraer a ese número de trabajadores. Así, cuando existe monopolio en el mercado de bienes, la explotación de monopolio viene dada por la diferencia entre el <span class="math inline">\(IMgF\)</span> de competencia, <span class="math inline">\(P\cdot PMg_{L}\)</span>, y el <span class="math inline">\(IMgF^{*}\)</span>. Si existe también monopsonio, la explotación de monopsonio añade la diferencia entre el <span class="math inline">\(IMgF^{*}\)</span>, igual al <span class="math inline">\(GMgF^{*}\)</span> en el equilibrio, y el salario que se paga, que se lee sobre la curva de oferta, en el punto 4.</p></li>
+</ul>
+<table class="caption-top table">
+<caption>Resumen de resultados</caption>
+<colgroup>
+<col style="width: 5%">
+<col style="width: 18%">
+<col style="width: 57%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: center;"></th>
+<th style="text-align: center;"><strong>Mercado de producto</strong></th>
+<th style="text-align: center;"><strong>Equilibrio</strong></th>
+<th style="text-align: center;"><strong>Mercado factor <span class="math inline">\(L\)</span></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><strong>1</strong></td>
+<td style="text-align: center;">Precio-aceptante</td>
+<td style="text-align: center;"><span class="math inline">\(P\cdot PMg_{L}=W\)</span></td>
+<td style="text-align: center;">Precio-aceptante</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;">Monopolista en <span class="math inline">\(x\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(IMg\cdot PMg_{L}=W\)</span></td>
+<td style="text-align: center;">Precio-aceptante</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;">Precio-aceptante</td>
+<td style="text-align: center;"><span class="math inline">\(P\cdot PMg_{L}=W\left(1+\dfrac{1}{\left|\varepsilon_{L^{S},W}\right|}\right)\)</span></td>
+<td style="text-align: center;">Monopsonista en <span class="math inline">\(L\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><strong>4</strong></td>
+<td style="text-align: center;">Monopolista en <span class="math inline">\(x\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(IMg\cdot PMg_{L}=W\left(1+\dfrac{1}{\left|\varepsilon_{L^{S},W}\right|}\right)\)</span></td>
+<td style="text-align: center;">Monopsonista en <span class="math inline">\(L\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>En suma, con competencia perfecta en ambos mercados, el salario y el nivel de empleo son los más altos, en el punto 1, mientras que con la empresa ostentando poder de mercado en ambos mercados, en el punto 4, el salario y el nivel de empleo son los más bajos. No hay, sin embargo, paro involuntario, porque el salario se fija sobre la curva de oferta y todos los que desean trabajar a ese salario encuentran empleo. El empleo es bajo porque muchos prefieren no trabajar por un salario tan reducido. Cuando la empresa es solo monopolista o solo monopsonista, los resultados se encuentran entre ambos extremos, sin que pueda decirse con carácter general cuál de los dos casos da lugar a más empleo.</p>
+<p>La principal implicación de política del monopsonio se refiere al salario mínimo, que, fijado entre el salario de monopsonio y el competitivo, puede elevar a la vez el salario y el empleo.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a> El ejemplo más conocido es el de <span class="citation" data-cites="11_CardKrueger1994">Card y Krueger (<a href="01-tema-a1.html#ref-11_CardKrueger1994" role="doc-biblioref">1994</a>)</span>, que compararon los restaurantes de comida rápida de Nueva Jersey, que subió su salario mínimo en 1992, con los de la vecina Pensilvania, que no lo hizo, y no hallaron una caída del empleo, resultado difícil de explicar en competencia perfecta pero compatible con el monopsonio <span class="citation" data-cites="11_Manning2003">(<a href="01-tema-a1.html#ref-11_Manning2003" role="doc-biblioref">Manning 2003</a>)</span>.</p>
+</section>
+<section id="poder-de-monopolio-de-los-trabajadores-el-sindicato" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="poder-de-monopolio-de-los-trabajadores-el-sindicato">Poder de monopolio de los trabajadores: el sindicato</h4>
+<p>Cuando son los trabajadores quienes tienen poder en la oferta de trabajo, el resultado es el simétrico del monopsonio. El trabajador es el único oferente de trabajo porque está muy especializado o, sobre todo, porque los trabajadores se agrupan en un sindicato que negocia con las empresas, algo que se viene observando en las economías desarrolladas desde el siglo XIX.</p>
+<p>La función de utilidad del sindicato depende positivamente del salario y del nivel de empleo, es decir, de la masa salarial, <span class="math inline">\(W\cdot L\)</span>, y negativamente de la desutilidad asociada al trabajo, <span class="math inline">\(C\left(L\right)\)</span>: <span class="math display">\[U=W\left(L\right)\cdot L-C\left(L\right)\]</span> De su CPO se obtiene que el sindicato iguala su ingreso marginal, <span class="math inline">\(IMg\)</span>, al coste marginal del trabajo, <span class="math inline">\(CMg_{L}\)</span>, en una condición en la que interviene la elasticidad de la demanda de trabajo respecto al salario, <span class="math inline">\(\varepsilon_{L^{D},W}\)</span>: <span class="math display">\[IMg=W\left(1-\dfrac{1}{\left|\varepsilon_{L^{D},W}\right|}\right)=CMg_{L}\]</span></p>
+<p>Gráficamente, como se observa en la <a href="#fig-11-poder-de-monopolio-de-trabajador" class="quarto-xref">Figura&nbsp;<span>11.9</span></a>, la curva de ingreso marginal está por debajo de la curva de demanda de trabajo porque, al tener el sindicato poder de monopolio, un aumento de su oferta reduce el salario de todas las unidades, <span class="math inline">\(IMg&lt;W\)</span>.</p>
+<div id="fig-11-poder-de-monopolio-de-trabajador" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Poder de monopolio del trabajador">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-poder-de-monopolio-de-trabajador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.9: Poder de monopolio del trabajador
+</figcaption>
+<div aria-describedby="fig-11-poder-de-monopolio-de-trabajador-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-poder-monopolio-del-trabajador.svg" class="img-fluid figure-img" alt="Poder de monopolio del trabajador">
+</div>
+</figure>
+</div>
+<p>En suma, con un sindicato con poder de monopolio en el mercado de trabajo, el nivel de empleo es inferior y el salario mayor que en competencia perfecta, por lo que se produce paro involuntario: a ese salario hay trabajadores que desearían trabajar y no encuentran empleo. El resultado depende, además, del objetivo del sindicato. Si maximiza el empleo, el equilibrio es el competitivo. Si maximiza la masa salarial, fija el salario en el que su ingreso marginal es nulo. Y si maximiza la renta neta de sus afiliados, como en el planteamiento anterior, iguala ingreso y coste marginales y obtiene el salario más alto y el empleo más bajo de los tres casos.</p>
+<p>Por lo tanto, tanto en el caso del monopsonio de la empresa como en el del sindicato, cuanto mayor es el poder de mercado de los agentes, menor es el nivel de empleo de equilibrio. Pero solo en el segundo caso hay paro involuntario, porque el salario supera al competitivo y la oferta de trabajo excede a la demanda.</p>
+<p>Cuando un sindicato con poder de monopolio se enfrenta a una empresa monopsonista se tiene un monopolio bilateral, ya presentado en el Tema 8. El resultado queda indeterminado: el salario se sitúa entre el que fijaría el monopsonista y el que pediría el sindicato, según el poder de negociación de cada parte, cuyos modelos se estudian en el Tema 12. Es el único caso en el que el análisis neoclásico justifica el sindicato, como poder compensador del monopsonio, porque puede acercar el salario y el empleo a los competitivos.</p>
+<p>Todo el análisis anterior es estático: el individuo decide cuántas horas trabaja en un único período, y el trabajo se supone homogéneo. Los dos bloques siguientes levantan sucesivamente estos dos supuestos.</p>
+</section>
+</section>
+</section>
+<section id="análisis-intertemporal-de-la-oferta-de-trabajo" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="análisis-intertemporal-de-la-oferta-de-trabajo"><span class="header-section-number">11.3</span> Análisis intertemporal de la oferta de trabajo <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos">5'</span></h2>
+<p>El modelo estático trata cada período como si fuera independiente de los demás, pero las decisiones de trabajo se toman a lo largo de toda la vida. El análisis intertemporal considera que el individuo reparte su consumo y su ocio entre períodos, lo que permite explicar cómo varía la oferta de trabajo a lo largo del ciclo vital y cómo responde a los cambios transitorios del salario, que en los modelos del ciclo real constituyen el mecanismo de propagación de los shocks.</p>
+<section id="la-oferta-de-trabajo-a-lo-largo-del-ciclo-vital" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-oferta-de-trabajo-a-lo-largo-del-ciclo-vital">La oferta de trabajo a lo largo del ciclo vital</h3>
+<p>El salario sigue con la edad un perfil creciente y cóncavo: es bajo al comienzo de la vida laboral, aumenta con la experiencia hasta alcanzar un máximo hacia los cincuenta años y después se estanca o cae ligeramente. Las horas trabajadas siguen un perfil parecido <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, cap. 2</a>)</span>.</p>
+<p>La teoría del ciclo vital explica esta coincidencia. Como el individuo conoce de antemano la senda de su salario, esos cambios previstos no alteran su riqueza a lo largo de la vida, que ya los incorporaba, y solo cambian el precio del ocio en cada momento. Por eso concentrará sus horas de trabajo en los años en que el salario es más alto, que es cuando el ocio es más caro, y suavizará su consumo ahorrando o endeudándose. A diferencia del modelo estático, estos cambios del salario solo generan efecto sustitución.</p>
+</section>
+<section id="la-sustitución-intertemporal-lucas-y-rapping-1969" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-sustitución-intertemporal-lucas-y-rapping-1969">La sustitución intertemporal: Lucas y Rapping (1969)</h3>
+<p><span class="citation" data-cites="11_Lucas1969">Lucas y Rapping (<a href="01-tema-a1.html#ref-11_Lucas1969" role="doc-biblioref">1969</a>)</span> fueron los primeros en tratar la oferta de trabajo como una decisión intertemporal, para explicar por qué el empleo fluctúa mucho a lo largo del ciclo mientras el salario real lo hace poco.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a> El modelo se basa en los siguientes supuestos:</p>
+<ol type="1">
+<li><p>El individuo vive dos períodos.</p></li>
+<li><p>No dispone de riqueza inicial, es decir, todas sus rentas son salariales.</p></li>
+<li><p>Los mercados de capitales son perfectos, es decir, puede transferir fondos de un período a otro al tipo de interés real, <span class="math inline">\(r\)</span>.</p></li>
+<li><p>La función de utilidad es aditivamente separable en el tiempo y también entre consumo y ocio.</p></li>
+<li><p>La dotación de tiempo de cada período se normaliza a la unidad, <span class="math inline">\(O_{t}+L_{t}=\bar{L}=1\)</span>.</p></li>
+</ol>
+<p>Con el consumo de cada período, <span class="math inline">\(C_{t}\)</span>, las horas trabajadas, <span class="math inline">\(L_{t}\)</span>, el salario real, <span class="math inline">\(w_{t}\)</span>, y la tasa subjetiva de descuento, <span class="math inline">\(\rho\)</span>, que define el factor de descuento, <span class="math inline">\(\beta\)</span>, el individuo resuelve <span class="math display">\[\max_{C_{1},C_{2},L_{1},L_{2}}\;U=u\left(C_{1}\right)+v\left(1-L_{1}\right)+\beta\left[u\left(C_{2}\right)+v\left(1-L_{2}\right)\right],\qquad\beta=\dfrac{1}{1+\rho}\]</span> sujeto a la restricción presupuestaria intertemporal, según la cual el valor actual del consumo debe igualar al de las rentas salariales: <span class="math display">\[C_{1}+\dfrac{C_{2}}{1+r}=w_{1}L_{1}+\dfrac{w_{2}L_{2}}{1+r}\]</span></p>
+<p>De las CPO se obtienen tres condiciones, cuya derivación se desarrolla en el Apéndice:</p>
+<ul>
+<li><p>Intratemporal: en cada período, la relación marginal de sustitución entre ocio y consumo se iguala al salario real, <span class="math inline">\(RMS_{O_{t},C_{t}}=v^{\prime}\left(1-L_{t}\right)/u^{\prime}\left(C_{t}\right)=w_{t}\)</span>, como en el modelo estático.</p></li>
+<li><p>Ecuación de Euler: el consumo se reparte entre períodos hasta que <span class="math inline">\(u^{\prime}\left(C_{1}\right)=\beta\left(1+r\right)u^{\prime}\left(C_{2}\right)\)</span>.</p></li>
+<li><p>Intertemporal del ocio, que es la novedad del modelo: <span id="eq-11-ocio-intertemporal"><span class="math display">\[\dfrac{v^{\prime}\left(1-L_{1}\right)}{v^{\prime}\left(1-L_{2}\right)}=\dfrac{1+r}{1+\rho}\cdot\dfrac{w_{1}}{w_{2}} \tag{11.3}\]</span></span> es decir, el individuo trabajará relativamente más en el período en que el salario, corregido por el tipo de interés y la impaciencia, sea más alto.</p></li>
+</ul>
+<p>Por tanto, la oferta de trabajo relativa depende positivamente del salario relativo y del tipo de interés, y negativamente de la tasa de descuento, que mide la impaciencia del individuo: <span class="math display">\[\dfrac{L^{S}_{1}}{L^{S}_{2}}=f\left(\underset{(+)}{\dfrac{w_{1}}{w_{2}}},\;\underset{(+)}{r},\;\underset{(-)}{\rho}\right)\]</span> De ahí se derivan cuatro implicaciones:</p>
+<ul>
+<li><p>Una subida permanente del salario, que eleva en la misma proporción el de los dos períodos, no altera la oferta relativa: solo tiene un efecto renta, que cambia el nivel de la senda de consumo y de ocio.</p></li>
+<li><p>Una subida transitoria del salario en el primer período aumenta la oferta de trabajo en ese período respecto al segundo. Es la sustitución intertemporal del trabajo: se trabaja más cuando trabajar compensa más.</p></li>
+<li><p>Una subida del tipo de interés aumenta la oferta de trabajo presente, porque trabajar y ahorrar hoy resulta más atractivo.</p></li>
+<li><p>Una mayor impaciencia la reduce, porque el individuo prefiere disfrutar del ocio cuanto antes.</p></li>
+</ul>
+<p>La implicación de política es que los cambios transitorios tienen efectos mucho mayores sobre el empleo que los permanentes. Una rebaja temporal de los impuestos sobre el trabajo, por ejemplo, desplaza horas hacia el período en que se aplica, mientras que una permanente apenas altera la oferta relativa.</p>
+</section>
+<section id="la-elasticidad-de-frisch-y-macurdy-1981" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-elasticidad-de-frisch-y-macurdy-1981">La elasticidad de Frisch y MaCurdy (1981)</h3>
+<p>El parámetro clave del modelo es la elasticidad de Frisch, que mide la respuesta de las horas trabajadas a un cambio del salario manteniendo constante la utilidad marginal de la riqueza, <span class="math inline">\(\lambda\)</span>: <span class="math display">\[\varepsilon^{F}=\left.\dfrac{\partial\ln L_{t}}{\partial\ln w_{t}}\right|_{\lambda\ \text{constante}}\]</span> Recoge, por tanto, un efecto sustitución intertemporal puro, el que se produce cuando el salario cambia de forma prevista a lo largo del ciclo vital o de forma transitoria, sin alterar la riqueza de toda la vida.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a> Por ejemplo, si la utilidad de cada período es <span class="math inline">\(\ln C_{t}-\varphi\,L^{1+1/\eta}_{t}/\left(1+1/\eta\right)\)</span>, donde <span class="math inline">\(\varphi\)</span> mide el peso de la desutilidad del trabajo y <span class="math inline">\(\eta\)</span> su curvatura, la elasticidad de Frisch es constante e igual a <span class="math inline">\(\eta\)</span>.</p>
+<p><span class="citation" data-cites="11_MaCurdy1981">MaCurdy (<a href="01-tema-a1.html#ref-11_MaCurdy1981" role="doc-biblioref">1981</a>)</span> fue el primero en estimarla de forma coherente con el modelo. Utilizó datos de panel de 513 hombres casados de Estados Unidos entre 1967 y 1976 y aprovechó que el crecimiento previsto del salario a lo largo del ciclo vital no altera la riqueza: al comparar a cada individuo consigo mismo a lo largo del tiempo, el efecto de la riqueza desaparece y queda solo el de sustitución. Concluyó que una subida del 10 % del salario real debida a su crecimiento a lo largo del ciclo vital eleva las horas trabajadas entre un 1 % y un 3 %, es decir, una elasticidad de Frisch de entre 0,1 y 0,3.</p>
+</section>
+<section id="evidencia-empírica-y-papel-en-el-ciclo-real" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="evidencia-empírica-y-papel-en-el-ciclo-real">Evidencia empírica y papel en el ciclo real</h3>
+<p>Buena parte de la evidencia posterior, que estima esta elasticidad con efectos fijos individuales, confirma que es positiva pero pequeña, en torno a 0,1 para los varones: las horas apenas cambian en las edades centrales aunque el salario crezca <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, cap. 2</a>)</span>. Hay, no obstante, respuestas claras allí donde el trabajador puede elegir sus horas con libertad, como la de los taxistas, que alargan sus turnos en los días y franjas en que esperan más clientes, como recoge el propio Borjas. <span class="citation" data-cites="11_Chetty2011">Chetty et&nbsp;al. (<a href="01-tema-a1.html#ref-11_Chetty2011" role="doc-biblioref">2011</a>)</span>, al revisar la evidencia cuasiexperimental, proponen valores de 0,5 en el margen intensivo y de 0,25 en el extensivo, lo que da una elasticidad de Frisch de las horas agregadas de alrededor de 0,75.</p>
+<p>Esta magnitud es decisiva para la teoría del ciclo real. <span class="citation" data-cites="11_KydlandPrescott1982">Kydland y Prescott (<a href="01-tema-a1.html#ref-11_KydlandPrescott1982" role="doc-biblioref">1982</a>)</span> extendieron el razonamiento de Lucas y Rapping a una economía con incertidumbre sometida a shocks reales de productividad. Ante un shock transitorio que eleva el salario real, los trabajadores sustituyen ocio presente por ocio futuro y trabajan más hoy, lo que genera la expansión y la posterior contracción. Un shock permanente, en cambio, no altera la oferta relativa de trabajo ni genera ciclo, y solo modifica la decisión de inversión por el aumento permanente de la productividad marginal del capital. La implicación de política es que, si las fluctuaciones del empleo son respuestas óptimas a shocks reales, las políticas de estabilización de la demanda no mejoran el bienestar.</p>
+<p>Sin embargo, para reproducir las grandes fluctuaciones del empleo con salarios reales poco variables, estos modelos necesitan una elasticidad intertemporal elevada, mayor que la que estiman la mayoría de los trabajos microeconómicos, lo que ha generado un intenso debate <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, cap. 2</a>)</span>. Si la sustitución intertemporal es pequeña, buena parte de las fluctuaciones del empleo no pueden ser voluntarias, y hay que acudir a las rigideces y fricciones que se estudian en el Tema 12 y, desde el punto de vista macroeconómico, en los Temas 11 y 12 de la Parte B.</p>
+<p>Tanto el enfoque estático como el intertemporal han supuesto hasta aquí que todos los trabajadores son iguales. La teoría del capital humano levanta este supuesto con un razonamiento también intertemporal: formarse hoy tiene un coste presente a cambio de un salario más alto en el futuro.</p>
+</section>
+</section>
+<section id="teoría-del-capital-humano" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="teoría-del-capital-humano"><span class="header-section-number">11.4</span> Teoría del capital humano <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos 30 segundos">5'30"</span></h2>
+<p>Hasta ahora se ha mantenido el supuesto de que el trabajo es homogéneo, lo que implica un salario de equilibrio único. Sin embargo, los trabajadores difieren en su cualificación, que se adquiere en gran medida mediante la educación y la formación.</p>
+<section id="la-educación-como-inversión-schultz-1961-y-becker-1964" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-educación-como-inversión-schultz-1961-y-becker-1964">La educación como inversión: Schultz (1961) y Becker (1964)</h3>
+<p><span class="citation" data-cites="11_Schultz1961">Schultz (<a href="01-tema-a1.html#ref-11_Schultz1961" role="doc-biblioref">1961</a>)</span>, en su discurso como presidente de la Asociación Económica Americana, observó que la producción de Estados Unidos había crecido mucho más que la tierra, las horas de trabajo y el capital físico empleados, y atribuyó buena parte de la diferencia a la inversión de las personas en sí mismas, en educación, en salud o en migraciones. Gary Becker, Premio Nobel en 1992 “por haber extendido los dominios del análisis microeconómico a un rango más amplio del comportamiento y la interacción humana, incluyendo comportamientos fuera de mercado”, desarrolló esta idea en la teoría del capital humano <span class="citation" data-cites="11_Becker1964">(<a href="01-tema-a1.html#ref-11_Becker1964" role="doc-biblioref">1964</a>)</span>, que considera la educación como una inversión que incrementa la productividad del trabajador y, con ella, su salario.</p>
+<p>De esta forma, el capital humano es el conjunto de conocimientos y habilidades de un trabajador que elevan su productividad y que, en el modelo de Becker, se adquieren mediante la educación y la formación. El trabajador no puede venderlo, pero sí alquilar sus servicios a las empresas.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+<p>Por tanto, la educación deja de ser un fenómeno cultural o social y pasa a ser un fenómeno económico, una decisión de inversión más. Cada individuo compara los costes de formarse, directos, como la matrícula o los materiales, e indirectos, como el salario al que renuncia mientras estudia, con el aumento de sus salarios futuros, y sigue estudiando mientras el valor actual neto de la inversión sea positivo. Este enfoque generó fuertes críticas en los años cincuenta y sesenta, porque se consideraba que denigraba a los trabajadores tratándolos como meras máquinas, pero su capacidad para explicar y predecir los fenómenos educativos acabó otorgándole la validez que tiene hoy.</p>
+</section>
+<section id="formación-general-y-formación-específica" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="formación-general-y-formación-específica">Formación general y formación específica</h3>
+<p>Becker distinguió entre dos tipos de formación, según dónde pueda aprovecharse:</p>
+<ol type="1">
+<li><p>Formación general: incrementa la productividad del individuo en cualquier empresa.</p></li>
+<li><p>Formación específica: incrementa la productividad del individuo solo en una determinada empresa.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></p></li>
+</ol>
+<p>La distinción determina quién paga la formación. La general corresponde al trabajador, pues ninguna empresa tiene incentivos a costear una formación que el trabajador podría aprovechar en otras: si lo hiciera, la competencia de estas le obligaría a subirle el salario hasta su nueva productividad y no recuperaría lo invertido. Por eso el trabajador la paga aceptando un salario más bajo mientras se forma <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, 265</a>)</span>. La formación específica, en cambio, se reparte entre la empresa y el trabajador, porque ninguno querría asumirla entera: si la pagara solo la empresa, el trabajador podría marcharse, y si la pagara solo el trabajador, la empresa podría despedirlo, y en ambos casos se perdería la inversión <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, 266-67</a>)</span>.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a> Por eso los trabajadores con formación específica rotan menos y son los últimos en ser despedidos en las recesiones.</p>
+<p>Respecto a la formación general, en un plano con el capital humano, <span class="math inline">\(K_{H}\)</span>, en el eje horizontal y su ingreso y coste marginales, <span class="math inline">\(IMg\)</span> y <span class="math inline">\(CMg\)</span>, en el vertical, como el de la <a href="#fig-11-kh-formacion-general" class="quarto-xref">Figura&nbsp;<span>11.10</span></a>, el trabajador invierte en capital humano hasta que el aumento del salario que le reporta la última unidad, <span class="math inline">\(\partial W\left(K_{H}\right)/\partial K_{H}\)</span>, descontado al tipo de interés, <span class="math inline">\(r\)</span>, se iguala a su coste marginal: <span class="math display">\[\dfrac{\partial W\left(K_{H}\right)/\partial K_{H}}{1+r}=CMg_{K_{H}}\]</span></p>
+<ul>
+<li><p>Ingreso marginal: es decreciente porque la inversión en capital humano presenta rendimientos decrecientes, por los límites de la memoria y del tiempo disponible: aprender a leer aporta más que el décimo máster.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a></p></li>
+<li><p>Coste marginal: es creciente y discontinuo, pues, según Becker, el individuo acude a fuentes de financiación racionadas, empezando por las más baratas: becas, préstamos subvencionados y préstamos a precios de mercado.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a></p></li>
+</ul>
+<div id="fig-11-kh-formacion-general" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de capital humano: formación general">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-11-kh-formacion-general-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.10: Modelo de capital humano: formación general
+</figcaption>
+<div aria-describedby="fig-11-kh-formacion-general-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-11-kh-y-formacion-general.svg" class="img-fluid figure-img" alt="Modelo de capital humano: formación general">
+</div>
+</figure>
+</div>
+<p>El elemento relevante de este problema intertemporal es que puede estudiarse sin tener en cuenta la función de utilidad, gracias al teorema de la separación en la formulación de <span class="citation" data-cites="11_AcemogluAutor">Acemoglu y Autor (<a href="01-tema-a1.html#ref-11_AcemogluAutor" role="doc-biblioref">s.f., cap. 1</a>)</span>: con mercados de capitales perfectos y un ocio que no reporta utilidad, la inversión en capital humano que maximiza la utilidad es la que maximiza el valor actual de los ingresos, con independencia de las decisiones de consumo.</p>
+<p>En suma, las decisiones de invertir en educación, que difieren según la capacidad, los costes y el acceso a la financiación de cada individuo, dan lugar a trabajadores heterogéneos. Esto altera los resultados de la teoría neoclásica tradicional, porque segmenta el mercado: ya no existe un único salario de equilibrio, sino distintos salarios según la cualificación, aunque el único desempleo sigue siendo el voluntario.</p>
+</section>
+<section id="la-ecuación-de-mincer-1974" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-ecuación-de-mincer-1974">La ecuación de Mincer (1974)</h3>
+<p>La aplicación empírica de la teoría es la función de ingresos de <span class="citation" data-cites="11_Mincer1974">Mincer (<a href="01-tema-a1.html#ref-11_Mincer1974" role="doc-biblioref">1974</a>)</span>, que ya había modelizado la decisión de invertir en educación <span class="citation" data-cites="11_Mincer1958">(<a href="01-tema-a1.html#ref-11_Mincer1958" role="doc-biblioref">1958</a>)</span>. Relaciona el logaritmo del salario, <span class="math inline">\(\ln w\)</span>, con los años de escolarización, <span class="math inline">\(S\)</span>, y con los años de experiencia laboral, <span class="math inline">\(X\)</span>, y su cuadrado, con una perturbación aleatoria, <span class="math inline">\(\varepsilon\)</span>: <span class="math display">\[\ln w=\beta_{0}+\beta_{1}S+\beta_{2}X+\beta_{3}X^{2}+\varepsilon\]</span> El coeficiente <span class="math inline">\(\beta_{1}\)</span> se interpreta como la tasa de rendimiento de un año adicional de educación, de modo que cada año de estudios eleva el salario en torno a un <span class="math inline">\(100\cdot\beta_{1}\)</span> %. Los coeficientes de la experiencia, con <span class="math inline">\(\beta_{2}&gt;0\)</span> y <span class="math inline">\(\beta_{3}&lt;0\)</span>, recogen la formación en el empleo y dan un perfil de ingresos creciente y cóncavo con la edad, como el que se vio en el análisis intertemporal. La derivación de la ecuación se recoge en el Apéndice.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></p>
+<p>La ecuación de Mincer es el primer pilar del análisis empírico de los rendimientos de la educación y la aplicación más directa de la teoría del capital humano a la distribución de los salarios.</p>
+</section>
+<section id="rendimientos-de-la-educación-y-problemas-de-estimación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="rendimientos-de-la-educación-y-problemas-de-estimación">Rendimientos de la educación y problemas de estimación</h3>
+<p>Aunque la ecuación de Mincer se ajusta bien a los datos, su estimación por mínimos cuadrados ordinarios, MCO, no permite interpretar <span class="math inline">\(\beta_{1}\)</span> como un efecto causal. El principal problema es el sesgo de habilidad: si los individuos más capaces estudian más y, además, ganarían más con cualquier nivel de estudios, parte de lo que se atribuye a la educación se debe en realidad a una capacidad que no se observa, y el rendimiento estimado está sesgado al alza. A ello se suman la influencia del entorno familiar, porque los niveles educativos altos suelen ir unidos a una renta y una educación altas de los padres, y los errores de medida de los años de estudio, que sesgan el rendimiento a la baja.</p>
+<p>Por ello, la literatura ha recurrido a experimentos naturales, que buscan variaciones de la educación ajenas a la capacidad:<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a></p>
+<ul>
+<li><p><span class="citation" data-cites="11_AngristKrueger1991">Angrist y Krueger (<a href="01-tema-a1.html#ref-11_AngristKrueger1991" role="doc-biblioref">1991</a>)</span> usaron como variable instrumental el trimestre de nacimiento: por las leyes de escolarización obligatoria, quienes nacen al comienzo del año pueden dejar los estudios con menos años de escuela. Sus estimaciones del rendimiento de un año de estudios, de entre el 6 % y el 10 %, apenas difieren de las de MCO, lo que sugiere que el sesgo de habilidad es pequeño <span class="citation" data-cites="11_Card2001">(<a href="01-tema-a1.html#ref-11_Card2001" role="doc-biblioref">Card 2001</a>)</span>.</p></li>
+<li><p><span class="citation" data-cites="11_Card1995">Card (<a href="01-tema-a1.html#ref-11_Card1995" role="doc-biblioref">1995</a>)</span> usó como instrumento la cercanía de una universidad al lugar en el que se crece, que abarata los estudios.</p></li>
+<li><p><span class="citation" data-cites="11_AshenfelterKrueger1994">Ashenfelter y Krueger (<a href="01-tema-a1.html#ref-11_AshenfelterKrueger1994" role="doc-biblioref">1994</a>)</span> compararon gemelos idénticos, que comparten capacidad y entorno familiar, y estimaron un rendimiento de entre el 12 % y el 16 % por año de estudios.</p></li>
+<li><p><span class="citation" data-cites="11_Duflo2001">Duflo (<a href="01-tema-a1.html#ref-11_Duflo2001" role="doc-biblioref">2001</a>)</span> aprovechó el gran programa de construcción de escuelas de Indonesia de los años setenta y obtuvo rendimientos de entre el 6,8 % y el 10,6 %.</p></li>
+</ul>
+<p>En conjunto, las estimaciones con variables instrumentales suelen ser iguales o mayores que las de MCO, lo que <span class="citation" data-cites="11_Card1999">Card (<a href="01-tema-a1.html#ref-11_Card1999" role="doc-biblioref">1999</a>)</span> atribuye a que los rendimientos son heterogéneos y más altos para quienes estudian más gracias a esas reformas, a menudo personas con dificultades para financiarse. <span class="citation" data-cites="11_Heckman2006">Heckman et&nbsp;al. (<a href="01-tema-a1.html#ref-11_Heckman2006" role="doc-biblioref">2006</a>)</span> advierten, además, de que el coeficiente de Mincer solo coincide con la tasa interna de rendimiento de la educación bajo supuestos muy restrictivos, como la ausencia de costes directos y de impuestos. La implicación de política es que la educación es una inversión muy rentable y que los obstáculos para financiarla pueden explicar buena parte de la inversión insuficiente en ella.</p>
+</section>
+<section id="la-señalización-como-alternativa-y-otras-críticas" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-señalización-como-alternativa-y-otras-críticas">La señalización como alternativa y otras críticas</h3>
+<p>La teoría del capital humano no es la única explicación de que los más educados ganen más. En el modelo de señalización de <span class="citation" data-cites="11_Spence1973">Spence (<a href="01-tema-a1.html#ref-11_Spence1973" role="doc-biblioref">1973</a>)</span>, que se estudia en el Tema 13, la educación no aumenta la productividad, sino que, en un contexto de información asimétrica, permite a los trabajadores más productivos distinguirse, porque para ellos estudiar es menos costoso. Las cadenas causales son distintas:</p>
+<ul>
+<li><p>Becker: <span class="math inline">\(\uparrow\)</span> educación (inversión) <span class="math inline">\(\Rightarrow\)</span> <span class="math inline">\(\uparrow\)</span> productividad <span class="math inline">\(\Rightarrow\)</span> <span class="math inline">\(\uparrow\)</span> salario.</p></li>
+<li><p>Spence: <span class="math inline">\(\uparrow\)</span> productividad <span class="math inline">\(\Rightarrow\)</span> <span class="math inline">\(\uparrow\)</span> educación (señal) <span class="math inline">\(\Rightarrow\)</span> <span class="math inline">\(\uparrow\)</span> salario.</p></li>
+</ul>
+<p>Ambas teorías predicen la misma relación positiva entre educación y salario, pero sus implicaciones de política difieren: si la educación solo señaliza, su rendimiento social es menor que el privado y puede haber sobreeducación <span class="citation" data-cites="11_Cahuc2014">(<a href="01-tema-a1.html#ref-11_Cahuc2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, cap. 4</a>)</span>. Además, la teoría de Becker está sujeta a otras críticas:</p>
+<ul>
+<li><p>Si el mercado es capaz de proveer el nivel óptimo de formación, ¿por qué se financia públicamente el capital humano? La respuesta es que la teoría de Becker no tiene en cuenta ni las externalidades del capital humano ni las restricciones al crédito.<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a></p></li>
+<li><p>El capital humano se deprecia y, además, no es el único determinante del salario, en el que influyen también el sexo o la antigüedad.</p></li>
+<li><p>Supone información perfecta sobre costes y rendimientos, lo que resulta poco realista.</p></li>
+<li><p>Ignora otros beneficios no salariales de la formación, como la motivación o la disciplina.</p></li>
+<li><p>No todo gasto en educación es inversión: muchas veces se trata más de consumo, como un máster en una universidad prestigiosa por su reputación.</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">11.5</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="40 segundos">40"</span></h2>
+<p>Como conclusión, el planteamiento tradicional parte de unos supuestos muy alejados de la realidad y por lo tanto el levantamiento de los mismos darán paso a nuevas líneas de investigación. El tratamiento del mercado de trabajo según los diferentes puntos de vista, tiene una importancia fundamental para las recomendaciones de política económica.</p>
+<p>Por ejemplo, los neoclásicos abogaban por la no intervención pero los nuevos modelos abren el camino a una intervención del sector público tanto por el lado de la demanda como por el lado de la oferta, cuyo objetivo sería mejorar el funcionamiento del mercado a través de, por ejemplo, políticas activas recomendadas por la OCDE.</p>
+<p>Además, el análisis microeconómico permite además estudiar fenómenos macroeconómicos como la histéresis y los nuevos desarrollos se vuelven fundamentales cuestiones relativas a la formación del trabajador y al aumento de la capacidad productiva de la economía.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-gary-becker" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-gary-becker">11.A.1.&nbsp;&nbsp;Gary Becker</h3>
+<p>Gary Becker es particularmente conocido por su aplicación del instrumental económico a problemas que trascienden el ámbito de la economía tradicional, introduciéndose en campos como la sociología, la criminalidad, la psicología o las relaciones sociales en el hogar.</p>
+<ul>
+<li><p>Esta metodología no parte de la asunción de un tipo de comportamiento egoísta por parte de los individuos, sino del supuesto de que los agentes actúan en función de sus valores y preferencias. En ese sentido, buscarán maximizar su bienestar “tal y como ellos lo conciben”.</p></li>
+<li><p>A su vez tendrán un comportamiento tipo forward looking y consistente en el tiempo, lo que permitirá su modelización.</p></li>
+<li><p>Por último, los agentes estarán sujetos a diferentes restricciones, como la renta, el tiempo disponible, los límites a la racionalidad y las oportunidades de la economía.</p></li>
+</ul>
+</section>
+<section id="a.2.-monopolio-bilateral" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-monopolio-bilateral">11.A.2.&nbsp;&nbsp;Monopolio bilateral</h3>
+</section>
+<section id="a.3.-estática-comparativa-en-la-demanda-de-trabajo-a-largo-plazo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-estática-comparativa-en-la-demanda-de-trabajo-a-largo-plazo">11.A.3.&nbsp;&nbsp;Estática comparativa en la demanda de trabajo a largo plazo</h3>
+</section>
+<section id="a.4.-diferencias-salariales-compensatorias" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-diferencias-salariales-compensatorias">11.A.4.&nbsp;&nbsp;Diferencias salariales compensatorias</h3>
+<p>Las diferencias salariales compensatorias son un concepto central en la Microeconomía del trabajo que explica por qué trabajos con características indeseables pagan salarios más altos que trabajos similares con condiciones más favorables. Esta teoría se basa en la idea de que los trabajadores no solo valoran el salario, sino también las condiciones del trabajo, como el riesgo, el esfuerzo, los horarios o la seguridad. Se encuadra dentro de la teoría neoclásica, ya que asume que un mercado competitivo iguala los "retornos netos" de diferentes empleos, no solo los salarios.</p>
+<section id="el-mecanismo-detrás-del-concepto" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-mecanismo-detrás-del-concepto">El Mecanismo detrás del Concepto</h5>
+<p>En este modelo, las empresas deben ofrecer un “plus salarial” para atraer trabajadores a empleos con características negativas. Los trabajadores, por su parte, aceptan ese salario extra como compensación por el riesgo o la molestia. Esta dinámica crea un equilibrio donde, en el margen, un trabajador es indiferente entre un trabajo de bajo riesgo y menor salario y uno de alto riesgo con un salario mayor.</p>
+</section>
+<section id="ejemplos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ejemplos">Ejemplos</h5>
+<ul>
+<li><p>Trabajos peligrosos: Un minero o un trabajador de la construcción que opera en altura ganará más que un oficinista con habilidades similares. El salario adicional compensa el mayor riesgo de accidentes o lesiones.</p></li>
+<li><p>Turnos nocturnos o de fin de semana: Un enfermero que trabaja en el turno de noche en un hospital o un empleado de una tienda de conveniencia que trabaja en horarios no convencionales recibirá una prima salarial por trabajar cuando la mayoría de la gente descansa.</p></li>
+<li><p>Condiciones ambientales adversas: Un soldador que trabaja en entornos con altas temperaturas o un limpiador de aguas residuales ganará un salario más alto para compensar las condiciones insalubres o desagradables.</p></li>
+<li><p>Inestabilidad laboral: Un trabajador con un contrato temporal en una empresa que no ofrece seguridad laboral podría tener un salario más alto que uno con un contrato indefinido, para compensar el riesgo de desempleo futuro.</p></li>
+</ul>
+<p>En todos estos casos, la diferencia salarial no se debe a una mayor productividad, sino a un pago compensatorio por los atributos negativos del trabajo. Esto demuestra que el mercado laboral valora tanto las condiciones del empleo como la productividad del trabajador.</p>
+</section>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-11_AcemogluAutor" class="csl-entry" role="listitem">
+Acemoglu, Daron, y David Autor. s.f. <em><span>Lectures in Labor Economics</span></em>. Manuscrito, Massachusetts Institute of Technology.
+</div>
+<div id="ref-11_AngristKrueger1991" class="csl-entry" role="listitem">
+Angrist, Joshua D., y Alan B. Krueger. 1991. <span>«<span>Does Compulsory School Attendance Affect Schooling and Earnings?</span>»</span> <em>Quarterly Journal of Economics</em> 106 (4): 979-1014. <a href="https://doi.org/10.2307/2937954">https://doi.org/10.2307/2937954</a>.
+</div>
+<div id="ref-11_AshenfelterKrueger1994" class="csl-entry" role="listitem">
+Ashenfelter, Orley, y Alan B. Krueger. 1994. <span>«<span>Estimates of the Economic Return to Schooling from a New Sample of Twins</span>»</span>. <em>American Economic Review</em> 84 (5): 1157-73.
+</div>
+<div id="ref-11_Becker1964" class="csl-entry" role="listitem">
+Becker, Gary S. 1964. <em><span>Human Capital: A Theoretical and Empirical Analysis with Special Reference to Education</span></em>. NBER Books, beck-5. National Bureau of Economic Research, Inc. <a href="https://ideas.repec.org/b/nbr/nberbk/beck-5.html">https://ideas.repec.org/b/nbr/nberbk/beck-5.html</a>.
+</div>
+<div id="ref-11_BlundellMaCurdy1999" class="csl-entry" role="listitem">
+Blundell, Richard, y Thomas MaCurdy. 1999. <span>«<span>Labor Supply: A Review of Alternative Approaches</span>»</span>. Chap. 27 en <em><span>Handbook of Labor Economics</span></em>, editado por Orley Ashenfelter y David Card, vol. 3A. Elsevier. <a href="https://doi.org/10.1016/S1573-4463(99)03008-4">https://doi.org/10.1016/S1573-4463(99)03008-4</a>.
+</div>
+<div id="ref-11_Borjas2016" class="csl-entry" role="listitem">
+Borjas, George J. 2016. <em><span>Labor Economics</span></em>. 7.ª ed. McGraw-Hill Education.
+</div>
+<div id="ref-11_Cahuc2014" class="csl-entry" role="listitem">
+Cahuc, Pierre, Stéphane Carcillo, y André Zylberberg. 2014. <em><span>Labor Economics</span></em>. 2.ª ed. MIT Press.
+</div>
+<div id="ref-11_Card1995" class="csl-entry" role="listitem">
+Card, David. 1995. <span>«<span>Using Geographic Variation in College Proximity to Estimate the Return to Schooling</span>»</span>. En <em><span>Aspects of Labour Market Behaviour: Essays in Honour of John Vanderkamp</span></em>, editado por Louis N. Christofides, E. Kenneth Grant, y Robert Swidinsky. University of Toronto Press.
+</div>
+<div id="ref-11_Card1999" class="csl-entry" role="listitem">
+Card, David. 1999. <span>«<span>The Causal Effect of Education on Earnings</span>»</span>. Chap. 30 en <em><span>Handbook of Labor Economics</span></em>, editado por Orley Ashenfelter y David Card, vol. 3A. Elsevier. <a href="https://doi.org/10.1016/S1573-4463(99)03011-4">https://doi.org/10.1016/S1573-4463(99)03011-4</a>.
+</div>
+<div id="ref-11_Card2001" class="csl-entry" role="listitem">
+Card, David. 2001. <span>«<span>Estimating the Return to Schooling: Progress on Some Persistent Econometric Problems</span>»</span>. <em>Econometrica</em> 69 (5): 1127-60. <a href="https://doi.org/10.1111/1468-0262.00237">https://doi.org/10.1111/1468-0262.00237</a>.
+</div>
+<div id="ref-11_CardKrueger1994" class="csl-entry" role="listitem">
+Card, David, y Alan B. Krueger. 1994. <span>«<span>Minimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania</span>»</span>. <em>American Economic Review</em> 84 (4): 772-93.
+</div>
+<div id="ref-11_Chetty2011" class="csl-entry" role="listitem">
+Chetty, Raj, Adam Guren, Day Manoli, y Andrea Weber. 2011. <span>«<span>Are Micro and Macro Labor Supply Elasticities Consistent? A Review of Evidence on the Intensive and Extensive Margins</span>»</span>. <em>American Economic Review</em> 101 (3): 471-75. <a href="https://doi.org/10.1257/aer.101.3.471">https://doi.org/10.1257/aer.101.3.471</a>.
+</div>
+<div id="ref-11_Duflo2001" class="csl-entry" role="listitem">
+Duflo, Esther. 2001. <span>«<span>Schooling and Labor Market Consequences of School Construction in Indonesia: Evidence from an Unusual Policy Experiment</span>»</span>. <em>American Economic Review</em> 91 (4): 795-813. <a href="https://doi.org/10.1257/aer.91.4.795">https://doi.org/10.1257/aer.91.4.795</a>.
+</div>
+<div id="ref-11_Evans2026" class="csl-entry" role="listitem">
+Evans, Alice. 2026. <em><span>How does Female Emancipation affect GDP?</span></em> The Great Gender Divergence (Substack), 31 de mayo. <a href="https://www.ggd.world/p/how-does-female-emancipation-affect">https://www.ggd.world/p/how-does-female-emancipation-affect</a>.
+</div>
+<div id="ref-11_Frisch1932" class="csl-entry" role="listitem">
+Frisch, Ragnar. 1932. <em>New <span>M</span>ethods of <span>M</span>easuring <span>M</span>arginal <span>U</span>tility</em>. Mohr Siebeck.
+</div>
+<div id="ref-11_Goldin2006" class="csl-entry" role="listitem">
+Goldin, Claudia. 2006. <span>«<span>The Quiet Revolution That Transformed Women’s Employment, Education, and Family</span>»</span>. <em>American Economic Review</em> 96 (2): 1-21. <a href="https://doi.org/10.1257/000282806777212350">https://doi.org/10.1257/000282806777212350</a>.
+</div>
+<div id="ref-11_Heckman2006" class="csl-entry" role="listitem">
+Heckman, James J., Lance J. Lochner, y Petra E. Todd. 2006. <span>«<span>Earnings Functions, Rates of Return and Treatment Effects: The Mincer Equation and Beyond</span>»</span>. Chap. 7 en <em><span>Handbook of the Economics of Education</span></em>, editado por Eric A. Hanushek y Finis Welch, vol. 1. Elsevier. <a href="https://doi.org/10.1016/S1574-0692(06)01007-5">https://doi.org/10.1016/S1574-0692(06)01007-5</a>.
+</div>
+<div id="ref-11_Hicks1932" class="csl-entry" role="listitem">
+Hicks, John R. 1932. <em><span>The Theory of Wages</span></em>. Macmillan.
+</div>
+<div id="ref-11_KydlandPrescott1982" class="csl-entry" role="listitem">
+Kydland, Finn E., y Edward C. Prescott. 1982. <span>«<span>Time to Build and Aggregate Fluctuations</span>»</span>. <em>Econometrica</em> 50 (6): 1345-70. <a href="https://doi.org/10.2307/1913386">https://doi.org/10.2307/1913386</a>.
+</div>
+<div id="ref-11_Lucas1969" class="csl-entry" role="listitem">
+Lucas, Robert E., y Leonard A. Rapping. 1969. <span>«Real Wages, Employment, and Inflation»</span>. <em>Journal of Political Economy</em> 77 (5): 721-54. <a href="http://www.jstor.org/stable/1829964">http://www.jstor.org/stable/1829964</a>.
+</div>
+<div id="ref-11_MaCurdy1981" class="csl-entry" role="listitem">
+MaCurdy, Thomas E. 1981. <span>«<span>An Empirical Model of Labor Supply in a Life-Cycle Setting</span>»</span>. <em>Journal of Political Economy</em> 89 (6): 1059-85. <a href="https://doi.org/10.1086/261023">https://doi.org/10.1086/261023</a>.
+</div>
+<div id="ref-11_Manning2003" class="csl-entry" role="listitem">
+Manning, Alan. 2003. <em><span>Monopsony in Motion: Imperfect Competition in Labor Markets</span></em>. Princeton University Press.
+</div>
+<div id="ref-11_Mincer1958" class="csl-entry" role="listitem">
+Mincer, Jacob. 1958. <span>«<span>Investment in Human Capital and Personal Income Distribution</span>»</span>. <em>Journal of Political Economy</em> 66 (4): 281-302. <a href="https://doi.org/10.1086/258055">https://doi.org/10.1086/258055</a>.
+</div>
+<div id="ref-11_Mincer1974" class="csl-entry" role="listitem">
+Mincer, Jacob. 1974. <em><span>Schooling, Experience, and Earnings</span></em>. National Bureau of Economic Research / Columbia University Press.
+</div>
+<div id="ref-11_Pigou1932" class="csl-entry" role="listitem">
+Pigou, Arthur C. 1932. <em><span>The Economics of Welfare</span></em>. 4.ª ed. Macmillan.
+</div>
+<div id="ref-11_Robbins1930" class="csl-entry" role="listitem">
+Robbins, Lionel. 1930. <span>«<span>On the Elasticity of Demand for Income in Terms of Effort</span>»</span>. <em>Economica</em>, n.º 29: 123-29. <a href="https://doi.org/10.2307/2548225">https://doi.org/10.2307/2548225</a>.
+</div>
+<div id="ref-11_Robinson" class="csl-entry" role="listitem">
+Robinson, Joan. 1933. <em><span>The Economics of Imperfect Competition</span></em>. <span>MacMillan and Co</span>.
+</div>
+<div id="ref-11_Sahuquillo18A" class="csl-entry" role="listitem">
+Sahuquillo López, Alfonso. s.&nbsp;f.-a. <em><span>Tema 18-A: Teor<span>í</span>a Neocl<span>á</span>sica de la oferta y demanda de trabajo. An<span>á</span>lisis intertemporal de la oferta de trabajo. Teor<span>í</span>a del capital humano.</span></em> <a href="https://www.alfonsosahuquillo.com/copia-de-3a-17">https://www.alfonsosahuquillo.com/copia-de-3a-17</a>.
+</div>
+<div id="ref-11_Sahuquillo19A" class="csl-entry" role="listitem">
+Sahuquillo López, Alfonso. s.&nbsp;f.-b. <em><span>Tema 19-A: Extensiones de las teor<span>í</span>as de oferta y demanda de trabajo: información, búsqueda, costes de ajuste y dinámica de la demanda de trabajo.</span></em>
+</div>
+<div id="ref-11_Sahuquillo20A" class="csl-entry" role="listitem">
+Sahuquillo López, Alfonso. s.&nbsp;f.-c. <em><span>Tema 20-A: Determinación de salarios: negociación, salarios de eficiencia y contratos implı́citos.</span></em>
+</div>
+<div id="ref-11_Schultz1961" class="csl-entry" role="listitem">
+Schultz, Theodore W. 1961. <span>«<span>Investment in Human Capital</span>»</span>. <em>American Economic Review</em> 51 (1): 1-17.
+</div>
+<div id="ref-11_Spence1973" class="csl-entry" role="listitem">
+Spence, Michael. 1973. <span>«<span>Job Market Signaling</span>»</span>. <em>The Quarterly Journal of Economics</em> 87 (3): 355-74. <a href="https://ideas.repec.org/a/oup/qjecon/v87y1973i3p355-374..html">https://ideas.repec.org/a/oup/qjecon/v87y1973i3p355-374..html</a>.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>La intuición es que cada hora de trabajo es una hora menos de ocio, de modo que decidir cuánto trabajar equivale a decidir a cuánto consumo se renuncia por cada hora de ocio.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>La función de utilidad tiene las siguientes propiedades: i) continua; ii) creciente; iii) cuasicóncava; iv) diferenciable; y v) ordinal.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Las preferencias se representan mediante curvas de indiferencia con las siguientes características: i) continuas; ii) no se cortan; iii) representan más utilidad cuanto más alejadas del origen; iv) tienen pendiente negativa, igual a la <span class="math inline">\(RMS_{O,C}\)</span> cambiada de signo; y v) son convexas, es decir, ocio y consumo son sustitutivos imperfectos, de forma que, conforme aumenta el ocio, el individuo está dispuesto a sacrificar cada vez menos consumo por una hora adicional.</p>
+<p>La pendiente de las curvas de indiferencia refleja la valoración relativa del ocio. Si son muy inclinadas, el individuo está dispuesto a sacrificar mucho consumo por una hora más de ocio. Si son muy planas, valora poco el ocio y trabajará más horas.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>El efecto renta es doble:</p>
+<ol type="1">
+<li><p>Por una parte se produce el efecto renta habitual o efecto renta ordinario, propio de cualquier variación de precios: al incrementarse el salario, el ocio se encarece relativamente y el efecto renta es negativo, aumenta la cantidad de trabajo, <span class="math inline">\(\uparrow L^{S}\)</span>.</p></li>
+<li><p>Por otra parte, se genera un efecto renta potencial positivo o efecto renta dotación: al aumentar el salario se eleva el valor potencial del tiempo de trabajo, por lo que aumenta el consumo de ocio, disminuyendo la cantidad de trabajo, <span class="math inline">\(\downarrow L^{S}\)</span>.</p></li>
+</ol>
+<p>Para quien ofrece trabajo, el efecto renta dotación es mayor que el efecto renta ordinario, por lo que si aumenta <span class="math inline">\(w\)</span>, entonces el efecto renta total hace que aumente el ocio, <span class="math inline">\(\uparrow O\)</span>, y, por lo tanto, disminuya la oferta de trabajo, <span class="math inline">\(\downarrow L^{S}\)</span>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Si el ocio es un bien normal y el efecto sustitución es mayor en valor absoluto que el efecto renta, <span class="math inline">\(\left|ES\right|&gt;\left|ER\right|\)</span>, la oferta de trabajo tiene pendiente positiva. Si el ocio es un bien inferior, el efecto renta refuerza al efecto sustitución y la oferta de trabajo tiene pendiente positiva en todo caso.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Sin embargo, esto podría cambiar con horas extraordinarias. Mientras que con una subida del salario el efecto es ambiguo, con una prima por horas extraordinarias la oferta de trabajo aumenta inequívocamente. Esta diferencia se debe a que la respuesta a una prima por horas extraordinarias es esencialmente un efecto sustitución puro. Y es que la prima proporciona una mayor retribución por las horas extraordinarias trabajadas, mientras que una subida del salario proporciona una mayor retribución por todas las horas trabajadas.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Frisch, economista noruego que compartió con Tinbergen el primer Premio Nobel de Economía, en 1969, halló que, para niveles muy bajos de salario, el efecto renta domina al efecto sustitución, por lo que la curva de oferta tendría un tramo inicial con pendiente negativa. Lo asociaba a trabajadores sin más ingresos que su salario, que, cuando este baja, tienen que trabajar más horas para subsistir.</p>
+<p>Otra posible explicación, distinta de la de Frisch, es que, con salarios muy bajos, los trabajadores tienen opción a subsidios que perderían si el salario aumentase, por lo que, ante subidas modestas del salario, ofrecerán menos trabajo para que su renta no supere el umbral que les da derecho al subsidio.</p>
+<p>Respecto a este último punto, esto podría estar ligado a los intentos de introducir incentivos al empleo dentro del marco del IMV.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>La intuición es que la primera hora de trabajo solo compensa si lo que se gana con ella vale más que la hora de ocio a la que se renuncia, y esa valoración es la pendiente de la curva de indiferencia en el punto en el que no se trabaja. Formalmente, el salario de reserva, <span class="math inline">\(w_{R}\)</span>, es la <span class="math inline">\(RMS_{O,C}\)</span> evaluada en el punto de dotación, <span class="math inline">\(\left(O,C\right)=\left(\bar{L},M/P_{C}\right)\)</span> <span class="citation" data-cites="11_Borjas2016">(<a href="01-tema-a1.html#ref-11_Borjas2016" role="doc-biblioref">Borjas 2016, 41</a>)</span>. Si el ocio es un bien normal, una renta no salarial más alta eleva el salario de reserva y reduce la probabilidad de participar en el mercado de trabajo. El Tema 13 emplea el mismo concepto en el contexto de la información asimétrica.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>La distinción importa para la política económica, porque la evidencia muestra que las horas de los varones en edad central apenas responden al salario, mientras que la participación, sobre todo la de las mujeres casadas, es mucho más sensible <span class="citation" data-cites="11_BlundellMaCurdy1999">(<a href="01-tema-a1.html#ref-11_BlundellMaCurdy1999" role="doc-biblioref">Blundell y MaCurdy 1999</a>)</span>. El efecto de los impuestos sobre la oferta de trabajo se estudia en el Tema 21.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>La función de producción tiene las siguientes propiedades: i) productividad marginal positiva pero decreciente; ii) estrictamente cóncava, lo que implica rendimientos a escala decrecientes; iii) continua; y iv) dos veces diferenciable, con <span class="math inline">\(f^{\prime}_{i}&gt;0\)</span>, <span class="math inline">\(f^{\prime}_{j}&gt;0\)</span> y <span class="math inline">\(f_{ij}&gt;0\)</span>. Esto último implica que la productividad marginal de cada factor aumenta con la cantidad del otro, es decir, que los factores son cooperantes, como en una Cobb-Douglas.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Para que pueda maximizarse el beneficio con todos los factores variables se exige que la función de producción sea estrictamente cóncava, y no basta con que sea estrictamente cuasicóncava, porque la función objetivo, la de beneficios, no está sujeta a ninguna restricción: la tecnológica se inserta en ella. En el problema de maximización de la producción, en cambio, sí hay una restricción, por lo que basta con la cuasiconcavidad estricta y se admite cualquier tipo de rendimientos a escala.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>En puridad, el programa de optimización esconde dos subprogramas. El primero consiste en elegir la combinación de factores que minimiza el coste de una producción dada, es decir, el problema dual de costes, que da lugar a la primera condición y, de ella, a las demandas condicionadas de factores, <span class="math inline">\(X^{D}_{i}(W,Y)\)</span>, donde <span class="math inline">\(W\)</span> es el vector de precios nominales de los factores. El segundo consiste en elegir el nivel de producción que maximiza el beneficio, manteniendo la combinación eficiente de factores, lo que da lugar a la segunda y, de ella, a las demandas incondicionadas, <span class="math inline">\(X^{D}_{i}(W,P)\)</span>.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>No obstante, a diferencia de lo que ocurría en el corto plazo, estas ecuaciones no son las demandas de factores, ya que en el largo plazo éstas, además, dependen, como se verá más adelante, de la productividad y del precio del otro factor.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Esto ocurre siempre, por ejemplo, en las funciones de producción neoclásicas, es decir, de buen comportamiento. Para un análisis más general, véase el Apéndice 11.A.3.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>La intuición es que el monopsonista sabe que, si contrata menos, puede pagar menos a todos, porque los trabajadores no tienen otra empresa a la que acudir.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p><span class="citation" data-cites="11_Robinson">Robinson (<a href="01-tema-a1.html#ref-11_Robinson" role="doc-biblioref">1933, 283</a>)</span> considera que un grupo de trabajadores está siendo explotado cuando su salario es menor que “the marginal physical product that they are producing, valued at the price at which it is being sold”, y distingue la explotación que se debe al monopolio del bien de la que se debe al monopsonio del trabajo. Sigue así la definición de Pigou, a quien cita <span class="citation" data-cites="11_Pigou1932">(<a href="01-tema-a1.html#ref-11_Pigou1932" role="doc-biblioref">Pigou 1932, 549</a>)</span>. Para Robinson, la causa fundamental de la explotación es la falta de elasticidad perfecta de la oferta de trabajo o de la demanda del bien (p.&nbsp;281).<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>Si se fija un salario mínimo <span class="math inline">\(w_{\text{min}}&lt;w_{\text{Monopsonio}}\)</span>, este no afecta al equilibrio de mercado, pues ya se estaba pagando un salario mayor y la restricción no es vinculante.</p>
+<p>Si se fija un salario mínimo <span class="math inline">\(w_{\text{min}}\in\left(w_{\text{Monopsonio}},w_{\text{Competencia}}\right)\)</span>, la restricción es vinculante: la empresa paga el salario mínimo y pasa a ser salario-aceptante hasta el empleo en el que este corta la curva de oferta. Al aumentar el salario mínimo en este intervalo, la situación tiende a la de competencia y, lejos de generar más paro, aumenta el empleo.</p>
+<p>Si se fija un salario mínimo <span class="math inline">\(w_{\text{min}}&gt;w_{\text{Competencia}}\)</span>, se destruye empleo y se genera un exceso de oferta de trabajo, que aumenta conforme lo hace el salario mínimo.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>El artículo original es un modelo econométrico agregado, estimado con series anuales de Estados Unidos entre 1929 y 1965, que pretendía además dar un fundamento de oferta y demanda a la curva de Phillips. La versión de dos períodos que se presenta aquí es la de los manuales <span class="citation" data-cites="11_Cahuc2014">(<a href="01-tema-a1.html#ref-11_Cahuc2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, cap. 1</a>)</span>.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>La intuición es que un cambio pequeño y pasajero del salario apenas modifica lo que el individuo puede gastar a lo largo de su vida, de modo que solo cambia el momento en que le conviene trabajar. Por eso la elasticidad de Frisch es la mayor de las tres que se distinguen en la literatura, por encima de la hicksiana y de la marshalliana, <span class="math inline">\(\varepsilon^{F}\geq\varepsilon^{H}\geq\varepsilon^{M}\)</span>, que sí incorporan el efecto renta <span class="citation" data-cites="11_Cahuc2014">(<a href="01-tema-a1.html#ref-11_Cahuc2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, cap. 1</a>)</span>. Debe su nombre a Ragnar Frisch, que estudió las demandas con utilidad marginal de la renta constante.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>La intuición es que formarse supone renunciar hoy a renta, por lo que cuestan los estudios y por el salario que se deja de ganar mientras se estudia, a cambio de cobrar más durante el resto de la vida laboral.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>Por ejemplo, las consultoras como Deloitte aplican el modelo de capital humano específico al invertir intensivamente en la formación de sus empleados. La capacitación en metodologías internas y el conocimiento profundo de los clientes son activos que no son transferibles a otra firma. A cambio, la empresa paga un salario inicial más bajo que el que el empleado podría ganar, lo que equivale a que este financie parte de su formación, y luego lo compensa con un salario creciente y una carrera profesional atractiva. Esta dependencia mutua retiene tanto a la empresa como al empleado, reduciendo la rotación y asegurando el retorno de la inversión para ambas partes.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Durante la formación, el trabajador cobra menos de lo que ganaría en otra empresa, pero más de lo que produce mientras se forma, de modo que cada parte paga una porción del coste. Una vez completada la formación, la empresa le sube el salario por encima de lo que podría ganar fuera, pero por debajo de su nueva productividad marginal, lo que reparte los rendimientos: al trabajador no le interesa irse y a la empresa no le interesa despedirlo.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>Los agentes deciden formarse en la primera etapa de su vida en función de los rendimientos esperados. Ello permite comprender por qué durante el auge económico en España la tasa de abandono escolar era tan alta, por la baja prima salarial de la educación, y por qué aumentó la formación cuando estalló la crisis, con una alta tasa de desempleo, especialmente para los individuos con baja formación.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>En el primer tramo estarían las donaciones de los padres y las becas, de coste nulo; después, los préstamos y donaciones en condiciones favorables y los recursos propios; y, por último, un tramo siempre creciente de préstamos comerciales.</p>
+<p>Un caso muy aplicable a este modelo es el de los préstamos universitarios en Estados Unidos, mientras que en España lo es menos por el peso de las universidades públicas.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>La crítica más importante es que parece muy simplista suponer que, una vez controlada la experiencia, todas las diferencias salariales se deben únicamente a las diferencias en formación. Por ejemplo, no logra explicar la discriminación salarial entre hombres y mujeres.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>David Card y Joshua Angrist compartieron con Guido Imbens el Premio Nobel de Economía de 2021 por sus aportaciones a este enfoque.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>Las restricciones de liquidez pueden hacer que individuos que a priori decidirían formarse no lo acaben haciendo. Además, la educación tiene externalidades positivas, por lo que su rendimiento social es superior al privado: los individuos con más educación tienen una menor tasa de criminalidad, incrementan la productividad agregada de las empresas y muestran comportamientos más cívicos. Ello implica que la decisión privada de educarse sea subóptima en términos de Pareto, lo que justificaría la subvención en sí misma.<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./10-tema-a10.html" class="pagination-link" aria-label="Teoría de la competencia monopolística">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./12-tema-a12-pendiente.html" class="pagination-link" aria-label="Teorías microeconómicas del mercado de trabajo (II)">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

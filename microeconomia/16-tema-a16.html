@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Cómo convertir preferencias individuales en decisiones colectivas: el teorema de imposibilidad de Arrow, las funciones de bienestar social y las reglas de votación.">
+
+<title>Tema A16. Teoría de la elección colectiva | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./17-tema-a17.html" rel="next">
+<link href="./15-tema-a15.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A16. Teoría de la elección colectiva | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Cómo convertir preferencias individuales en decisiones colectivas: el teorema de imposibilidad de Arrow, las funciones de bienestar social y las reglas de votación.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A16. Teoría de la elección colectiva | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Cómo convertir preferencias individuales en decisiones colectivas: el teorema de imposibilidad de Arrow, las funciones de bienestar social y las reglas de votación.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A16. Economía del bienestar (III): teoría de la elección colectiva. El teorema de imposibilidad de Arrow. Funciones de bienestar social, reglas de votación y otros desarrollos posteriores.",
+ "alternateName": "Teoría de la elección colectiva",
+ "description": "Cómo convertir preferencias individuales en decisiones colectivas: el teorema de imposibilidad de Arrow, las funciones de bienestar social y las reglas de votación.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/16-tema-a16.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./16-tema-a16.html"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">16.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#el-problema-de-la-elección-colectiva" id="toc-el-problema-de-la-elección-colectiva" class="nav-link" data-scroll-target="#el-problema-de-la-elección-colectiva"><span class="header-section-number">16.2</span> El problema de la Elección Colectiva <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></a></li>
+  <li><a href="#criterios-que-debe-cumplir-la-regla-de-la-elección-colectiva" id="toc-criterios-que-debe-cumplir-la-regla-de-la-elección-colectiva" class="nav-link" data-scroll-target="#criterios-que-debe-cumplir-la-regla-de-la-elección-colectiva"><span class="header-section-number">16.3</span> Criterios que debe cumplir la Regla de la Elección Colectiva <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#el-teorema-de-imposibilidad-de-arrow" id="toc-el-teorema-de-imposibilidad-de-arrow" class="nav-link" data-scroll-target="#el-teorema-de-imposibilidad-de-arrow"><span class="header-section-number">16.4</span> El Teorema de Imposibilidad de Arrow <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#elección-mediante-votación" id="toc-elección-mediante-votación" class="nav-link" data-scroll-target="#elección-mediante-votación"><span class="header-section-number">16.5</span> Elección mediante votación <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="14 minutos">14'</span></a>
+  <ul class="collapse">
+  <li><a href="#democracia-directa" id="toc-democracia-directa" class="nav-link" data-scroll-target="#democracia-directa">Democracia Directa</a></li>
+  <li><a href="#democracia-representativa" id="toc-democracia-representativa" class="nav-link" data-scroll-target="#democracia-representativa">Democracia Representativa</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">16.6</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-el-modelo-de-salop-como-extensión-de-downs-hotelling-más-de-dos-partidos" id="toc-a.1.-el-modelo-de-salop-como-extensión-de-downs-hotelling-más-de-dos-partidos" class="nav-link" data-scroll-target="#a.1.-el-modelo-de-salop-como-extensión-de-downs-hotelling-más-de-dos-partidos">16.A.1.&nbsp;&nbsp;El modelo de Salop como extensión de Downs-Hotelling: más de dos partidos</a></li>
+  <li><a href="#a.2.-la-paradoja-liberal-de-amartya-sen" id="toc-a.2.-la-paradoja-liberal-de-amartya-sen" class="nav-link" data-scroll-target="#a.2.-la-paradoja-liberal-de-amartya-sen">16.A.2.&nbsp;&nbsp;La paradoja liberal de Amartya Sen</a></li>
+  <li><a href="#a.3.-análisis-coste-beneficio" id="toc-a.3.-análisis-coste-beneficio" class="nav-link" data-scroll-target="#a.3.-análisis-coste-beneficio">16.A.3.&nbsp;&nbsp;Análisis coste-beneficio</a></li>
+  <li><a href="#a.4.-la-tiranía-de-la-mayoría-y-la-tiranía-de-la-minoría-el-diseño-de-las-reglas-de-votación" id="toc-a.4.-la-tiranía-de-la-mayoría-y-la-tiranía-de-la-minoría-el-diseño-de-las-reglas-de-votación" class="nav-link" data-scroll-target="#a.4.-la-tiranía-de-la-mayoría-y-la-tiranía-de-la-minoría-el-diseño-de-las-reglas-de-votación">16.A.4.&nbsp;&nbsp;La tiranía de la mayoría y la tiranía de la minoría: el diseño de las reglas de votación</a></li>
+  <li><a href="#a.5.-funciones-de-elección-social-no-manipulables-en-dominios-restringidos" id="toc-a.5.-funciones-de-elección-social-no-manipulables-en-dominios-restringidos" class="nav-link" data-scroll-target="#a.5.-funciones-de-elección-social-no-manipulables-en-dominios-restringidos">16.A.5.&nbsp;&nbsp;Funciones de elección social no manipulables en dominios restringidos</a></li>
+  <li><a href="#a.6.-el-mecanismo-de-vickrey-clarke-groves-y-la-revelación-de-preferencias" id="toc-a.6.-el-mecanismo-de-vickrey-clarke-groves-y-la-revelación-de-preferencias" class="nav-link" data-scroll-target="#a.6.-el-mecanismo-de-vickrey-clarke-groves-y-la-revelación-de-preferencias">16.A.6.&nbsp;&nbsp;El mecanismo de Vickrey-Clarke-Groves y la revelación de preferencias</a></li>
+  <li><a href="#a.7.-funciones-de-bienestar-social-tipo-ces-e-índices-de-desigualdad" id="toc-a.7.-funciones-de-bienestar-social-tipo-ces-e-índices-de-desigualdad" class="nav-link" data-scroll-target="#a.7.-funciones-de-bienestar-social-tipo-ces-e-índices-de-desigualdad">16.A.7.&nbsp;&nbsp;Funciones de bienestar social tipo CES e índices de desigualdad</a></li>
+  <li><a href="#a.8.-la-ventana-de-overton-cómo-cambia-lo-políticamente-posible" id="toc-a.8.-la-ventana-de-overton-cómo-cambia-lo-políticamente-posible" class="nav-link" data-scroll-target="#a.8.-la-ventana-de-overton-cómo-cambia-lo-políticamente-posible">16.A.8.&nbsp;&nbsp;La ventana de Overton: cómo cambia lo políticamente posible</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Economía del bienestar (III): teoría de la elección colectiva. El teorema de imposibilidad de Arrow. Funciones de bienestar social, reglas de votación y otros desarrollos posteriores.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="16.1">
+<h2 data-number="16.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">16.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En el blog "Nada es Gratis", el profesor José Luis Ferreira relató cómo los participantes del 15-M, al organizar sus asambleas, descubrieron por sí mismos los desafíos de la toma de decisiones colectiva. Sin saberlo, se enfrentaban a la misma complejidad que Kenneth Arrow abordó en su trabajo: la aparente sencillez del voto esconde una profunda complejidad.</p>
+<p>Así, el Sector Público se enfrenta a un problema central: cómo agregar las diferentes preferencias individuales en una decisión colectiva coherente. El análisis de cómo se realiza esta agregación y de las propiedades de los diferentes mecanismos que la hacen posible se denomina Teoría de la Elección Colectiva. Dentro de este marco, exploraremos los mecanismos de decisión del Sector Público, profundizando en las reglas de votación que traducen los votos en resultados, en la elección directa como un reflejo de la voluntad popular, y en la democracia representativa, que delega el poder de decisión en nuestros representantes.</p>
+<p>Por consiguiente, el objetivo de esta exposición será estudiar la Teoría de la Elección Colectiva, es decir, si se puede encontrar una buena regla de Elección Colectiva y cuáles son sus efectos a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>El problema de la Elección Colectiva.</p></li>
+<li><p>Criterios que debe cumplir la Regla de la Elección Colectiva.</p></li>
+<li><p>Teorema de Imposibilidad de Arrow.</p></li>
+<li><p>Elección mediante votación, donde se analizará la democracia directa y la democracia representativa.</p></li>
+</ol>
+</section>
+<section id="el-problema-de-la-elección-colectiva" class="level2" data-number="16.2">
+<h2 data-number="16.2" class="anchored" data-anchor-id="el-problema-de-la-elección-colectiva"><span class="header-section-number">16.2</span> El problema de la Elección Colectiva <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="2 minutos">2'</span></h2>
+<p>Comenzando con el problema de la elección colectiva, es aquel que estudia la cuestión de la toma de decisiones del sector público analizando si es posible formular una regla de elección colectiva que permita agregar las preferencias individuales, respetándolas y cumpliendo unos requisitos de racionalidad y eficiencia.</p>
+<p>Así, una regla de elección colectiva es un mecanismo que permite agregar preferencias individuales para conseguir una preferencia social, siendo los más utilizados:</p>
+<ul>
+<li><p>Las reglas de votación, que se basan en la ordenación de preferencias individuales.</p></li>
+<li><p>Funciones de Bienestar Social, que ponderan la intensidad de preferencias individuales en una función de utilidad.</p></li>
+</ul>
+<p>La función de bienestar social fue planteada inicialmente por Bergson&nbsp;<span class="citation" data-cites="16_Bergson1938">(<a href="01-tema-a1.html#ref-16_Bergson1938" role="doc-biblioref">1938</a>)</span> y Samuelson&nbsp;<span class="citation" data-cites="16_Samuelson1947">(<a href="01-tema-a1.html#ref-16_Samuelson1947" role="doc-biblioref">1947</a>)</span> y se define como una función&nbsp;<span class="math inline">\(W\)</span> que asigna un índice de utilidad a un vector de variables, <span class="math inline">\(\left(Z_{1},Z_{2,}\ldots,Z_{n}\right)\)</span>, que pueden afectar al bienestar social: <span id="eq-a-16-1"><span class="math display">\[W=W\left(Z_{1},Z_{2},\ldots,Z_{n}\right) \tag{16.1}\]</span></span> donde las variables son índices de utilidad, de modo que la función de bienestar social permite elegir entre óptimos de Pareto. De esta manera, la función de bienestar social asigna un índice de utilidad social a cada vector de índices de utilidad.</p>
+<p>La forma de la función de bienestar social –concavidad– reflejará las distintas preferencias sobre la distribución de la renta:</p>
+<ul>
+<li><p>La función de bienestar utilitarista, desarrollada por Bentham y Harsanyi&nbsp;<span class="citation" data-cites="16_Harsanyi1955 16_Bentham1789">(<a href="01-tema-a1.html#ref-16_Harsanyi1955" role="doc-biblioref">1955</a>; <a href="01-tema-a1.html#ref-16_Bentham1789" role="doc-biblioref">1789</a>)</span>, queda definida como la suma lineal de utilidades donde se valora socialmente de forma idéntica la valoración de utilidad de cualquier individuo. No se preocupa por la igualdad –aversión a la desigualdad igual a 0 o agentes neutrales ante el riesgo–, siendo las curvas de indiferencia social rectas con pendiente -1.</p></li>
+<li><p>La función de bienestar social maxi-min, desarrollada por Rawls<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>&nbsp;<span class="citation" data-cites="16_Rawls1971">(<a href="01-tema-a1.html#ref-16_Rawls1971" role="doc-biblioref">1971</a>)</span>, donde el criterio maximin implica que el bienestar social es igual a la utilidad del individuo con menor utilidad. Según Rawls, cuando los agentes actúan bajo el “velo de la ignorancia”, es decir, desconocen ex ante su lugar en la sociedad, se protegerán frente al peor resultado posible, como si tuvieran una aversión infinita al riesgo, y por eso seguirán esta regla<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>. Así, las curvas de indiferencia social tendrán forma de L –tipo Leontief– y sus vértices se sitúan en la bisectriz, ya que el bienestar social solo aumenta si mejora la utilidad del individuo peor situado: aumentar la del mejor situado, sin mejorar la del otro, no añade bienestar.</p></li>
+<li><p>La función de bienestar social de Bernoulli y Nash&nbsp;<span class="citation" data-cites="16_Bernoulli1738 16_Nash1950">(<a href="01-tema-a1.html#ref-16_Bernoulli1738" role="doc-biblioref">1738</a>; <a href="01-tema-a1.html#ref-16_Nash1950" role="doc-biblioref">1950</a>)</span>, que toma como referencia una especificación tipo Cobb-Douglas, el producto de las utilidades individuales, con curvas de indiferencia social convexas. De esta forma, se pasa de la aversión infinita a la desigualdad de Rawls a una aversión finita. Ahora se está dispuesto a intercambiar pérdidas de utilidad de los más favorecidos a cambio de ganancias de los más desfavorecidos hasta un límite.</p></li>
+</ul>
+<div id="fig-a-16-tipos-de-fbs" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Tipos de Función de Bienestar Social">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-16-tipos-de-fbs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.1: Tipos de Función de Bienestar Social
+</figcaption>
+<div aria-describedby="fig-a-16-tipos-de-fbs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-tipos-de-fbs.svg" class="img-fluid figure-img" alt="Tipos de Función de Bienestar Social">
+</div>
+</figure>
+</div>
+<p>Sin embargo, la Función de Bienestar Social plantea limitaciones al realizar comparaciones interpersonales de utilidad y tratarse de un enfoque cardinal<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>.</p>
+<p>Por ello, buena parte de la Teoría de la Elección Colectiva se ha centrado en el análisis de las Reglas de Votación, tanto porque evitan el debate sobre la posibilidad o no de comparar utilidades, como por el hecho de que en las sociedades democráticas las decisiones se toman a través de votación.</p>
+</section>
+<section id="criterios-que-debe-cumplir-la-regla-de-la-elección-colectiva" class="level2" data-number="16.3">
+<h2 data-number="16.3" class="anchored" data-anchor-id="criterios-que-debe-cumplir-la-regla-de-la-elección-colectiva"><span class="header-section-number">16.3</span> Criterios que debe cumplir la Regla de la Elección Colectiva <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En sociedades democráticas y racionales, se espera que las reglas de elección colectiva cumplan unos determinados criterios de coherencia respecto a las preferencias de los individuos. El Premio Nobel Kenneth Arrow <span class="citation" data-cites="16_Arrow1951">(<a href="01-tema-a1.html#ref-16_Arrow1951" role="doc-biblioref">Arrow 1951</a>)</span>, estableció 5 propiedades básicas deseables que debería cumplir cualquier Regla de Elección Colectiva:</p>
+<ol type="1">
+<li><p>Dominio no restringido o universalidad (U), es decir, la regla debe estar definida para cualquier combinación de preferencias individuales.</p></li>
+<li><p>Racionalidad (R), es decir, la preferencia social que genera la regla es transitiva: dadas 3 alternativas, <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span>, y <span class="math inline">\(C\)</span>, si <span class="math inline">\(A\succ B\)</span> y <span class="math inline">\(B\succ C\)</span>, entonces <span class="math inline">\(A\succ C\)</span>. Implica que el resultado de la regla de elección social tiene coherencia lógica, evitando votos cíclicos.</p></li>
+<li><p>Criterio de Pareto (optimalidad débil, P), es decir, si todos prefieren individualmente una alternativa <span class="math inline">\(A\)</span> a otra <span class="math inline">\(B\)</span> entonces socialmente también debe ser así, asegurando la eficiencia<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>.</p></li>
+<li><p>Ausencia de Dictador (AD), es decir, no debe existir ningún individuo cuya preferencia estricta entre dos alternativas se convierta siempre en la preferencia social, sean cuales sean las preferencias de los demás. Esto implica que nadie controla la regla de elección colectiva</p></li>
+<li><p>Independencia de las Alternativas Irrelevantes (IAI), es decir, la elección entre 2 alternativas debe depender solo de las preferencias individuales entre ambas alternativas y no de la posición relativa frente a terceras<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>. Este axioma impide utilizar información sobre la intensidad de las preferencias, de forma que la regla solo puede basarse en cómo ordena cada individuo las dos alternativas en juego.</p></li>
+</ol>
+</section>
+<section id="el-teorema-de-imposibilidad-de-arrow" class="level2" data-number="16.4">
+<h2 data-number="16.4" class="anchored" data-anchor-id="el-teorema-de-imposibilidad-de-arrow"><span class="header-section-number">16.4</span> El Teorema de Imposibilidad de Arrow <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En base a las anteriores propiedades, el propio Arrow <span class="citation" data-cites="16_Arrow1950 16_Arrow1951">(<a href="01-tema-a1.html#ref-16_Arrow1950" role="doc-biblioref">1950</a>, <a href="01-tema-a1.html#ref-16_Arrow1951" role="doc-biblioref">1951</a>)</span> planteó el teorema de imposibilidad, afirmando que, si existen al menos 3 alternativas y el número de individuos es finito, no existe ninguna regla de elección colectiva que cumpla simultáneamente los 5 axiomas<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>.</p>
+<p>Por consiguiente, será imposible encontrar una Regla de Elección Colectiva que utilizando información exclusivamente ordinal acerca de las preferencias individuales se ajuste a unos principios mínimos de coherencia y respeto a preferencias individuales<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>. Por lo tanto, si se utiliza una regla de elección colectiva, se ha de renunciar a alguna de estas condiciones<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a><a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>.</p>
+<p>Sin embargo, la posibilidad de renunciar a R,P y AD parece poco aceptable en sociedades democráticas, por lo que la Economía Pública se ha centrado en los sistemas de elección colectiva que renuncian a la U, como la votación mayoritaria, o la IAI, como la función de bienestar social.</p>
+</section>
+<section id="elección-mediante-votación" class="level2" data-number="16.5">
+<h2 data-number="16.5" class="anchored" data-anchor-id="elección-mediante-votación"><span class="header-section-number">16.5</span> Elección mediante votación <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="14 minutos">14'</span></h2>
+<p>Como se ha mencionado, buena parte de las teorías de Elección Social se basan en las reglas de votación para evitar comparar utilidades y porque, normalmente, se utilizan en sociedades democráticas. A continuación, se analizarán las reglas de democracia directa y democracia representativa.</p>
+<section id="democracia-directa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="democracia-directa">Democracia Directa</h3>
+<p>Respecto a la democracia directa –donde las decisiones públicas se adoptan por votación entre los individuos<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>–, aunque casi no se aplica su estudio es importante ya que:</p>
+<ol type="1">
+<li><p>Revela los problemas inherentes a cualquier mecanismo de votación.</p></li>
+<li><p>Es aplicable en circunstancias económicas en las que el número de votantes es reducido, por ejemplo, votaciones en un Consejo de Ministros, en un Parlamento o en el seno del consejo directivo de una empresa.</p></li>
+<li><p>Bajo ciertas condiciones, lleva a las mismas decisiones de provisión pública que la Democracia Representativa<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a>.</p></li>
+</ol>
+<p>En Democracia Directa se parte de suponer una serie de preferencias individuales que tratan de traducirse en decisiones presupuestarias a través de un proceso regido por unas reglas de votación previamente establecidas. Se supone un individuo, un voto, y se analizan los aspectos de las reglas de votación: la distribución de votos y los criterios que determinan la decisión del voto ganador.</p>
+<p>A continuación, se analizarán los principales criterios para determinar el voto ganador.</p>
+<section id="regla-de-la-unanimidad" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="regla-de-la-unanimidad">Regla de la Unanimidad</h4>
+<p>En primer lugar, el economista sueco Knut Wicksell <span class="citation" data-cites="16_Wicksell1896">(<a href="01-tema-a1.html#ref-16_Wicksell1896" role="doc-biblioref">Wicksell 1896</a>)</span> propone la regla de la unanimidad que exige el acuerdo total de todos los individuos para aprobar una decisión. Wicksell la diseñó para resolver el problema de la financiación de los bienes públicos de forma eficiente.</p>
+<p>Ventajas de la Regla</p>
+<ul>
+<li><p>Mejora de Pareto: solo se aprueban las propuestas que benefician al menos a una persona sin perjudicar a nadie, porque cualquier perjudicado podría vetarlas. Si se siguen aprobando propuestas mientras quede alguna mejora posible, se alcanza un óptimo de Pareto.</p></li>
+<li><p>Financiación consensuada: el coste del bien público se financia con impuestos que todos los individuos aceptan voluntariamente. Por ejemplo, todos los vecinos tendrían que acordar no solo construir una nueva acera, sino también la fórmula exacta para repartir el coste entre ellos.</p></li>
+</ul>
+<p>Desventajas de la Regla Lentitud del Proceso:</p>
+<ul>
+<li><p>La negociación es extremadamente larga y compleja, haciendo que sea muy difícil, e incluso imposible, llegar a un acuerdo.</p></li>
+<li><p>Comportamientos Estratégicos: La regla puede generar tácticas manipuladoras, especialmente si el poder de negociación no es igual entre las partes:</p>
+<ul>
+<li><p>Tiranía de la minoría (Baumol): Una minoría con poder de veto puede bloquear cualquier propuesta de la mayoría hasta conseguir concesiones que les beneficien de forma desproporcionada. Por ejemplo, una pequeña comunidad que no quiere pagar impuestos para un hospital podría vetar la construcción a menos que el gobierno les ofrezca algo a cambio, como la exención del pago.</p></li>
+<li><p>Tiranía de la mayoría (Wicksell): La mayoría podría presionar a la minoría para que acepte una propuesta que no les beneficia, amenazando con negarle otros bienes o servicios. Por ejemplo, una mayoría que quiere construir una autopista podría amenazar a una minoría que se opone a ella con dejarla fuera del acceso a otros servicios públicos.</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="regla-de-la-mayoría-óptima-en-cada-elección" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="regla-de-la-mayoría-óptima-en-cada-elección">Regla de la mayoría óptima en cada elección</h4>
+<p>Debido a las limitaciones del criterio de unanimidad, <span class="citation" data-cites="16_BuchananTullock1962">Buchanan y Tullock (<a href="01-tema-a1.html#ref-16_BuchananTullock1962" role="doc-biblioref">1962</a>)</span> plantean una mayoría óptima para cada decisión. Según estos autores, existiría una mayoría óptima en la elección que pondera 2 tipos de costes:</p>
+<ul>
+<li><p>Costes Externos, <span class="math inline">\(CE\)</span>, que se producen cuando la alternativa elegida va en contra de los intereses de los individuos. Por lo tanto, cuanto mayor es el porcentaje de votos requeridos para que una alternativa sea vencedora, menores son los costes externos.</p></li>
+<li><p>Costes de Decisión, CD, surgen por la paralización de las decisiones hasta que se alcanza una mayoría y, por tanto, son más elevados cuanto mayor es el porcentaje de votos requeridos.</p></li>
+</ul>
+<p>Gráficamente, en un plano de costes y porcentajes de mayoría requerida como el de la <a href="#fig-15-1-mayoria-optima-en" class="quarto-xref">Figura&nbsp;<span>16.2</span></a>, los <span class="math inline">\(CE\)</span> serán decrecientes y los <span class="math inline">\(CD\)</span> serán crecientes. Por lo tanto, los Costes Totales , <span class="math inline">\(CT\)</span>, que serán la suma de ambos, tendrá forma de U. En el mínimo de los <span class="math inline">\(CT\)</span>, <span class="math inline">\(M^{*}\)</span>, se encuentra la mayoría óptima, que no tiene por qué coincidir con el 50% de la población.</p>
+<div id="fig-15-1-mayoria-optima-en" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Regla de la mayoría óptima en cada elección">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-15-1-mayoria-optima-en-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.2: Regla de la mayoría óptima en cada elección
+</figcaption>
+<div aria-describedby="fig-15-1-mayoria-optima-en-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-regla-de-la-mayoria-optima.svg" class="img-fluid figure-img" alt="Regla de la mayoría óptima en cada elección">
+</div>
+</figure>
+</div>
+<p>Sin embargo, para este criterio también se plantean una serie de problemas prácticos a la hora de fijar la mayoría óptima, ya que se deberá valorar los costes de transacción y, además, la estructura de costes será diferente para cada decisión. Por ello, la regla predominante es la Regla de la Mayoría Simple.</p>
+</section>
+<section id="regla-de-la-mayoría-simple" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="regla-de-la-mayoría-simple">Regla de la Mayoría Simple</h4>
+<p>La Regla de la Mayoría Simple establece que una alternativa es elegida cuando recibe la mitad más 1 de los votos cuando existan 2 alternativas. Cuenta con grandes ventajas ya que:</p>
+<ul>
+<li><p>Evita largas deliberaciones, por lo que los costes de decisión son muy bajos.</p></li>
+<li><p>Es de fácil comprensión y goza de gran legitimidad entre las sociedades democráticas.</p></li>
+</ul>
+<p>Por ello, la mayoría simple constituye el mecanismo de referencia para la elección directa. Sin embargo, no está exenta de inconvenientes relacionados con los criterios de Arrow:</p>
+<ul>
+<li><p>No garantiza una provisión eficiente, ya que no revela la intensidad de las preferencias. Esto no significa que incumpla el criterio de Pareto de Arrow, que sí cumple, porque si todos prefieren una alternativa esta gana la votación, sino que el nivel elegido puede no ser un óptimo de Pareto.</p></li>
+<li><p>Incentiva escasamente a la participación, dado que la posibilidad de que un voto sea decisivo es muy reducida.</p></li>
+<li><p>Tiene propiedades redistributivas que pueden convertirlo en un instrumento de explotación de la minoría por la mayoría.</p></li>
+<li><p>Posible incoherencia de resultados, que se explica a través de la paradoja de <span class="citation" data-cites="16_Condorcet1785">Condorcet (<a href="01-tema-a1.html#ref-16_Condorcet1785" role="doc-biblioref">1785</a>)</span>, es decir, ninguna alternativa resulta ganadora a causa de que cada alternativa puede ser batida por otra. Entonces se habla de mayorías cíclicas.</p></li>
+</ul>
+<p><strong>Incoherencia de resultados</strong></p>
+<p>Para explicar este último punto, si se plantean una situación en la que existen 3 votantes, <span class="math inline">\(V_{1}\)</span>, <span class="math inline">\(V_{2}\)</span> y <span class="math inline">\(V_{3}\)</span>, y 3 alternativas sobre niveles de gasto público, <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span>, y <span class="math inline">\(C\)</span>, y se establecen las siguientes preferencias: <span class="math display">\[\begin{align*}
+V_{1}: &amp; A\succ B\succ C\\
+V_{2}: &amp; B\succ C\succ A\\
+V_{3}: &amp; C\succ A\succ B
+\end{align*}\]</span> votando por pares de alternativas.</p>
+<p>Esto se puede observar en un plano de intensidad de preferencias y niveles de gasto público como el de la <a href="#fig-16-paradoja-de-condorcet" class="quarto-xref">Figura&nbsp;<span>16.3</span></a>.</p>
+<div id="fig-16-paradoja-de-condorcet" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Paradoja de Condorcet">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-paradoja-de-condorcet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.3: Paradoja de Condorcet
+</figcaption>
+<div aria-describedby="fig-16-paradoja-de-condorcet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-paradoja-de-condorcet.svg" class="img-fluid figure-img" alt="Paradoja de Condorcet">
+</div>
+</figure>
+</div>
+<p>Para adoptar una decisión social, se compararán las preferencias por pares:</p>
+<ul>
+<li><p>Entre <span class="math inline">\(A\)</span> y <span class="math inline">\(B\)</span>, se elige la alternativa <span class="math inline">\(A\)</span>, preferida por <span class="math inline">\(V_{1}\)</span> y <span class="math inline">\(V_{3}\)</span>.</p></li>
+<li><p>Entre <span class="math inline">\(B\)</span> y <span class="math inline">\(C\)</span>, se elige la alternativa <span class="math inline">\(B\)</span>, preferida por <span class="math inline">\(V_{1}\)</span> y <span class="math inline">\(V_{2}\)</span>.</p></li>
+<li><p>Entre <span class="math inline">\(A\)</span> y <span class="math inline">\(C\)</span>, se elige la alternativa <span class="math inline">\(C\)</span>, preferida por <span class="math inline">\(V_{2}\)</span> y <span class="math inline">\(V_{3}\)</span>.</p></li>
+</ul>
+<p>Así, aunque cada votante tiene una ordenación transitiva, la preferencia social resultante es intransitiva (<span class="math inline">\(A\succ B\)</span>, <span class="math inline">\(B\succ C\)</span> y <span class="math inline">\(C\succ A\)</span>), por lo que ninguna sale ganadora, violando así el supuesto de racionalidad de Arrow<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>.</p>
+<p>Esto ocurre porque el votante 3, <span class="math inline">\(V_{3}\)</span>, tiene preferencias multimodales (es decir, tiene dos máximos relativos, <span class="math inline">\(A\)</span> y <span class="math inline">\(C\)</span>, cuando las alternativas se ordenan según el nivel de gasto). La ciclicidad se evita, por ejemplo, cuando todos los individuos tienen preferencias idénticas o cuando todas las preferencias son unimodales. En este caso, en cambio, existe ciclicidad y no se verifica la transitividad social, dando lugar a la paradoja de Condorcet.</p>
+<p>Aun así, existen vías para evitar la paradoja como:</p>
+<ol type="1">
+<li><p>Todas las preferencias son idénticas. Sin embargo, en ese caso no sería necesaria una regla de elección colectiva.</p></li>
+<li><p>Eliminar las alternativas que han sido rechazadas alguna vez. Sin embargo, este método puede resultar en problemas de manipulación de la agenda por parte del seleccionador del orden de votación: el que diseña el orden de votación de las alternativas puede lograr el resultado final que desea, de modo que, en la práctica, actúa como un dictador aunque la regla no sea formalmente dictatorial.</p></li>
+<li><p>Las preferencias son unimodales (Black), lo que implica renunciar al axioma de universalidad.<br>
+Nos vamos a centrar en esta opción. Además, debemos considerar preferencias unidimensionales (es decir, se decide solo sobre una dimensión, por ejemplo, el nivel de gasto). Si son multidimensionales también pueden llevar a ciclos, comparación de preferencias, etc.</p></li>
+</ol>
+<p>En el ejemplo anterior, para hacer las preferencias unimodales, deberíamos modificar las preferencias del individuo 3: <span class="math inline">\(C\succ B\succ A\)</span>, de manera que la alternativa ganadora sería la <span class="math inline">\(B\)</span>, y en el gráfico solo existiría un solo pico –máximo– para cada individuo tal y como se observa en la <a href="#fig-16-preferencias-unimodales" class="quarto-xref">Figura&nbsp;<span>16.4</span></a>.</p>
+<div id="fig-16-preferencias-unimodales" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Preferencias unimodales">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-preferencias-unimodales-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.4: Preferencias unimodales
+</figcaption>
+<div aria-describedby="fig-16-preferencias-unimodales-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-preferencias-unimodales.svg" class="img-fluid figure-img" alt="Preferencias unimodales">
+</div>
+</figure>
+</div>
+<p>Pero, ¿hasta qué punto es restrictivo renunciar a la universalidad exigiendo preferencias unimodales? No es demasiado restrictivo exigir la unimodalidad, pues ésta implica que, a medida que un individuo se aleja de su opción preferida, debería estar siempre peor, de manera que las preferencias se modulen y no salten de extremo a extremo.</p>
+<p>Así, por ejemplo, si describimos las preferencias de un individuo sobre sanidad pública, parece lógico que, si su opción preferida es mucho gasto público, su siguiente opción preferida sea gasto público medio, y su última opción sea gasto público nulo.</p>
+<p>En definitiva, abandonar la condición de universalidad implica un cierto sacrificio (pues la regla deja de funcionar para algunas combinaciones de preferencias individuales), pero este sacrificio se juzga menos importante que el que resulta del incumplimiento de la condición de transitividad (es decir, la no existencia de una solución única).</p>
+<section id="teorema-del-votante-mediano-de" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="teorema-del-votante-mediano-de">Teorema del votante mediano de <span class="citation" data-cites="16_Black1948">Black (<a href="01-tema-a1.html#ref-16_Black1948" role="doc-biblioref">1948</a>)</span></h6>
+<p>La principal implicación de imponer unimodalidad es que la elección vendrá determinada por las preferencias del votante mediano, es decir, aquel cuya alternativa preferida se encuentra en la mediana de las alternativas más preferidas<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>, que en el caso anterior se daría sobre la opción <span class="math inline">\(B\)</span>.</p>
+<p>Este hecho se aprecia en una votación sobre niveles de gasto público, como veremos a continuación.</p>
+<p><strong>Provisión no eficiente</strong></p>
+<p>Se supone que los <span class="math inline">\(n\)</span> individuos con preferencias unimodales se preocupan únicamente por el nivel de gasto y que tiene las características de bien público, el cual es financiado por impuestos de cuantía alícuota. El nivel de gasto se determina por la regla de votación mayoritaria.</p>
+<p>Así, cada consumidor determinará su nivel de gasto público preferido maximizando su utilidad <span id="eq-a-16-2"><span class="math display">\[\max\quad U\left(Y_{d},G\right) \tag{16.2}\]</span></span> sujeto a su restricción presupuestaria <span id="eq-a-16-3"><span class="math display">\[Y_{d}=Y-T\left(Y_{i},G\right) \tag{16.3}\]</span></span></p>
+<p>Por tanto, tal y como se observa en la <a href="#fig-16-eleccion-del-bien-publico-por-parte-de-los-agentes" class="quarto-xref">Figura&nbsp;<span>16.5</span></a>:</p>
+<ul>
+<li><p>Cada consumidor determinará su nivel de gasto público preferido maximizando su utilidad sujeto a su restricción presupuestaria, gráficamente en el punto de tangencia de la curva de indiferencia con la restricción presupuestaria.</p></li>
+<li><p>El nivel óptimo de gasto vendrá dado por <span class="math inline">\(G^{*}\)</span>.</p></li>
+<li><p>Por consiguiente, la elección del bien público <span class="math inline">\(G\)</span> por parte de los agentes, <span class="math inline">\(V\left(G\right)\)</span>, depende de sus gustos, el nivel de renta y los impuestos (precio del bien público G).</p></li>
+</ul>
+<div id="fig-16-eleccion-del-bien-publico-por-parte-de-los-agentes" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Elección del bien público por parte de los agentes">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-eleccion-del-bien-publico-por-parte-de-los-agentes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.5: Elección del bien público por parte de los agentes
+</figcaption>
+<div aria-describedby="fig-16-eleccion-del-bien-publico-por-parte-de-los-agentes-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-eleccion-de-g-por.svg" class="img-fluid figure-img" alt="Elección del bien público por parte de los agentes">
+</div>
+</figure>
+</div>
+<p>Llevando este resultado a una votación, gráficamente en un plano de preferencias y niveles de gasto como el de la <a href="#fig-16-votacion-sobre-el" class="quarto-xref">Figura&nbsp;<span>16.6</span></a>, se suponen 5 individuos y se ordenan los niveles de gastos preferidos por los votantes de mayor a menor, donde el votante mediano será aquel cuyo nivel de gasto preferido, <span class="math inline">\(G_{M}\)</span>, se encuentra en la mediana de la distribución de gastos óptimos.</p>
+<ul>
+<li><p>Si hay dos alternativas de gasto, <span class="math inline">\(G_{1}\)</span> y <span class="math inline">\(G_{M}\)</span>, votarán por la alternativa <span class="math inline">\(G_{M}\)</span>, tanto el votante mediano como los que están a su derecha, <span class="math inline">\(V_{4}\)</span> y <span class="math inline">\(V_{5}\)</span>, y algunos de los que están a su izquierda, <span class="math inline">\(V_{2}\)</span>.</p></li>
+<li><p>Ocurrirá lo mismo para la alternativa de gasto <span class="math inline">\(G_{2}\)</span>.</p></li>
+<li><p>Dicho de otra manera, el gasto preferido por el votante mediano es el preferido en una votación.</p></li>
+</ul>
+<div id="fig-16-votacion-sobre-el" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Votación sobre el nivel de gasto">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-votacion-sobre-el-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.6: Votación sobre el nivel de gasto
+</figcaption>
+<div aria-describedby="fig-16-votacion-sobre-el-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-votacion-sobre-gasto.svg" class="img-fluid figure-img" alt="Votación sobre el nivel de gasto">
+</div>
+</figure>
+</div>
+<p>Este es un resultado general de la votación mayoritaria: cuando los individuos tienen preferencias unimodales y se votan alternativas unidimensionales, el resultado de la votación coincidirá con la alternativa preferida por el votante mediano.</p>
+<p>Sin embargo, este resultado es válido si las alternativas son unidimensionales, es decir, solo se elige sobre el nivel de gasto, ya que como afirma <span class="citation" data-cites="16_Kramer1973">Kramer (<a href="01-tema-a1.html#ref-16_Kramer1973" role="doc-biblioref">1973</a>)</span> con alternativas multidimensionales volvería a aparecer el problema de la ciclicidad<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>.</p>
+</section>
+<section id="posible-ineficiencia-del-resultado" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="posible-ineficiencia-del-resultado">Posible ineficiencia del resultado</h6>
+<p>No obstante, aun habiendo superado el problema de la ciclicidad, la regla de la mayoría simple no revela la intensidad de las preferencias por lo que no es eficiente en el sentido de Pareto. Esta premisa se va a demostrar con el análisis de la eficiencia, donde el nivel de gasto preferido por el votante mediano no tiene por qué coincidir con el nivel eficiente de gasto.</p>
+<p>Gráficamente, en un plano de relaciones marginales de sustitución y transformación, <span class="math inline">\(RMS\)</span> y <span class="math inline">\(RMT\)</span>, y niveles de provisión de un bien público, <span class="math inline">\(G\)</span>, como el de la <a href="#fig-16-nivel-de-provision-ineficiente-de-gasto-publico" class="quarto-xref">Figura&nbsp;<span>16.7</span></a>, se van a representar</p>
+<ul>
+<li><p>Las diferentes relaciones marginales de sustitución, que representan las preferencias marginales de los individuos y</p></li>
+<li><p>La relación marginal de transformación, <span class="math inline">\(RMT\)</span>, que representa el coste marginal de producción, que se va a asumir constante por simplicidad.</p></li>
+</ul>
+<p>La regla de eficiencia de Samuelson&nbsp;<span class="citation" data-cites="16_Samuelson1954">(<a href="01-tema-a1.html#ref-16_Samuelson1954" role="doc-biblioref">1954</a>)</span> para la provisión de bienes públicos asegura que la suma de relaciones marginales de sustitución de los individuos, <span class="math inline">\(i\)</span>, debe coincidir con la relación marginal de transformación<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a>: <span id="eq-a-16-4"><span class="math display">\[\sum RMS_{i}=RMT\quad i=1,2,3 \tag{16.4}\]</span></span></p>
+<p>Sin embargo, el resultado de la votación no es independiente de la financiación del gasto público. Por lo tanto, asumiendo que la financiación del gasto público es a través de un impuesto de capitación, el nivel de impuesto que paga cada individuo, <span class="math inline">\(\tau_{i}\)</span>, será: <span id="eq-a-16-5"><span class="math display">\[\tau_{i}=\dfrac{G}{3}\cdot RMT \tag{16.5}\]</span></span> por lo tanto, para un individuo <span class="math inline">\(i\)</span> el nivel de gasto público <span class="math inline">\(G\)</span> preferido será aquel que iguale su relación marginal de sustitución al coste marginal que le supone una unidad más de gasto público<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a>, es decir: <span id="eq-a-16-6"><span class="math display">\[RMS_{i}=\dfrac{\partial\tau_{i}}{\partial G}=\dfrac{RMT}{3} \tag{16.6}\]</span></span></p>
+<p>Gráficamente, en <a href="#fig-16-nivel-de-provision-ineficiente-de-gasto-publico" class="quarto-xref">Figura&nbsp;<span>16.7</span></a>, si se representa la suma de la relaciones marginales de sustitución, <span class="math inline">\(\sum RMS_{i}\)</span>, el nivel de gasto óptimo se determinaría en el punto de intersección entre la <span class="math inline">\(RMT\)</span> y la suma de las <span class="math inline">\(RMS\)</span>, cumpliéndose así la condición de eficiencia de Samuelson. Por lo tanto, el nivel óptimo de gasto público sería <span class="math inline">\(G^{*}\)</span>.</p>
+<div id="fig-16-nivel-de-provision-ineficiente-de-gasto-publico" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Nivel de provisión ineficiente de gasto público">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-nivel-de-provision-ineficiente-de-gasto-publico-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.7: Nivel de provisión ineficiente de gasto público
+</figcaption>
+<div aria-describedby="fig-16-nivel-de-provision-ineficiente-de-gasto-publico-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-provision-ineficiente.svg" class="img-fluid figure-img" alt="Nivel de provisión ineficiente de gasto público">
+</div>
+</figure>
+</div>
+<p>Sin embargo, como se ha visto, a través de la regla de votación cada votante igualaría su <span class="math inline">\(RMS\)</span> a su parte del coste marginal, es decir, a <span class="math inline">\(\frac{RMT}{3}\)</span> como habría 3 votantes y el votante 2 es el votante mediano, el nivel de gasto público preferido sería igual al nivel de gasto público preferido por el votante mediano, <span class="math inline">\(G_{B}\)</span>, que sería menor que el gasto eficiente, <span class="math inline">\(G^{*}\)</span>, que era uno de los inconvenientes relacionados con los criterios de Arrow.</p>
+</section>
+<section id="la-intensidad-de-preferencias" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="la-intensidad-de-preferencias">La intensidad de preferencias</h6>
+<p>Esto se debe a que no se considera la intensidad de preferencias, que es la que determina el nivel óptimo de provisión de bien público:</p>
+<ul>
+<li><p>Si los individuos pudieran negociar antes de la votación, la minoría, que tiene preferencias más intensas –y que por lo tanto obtiene mayores ganancias de la provisión del bien público–, podría compensar monetariamente a la mayoría para que votase a favor del nivel eficiente de gasto.</p></li>
+<li><p>Esto implica relajar IAI, para lo que se plantean dos posibilidades: el intercambio de votos y la regla de Borda.</p></li>
+</ul>
+</section>
+<section id="intercambio-de-votos-o-logrolling" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="intercambio-de-votos-o-logrolling">Intercambio de votos o logrolling</h6>
+<p>Por un lado, para analizar el método de intercambio de votos se supondrá que existen 2 proyectos, <span class="math inline">\(A\)</span> y <span class="math inline">\(B\)</span>, y 3 votantes, <span class="math inline">\(V_{1}\)</span>, <span class="math inline">\(V_{2}\)</span> y <span class="math inline">\(V_{3}\)</span>, suponiendo que el proyecto <span class="math inline">\(A\)</span> solo beneficia a <span class="math inline">\(V_{1}\)</span> y el proyecto <span class="math inline">\(B\)</span> solo beneficia a <span class="math inline">\(V_{2}\)</span>, si los 3 individuos votan para ver si salen o no los proyectos, <span class="math inline">\(V_{2}\)</span> y <span class="math inline">\(V_{3}\)</span> votarán en contra del proyecto <span class="math inline">\(A\)</span> y <span class="math inline">\(V_{1}\)</span> y <span class="math inline">\(V_{3}\)</span> votarán en contra del proyecto <span class="math inline">\(B\)</span>. Por lo tanto, no se aceptarían los proyectos.</p>
+<p>Sin embargo, si <span class="math inline">\(V_{1}\)</span> y <span class="math inline">\(V_{2}\)</span> negocian y se comprometen a intercambiar votos ambos proyectos saldrían adelante, ya que solo <span class="math inline">\(V_{3}\)</span> votaría en contra de ambos proyectos. No obstante, este método tiene una serie de inconvenientes ya que:</p>
+<ol type="1">
+<li><p>Nada garantiza que se cumpla el acuerdo, a no ser que <span class="math inline">\(V_{1}\)</span> y <span class="math inline">\(V_{2}\)</span> presenten ambos proyectos en una única propuesta conjunta, de modo que ninguno pueda votar a favor del suyo y en contra del otro.</p></li>
+<li><p>Existen elevados costes de negociación.</p></li>
+<li><p>Este método puede aumentar el gasto público por encima del nivel eficiente.</p></li>
+<li><p>Si <span class="math inline">\(V_{3}\)</span> no se ve representado en ningún proyecto, se produce una explotación de la minoría.</p></li>
+</ol>
+</section>
+<section id="regla-de-borda" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="regla-de-borda">Regla de Borda</h6>
+<p>Por otro lado, la regla de Borda&nbsp;<span class="citation" data-cites="16_Borda1781">(<a href="01-tema-a1.html#ref-16_Borda1781" role="doc-biblioref">1781</a>)</span> supone que si existen 4 alternativas, <span class="math inline">\(A\)</span>, <span class="math inline">\(B\)</span>, <span class="math inline">\(C\)</span> y <span class="math inline">\(D\)</span>, y 3 votantes, <span class="math inline">\(V_{1}\)</span>, <span class="math inline">\(V_{2}\)</span> y <span class="math inline">\(V_{3}\)</span>, cada votante ordena las alternativas y asigna 4 puntos a la que más prefiere, 3 a la segunda, 2 a la tercera y 1 a la última. Se elige la alternativa que obtenga más puntos en total.</p>
+<p>Los inconvenientes de este mecanismo son:</p>
+<ol type="1">
+<li><p>La posibilidad de que se dé un empate.</p></li>
+<li><p>El resultado es manipulable: un votante puede falsear el orden de las alternativas que no le importan, por ejemplo relegando al último lugar a la principal rival de su opción preferida, para inclinar el resultado a su favor.</p></li>
+</ol>
+</section>
+<section id="teorema-de-gibbard-satterthwaite" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="teorema-de-gibbard-satterthwaite">Teorema de Gibbard-Satterthwaite</h6>
+<p>Respecto al último punto, el teorema de Gibbard-Satterthwaite <span class="citation" data-cites="16_Gibbard1973 16_Satterthwaite1975">(<a href="01-tema-a1.html#ref-16_Gibbard1973" role="doc-biblioref">Gibbard 1973</a>; <a href="01-tema-a1.html#ref-16_Satterthwaite1975" role="doc-biblioref">Satterthwaite 1975</a>)</span> establece que, si existen al menos tres alternativas, no existe ninguna regla de elección colectiva no manipulable o a prueba de estrategia, es decir, en la que declarar las verdaderas preferencias sea una estrategia dominante para cada individuo, que cumpla simultáneamente los criterios de <span class="math inline">\(U\)</span>, <span class="math inline">\(P\)</span>, <span class="math inline">\(AD\)</span> y <span class="math inline">\(R\)</span>. Dicho de otra manera, con tres o más alternativas, un mecanismo de elección que cumpla R, P y U o es dictatorial o es manipulable<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a>.</p>
+<p>En suma, respecto a las reglas de elección colectiva analizadas: la votación mayoritaria es manipulable cuando cumple U, porque puede incumplir R al existir ciclicidad. Si se restringe U, considerando preferencias unimodales sobre una sola dimensión, deja de ser manipulable. En general, todos los mecanismos que se basan en la intensidad de las preferencias incumplen IAI y son manipulables.</p>
+</section>
+</section>
+</section>
+<section id="democracia-representativa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="democracia-representativa">Democracia Representativa</h3>
+<p>Por último, otro criterio de representación social puede ser el de Democracia Representativa, que supone votar sobre decisiones presupuestarias indirectamente a través de los parlamentarios o representantes, reduciendo los costes de negociación y simplificando el proceso. <span class="math display">\[\underset{\text{Eligen a los pol{í}ticos}}{\text{Ciudadanos}}\longrightarrow\underset{\text{Eligen los programas}}{\text{Pol{í}ticos}       }\longrightarrow\underset{\text{Aplican los programas}}{\text{Bur{ó}cratas o funcionarios}}\]</span></p>
+<p>Para analizar la democracia representativa hay que estudiar el comportamiento de tres tipos de agentes: los políticos, los votantes y los grupos de interés.</p>
+<p>Así, la teoría de la “Public Choice” resalta que el proceso de adopción de las decisiones públicas es más complejo de lo planteado por la teoría de la elección colectiva. En él intervienen diferentes tipos de agentes económicos, no solo votantes, sino también políticos, funcionarios, grupos de presión, con objetivos particulares, y debido a la presencia de información asimétrica son capaces de sesgar el proceso de elección colectiva hacia sus intereses.</p>
+<section id="políticos" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="políticos">Políticos</h4>
+<p>El comportamiento de los políticos se puede analizar mediante el modelo de Downs-Hotelling<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a>. El modelo prevé que los gobiernos llevarán a cabo políticas con rentabilidad electoral y no social, de la misma forma que los partidos políticos en la oposición.</p>
+<p>Los supuestos en los que se basa el modelo son los siguientes:</p>
+<ol type="1">
+<li><p>Sistema bipartidista maximizador de votos.</p></li>
+<li><p>Votantes con preferencias unimodales.</p></li>
+<li><p>Se vota sobre una variable unidimensional, que es la ideología.</p></li>
+</ol>
+<p>Estos supuestos coinciden con la existencia de un votante mediano, por lo que ganará las elecciones aquel partido cuya ideología coincida con la del votante mediano.</p>
+<p>Gráficamente, en un plano de número de votos, <span class="math inline">\(NV\)</span>, y posiciones ideológicas, <span class="math inline">\(I\)</span>, donde 0 es la posición de extrema izquierda y 1 la de extrema derecha como el de la <a href="#fig-16-modelo-downs-hotelling" class="quarto-xref">Figura&nbsp;<span>16.8</span></a>, se representa cómo se distribuyen los votantes según su posición ideológica (función de densidad), observándose que los partidos tenderán a aproximar su ideología a la del votante mediano, <span class="math inline">\(I_{M}\)</span>, que será la que dé la victoria en las elecciones.</p>
+<div id="fig-16-modelo-downs-hotelling" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Resultado del modelo Downs-Hotelling">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-16-modelo-downs-hotelling-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;16.8: Resultado del modelo Downs-Hotelling
+</figcaption>
+<div aria-describedby="fig-16-modelo-downs-hotelling-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-16-modelo-downs-hotelling.svg" class="img-fluid figure-img" alt="Resultado del modelo Downs-Hotelling">
+</div>
+</figure>
+</div>
+<p>No obstante, el modelo Downs-Hotelling suscita una serie de limitaciones<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a>:</p>
+<ul>
+<li><p>La votación se realiza sobre una variable unidimensional, la ideología, cuando en la realidad esto no ocurre ya que se suele votar sobre variables multidimensionales<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a>.</p></li>
+<li><p>Pueden existir partidos cuyo objeto no sea la maximización de votos.</p></li>
+<li><p>No todos los posibles votantes se comportan de la misma manera –por ejemplo, abstención–, es decir, el votante mediano efectivo puede diferir del teórico.</p></li>
+<li><p>Las preferencias pueden no ser unimodales.</p></li>
+</ul>
+<p>Con respecto al último punto, en el caso de que las preferencias fueran bimodales se daría que:</p>
+<ul>
+<li><p>Las preferencias de los electores se polarizarían en 2 o más campos.</p></li>
+<li><p>Los partidos tendrían posiciones muy diferenciadas.</p></li>
+<li><p>La democracia sería mucho más inestable y un cambio de Gobierno podría desembocar en una crisis social.</p></li>
+<li><p>Se podría desembocar en un sistema multipartidos cuando las preferencias sean multimodales.</p></li>
+<li><p>Entonces, la estabilidad de los gobiernos no depende, por tanto, del número de partidos, sino de las preferencias de los votantes.</p></li>
+</ul>
+</section>
+<section id="votantes" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="votantes">Votantes</h4>
+<p>Respecto a la actuación de los votantes, este modelo estudia también el fenómeno de la decisión de voto, acentuando la influencia provocada por el conocimiento imperfecto y la información costosa. Dado que los agentes son racionales, decidirán si votan, y cuánta información recaban, comparando el beneficio esperado de su voto con su coste.</p>
+<p>Ese beneficio esperado depende de lo que gana el votante si vence su opción y de la probabilidad de que su voto sea decisivo. El hecho de que la poca posibilidad de que un voto sea decisivo y la no divisibilidad de los beneficios, hace que no exista estímulo para lograr una buena información. Este escaso estímulo para informarse es la llamada ignorancia racional del votante.</p>
+<p>Por consiguiente, la participación electoral aumenta si:</p>
+<ul>
+<li><p>La probabilidad de vencer tiende a igualarse.</p></li>
+<li><p>Cuanto más diverjan los programas, ya que aumentará el ratio de beneficios/costes.</p></li>
+<li><p>Los individuos con un mayor nivel de renta y educación tendrán más incentivos a votar, dado que disminuirán los costes y aumentarán los beneficios derivados del voto.</p></li>
+</ul>
+<p>Por otro lado, la Teoría del Ciclo Político considera que los votantes valoran las actuaciones recientes del Gobierno –como aumentos del gasto público o bajadas de impuestos– a la hora de decidir el sentido de su voto. Esto supone que existiría cierta miopía o comportamiento no plenamente racional, lo que, además contribuiría a explicar los ciclos económicos (por las expansiones del gasto asociadas a la proximidad de las elecciones).</p>
+</section>
+<section id="grupos-de-interés" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="grupos-de-interés">Grupos de interés</h4>
+<p>Los grupos de interés son asociaciones de individuos que se unen con un objetivo común: influir en las decisiones públicas para que les sean favorables. Un ejemplo clásico son los sindicatos, que buscan mejorar las condiciones laborales para sus afiliados y no afiliados.</p>
+<p>Para lograr sus metas, estos grupos utilizan diversos instrumentos de manera simultánea:</p>
+<ul>
+<li><p>Intercambio de favores: Pueden intercambiar votos por programas políticos o financiar campañas a cambio de favores.</p></li>
+<li><p>Influencia directa: Buscan mejorar la información que llega a los legisladores, burócratas y público para posicionar su causa.</p></li>
+</ul>
+<p>Los efectos económicos de la actividad de estos grupos dependen de sus objetivos. Generalmente, los más activos y poderosos no son altruistas, sino aquellos con intereses económicos privados. Sus acciones, a menudo, perjudican el bienestar general de la sociedad.</p>
+<section id="la-teoría-de-los-grupos-de-interés-de-mancur-olson" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="la-teoría-de-los-grupos-de-interés-de-mancur-olson">La teoría de los grupos de interés de Mancur Olson</h6>
+<p>El economista Mancur Olson&nbsp;<span class="citation" data-cites="16_Olson1965">(<a href="01-tema-a1.html#ref-16_Olson1965" role="doc-biblioref">1965</a>)</span> analizó los grupos de interés desde la perspectiva de los bienes públicos. Para él, la actividad de un grupo de interés tiene carácter de bien público para todos los que comparten ese interés, ya que si el grupo logra promover su causa, todos se benefician, independientemente de si contribuyeron o no:</p>
+<ul>
+<li><p>El problema del free-rider: La afiliación a un grupo de interés tiene un coste (tiempo, dinero, etc.), pero el beneficio es gratuito para quienes no se afilian. Esto crea un incentivo para que los individuos se conviertan en {ü}suarios gratuitos" (free-riders).</p></li>
+<li><p>Grupos grandes vs.&nbsp;grupos pequeños: la tendencia a ser free-rider es mayor en los grupos grandes, porque la aportación de cada miembro apenas cambia el resultado y los costes de organización son altos, y también en los que defienden a las rentas bajas, que soportan peor el coste de participar. En cambio, los grupos pequeños y de rentas elevadas están mejor organizados y son más efectivos. A estos se les conoce como Grupos de Interés Directamente Influyentes, y Olson denomina “privilegiados” a los grupos pequeños y “latentes” a los grandes.</p></li>
+</ul>
+</section>
+<section id="el-triángulo-de-hierro-y-los-buscadores-de-rentas" class="level6 unnumbered">
+<h6 class="unnumbered anchored" data-anchor-id="el-triángulo-de-hierro-y-los-buscadores-de-rentas">El triángulo de hierro y los buscadores de rentas</h6>
+<p>Un concepto relacionado es el "triángulo de hierro", una alianza entre políticos, burócratas y grupos de presión que actúan como "buscadores de rentas". Su objetivo es obtener beneficios económicos no a través de la producción, sino a través de la manipulación del entorno político y regulatorio. Esta dinámica perjudica a los votantes (que representan el interés general) porque:</p>
+<ul>
+<li><p>Son menos numerosos que los votantes y, por lo tanto, tienen una mayor posibilidad de organizarse y ejercer presión para la asignación de Gasto Público en su beneficio.</p></li>
+<li><p>Los votantes, al ser un grupo tan numeroso, enfrentan el problema de la acción colectiva, haciendo que su organización para contrarrestar la influencia de los buscadores de rentas sea extremadamente difícil.</p></li>
+</ul>
+</section>
+</section>
+<section id="ampliaciones-y-otras-teorías" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="ampliaciones-y-otras-teorías">Ampliaciones y otras teorías</h4>
+<p>A su vez, existen ampliaciones que estudian fenómenos como:</p>
+<ul>
+<li><p>Voto útil y comportamiento estratégico: la teoría original supone que los votantes eligen a su candidato preferido. Sin embargo, en la realidad, el voto útil ocurre cuando un votante prefiere a un candidato pero vota por otro que tiene más probabilidades de ganar. Esto puede hacer que el resultado final se desvíe del punto del votante mediano.</p></li>
+<li><p>La abstención, el modelo del votante mediano supone que todos los individuos participan, pero la abstención rompe esa premisa. Al estudiar la abstención, se reconoce que el votante mediano del total de la población puede ser diferente al votante mediano de quienes realmente votan. Por ejemplo, si los votantes más extremos (los de los polos ideológicos) están más motivados para participar, el resultado final de la elección se alejará del centro político, contradiciendo la predicción del teorema.</p></li>
+<li><p>Los objetivos privados de los políticos, los políticos no siempre se mueven por la voluntad popular. Muchos modelos incluyen los objetivos personales de los políticos (como la reelección, el poder o la búsqueda de rentas) como un factor clave que moldea las políticas públicas.</p></li>
+<li><p>La votación probabilística, donde la existencia de incertidumbre dentro del proceso de decisión electoral –donde los votantes no podrán estimar con exactitud la situación de los candidatos en el espacio político– hace necesaria la incorporación explícita de este factor en el modelo del votante. Por un lado, los individuos en el momento de votar, no conocen el grado de realización de las promesas electorales del candidato en el caso de que llegue al poder. Por lo tanto, existe un grado de aleatoriedad derivado del desfase temporal entre la celebración de las elecciones y la aplicación de políticas por el partido ganador.</p></li>
+<li><p>Voto significativo, se refiere a la capacidad de un votante para influir en el resultado final. En un sistema de votación mayoritaria, un voto tiene un peso significativo si puede romper un empate o cambiar la victoria de un candidato a otro. Esta es una variable que los votantes racionales consideran.</p></li>
+<li><p>La relación entre el nivel de renta y las preferencias políticas. Por ejemplo, los votantes de bajos ingresos suelen favorecer políticas de redistribución de la riqueza o mayor gasto social, mientras que los votantes de altos ingresos tienden a preferir recortes de impuestos y menor intervención del Estado.</p></li>
+<li><p>Ventana de Overton. La ventana de Overton encaja en estas teorías al explicar cómo las reglas de votación y los mecanismos de elección se ven afectados por la percepción pública. Esta ventana representa el rango de ideas políticas aceptables para el público en un momento dado, desde lo “impensable” hasta la “política vigente”. En las democracias, las reglas de votación no operan en un vacío; los candidatos y grupos de interés manipulan la ventana de Overton para que sus propuestas se consideren aceptables por la mayoría. Así, por muy bien diseñado que esté un mecanismo de decisión, el resultado final siempre estará influenciado por lo que la sociedad considera posible, desplazando el debate y el voto hacia un conjunto limitado de opciones.</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="16.6">
+<h2 data-number="16.6" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">16.6</span> Conclusiones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Como conclusión, el Sector Público se enfrenta a un desafío inherente: nunca dispone de toda la información necesaria para agregar perfectamente las preferencias de la ciudadanía. Esta limitación fundamental puede llevar a fallos del sector público, resultando en un aumento del gasto o del tamaño del Estado por encima de un nivel eficiente.</p>
+<p>Por ello, las sociedades no buscan un mecanismo de decisión perfecto, sino que recurren a Reglas de Elección Colectiva sencillas. Estas reglas, si bien son imperfectas, se complementan con límites constitucionales que actúan como contrapesos para proteger a la sociedad de los riesgos de la ineficiencia y de las tiranías de la mayoría o la minoría.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-el-modelo-de-salop-como-extensión-de-downs-hotelling-más-de-dos-partidos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-el-modelo-de-salop-como-extensión-de-downs-hotelling-más-de-dos-partidos">16.A.1.&nbsp;&nbsp;El modelo de Salop como extensión de Downs-Hotelling: más de dos partidos</h3>
+<p>El modelo de Downs-Hotelling desarrollado en el cuerpo del tema explica la convergencia de los partidos hacia el votante mediano bajo un supuesto muy concreto: un sistema bipartidista. Esta restricción no es solo una simplificación cómoda, sino una condición necesaria para que el resultado se sostenga. Osborne&nbsp;<span class="citation" data-cites="16_Osborne1995">(<a href="01-tema-a1.html#ref-16_Osborne1995" role="doc-biblioref">1995</a>)</span> recoge la prueba formal de que, cuando hay tres o más partidos compitiendo sobre la misma línea ideológica, el modelo generalmente no tiene equilibrio de Nash en estrategias puras: para casi cualquier distribución de las preferencias de los votantes, no existe ninguna configuración de posiciones en la que ningún partido tenga incentivo a desplazarse. La intuición es que, con dos partidos, cada uno se enfrenta al otro desde ambos lados de la línea, lo que empuja a los dos hacia el centro. Con tres o más partidos, en cambio, siempre queda al menos uno situado entre otros dos que puede mejorar su resultado desplazándose ligeramente, lo que rompe cualquier posición de equilibrio antes de que llegue a estabilizarse. El propio Osborne concluye que extender directamente el modelo lineal a más de dos partidos aporta poca capacidad explicativa sobre lo que ocurre realmente en sistemas multipartidistas.</p>
+<p>El problema no es exclusivo de la política. Salop&nbsp;<span class="citation" data-cites="16_Salop1979">(<a href="01-tema-a1.html#ref-16_Salop1979" role="doc-biblioref">1979</a>)</span> se había encontrado con una dificultad estructuralmente idéntica en la competencia monopolística: en el modelo de Hotelling, las empresas situadas en los extremos de la línea disfrutan de una ventaja artificial —solo compiten por un lado—, lo que distorsiona el análisis de la entrada de nuevas empresas. Su solución fue sustituir la línea por una circunferencia: al no haber extremos, todas las posiciones del espacio son simétricas entre sí, y el número de empresas que pueden coexistir en equilibrio depende únicamente de la relación entre el coste fijo de entrada y el coste de “desplazamiento” que asumen los consumidores para llegar hasta la empresa más cercana en el círculo.</p>
+<p>Peeters, Saran y Yüksel&nbsp;<span class="citation" data-cites="16_PeetersSaranYuksel2016">(<a href="01-tema-a1.html#ref-16_PeetersSaranYuksel2016" role="doc-biblioref">2016</a>)</span> trasladan esta misma solución geométrica a la competencia electoral. En su modelo, el espacio ideológico ya no es un segmento con dos extremos, sino una circunferencia unitaria sobre la que se distribuyen tanto los votantes como las posibles posiciones de los partidos. Sobre este espacio, los autores caracterizan los equilibrios de Nash en estrategia pura bajo dos supuestos de comportamiento del votante: votación sincera (cada votante apoya siempre al partido ideológicamente más cercano) y votación estratégica (el votante puede apoyar a un partido distinto de su preferido si así evita que gane el que menos le convence). En ambos casos exigen además que el equilibrio sea “a prueba de deserción”: ningún subgrupo de partidos debe tener incentivo a reorganizarse conjuntamente abandonando sus posiciones actuales.</p>
+<p>Sus resultados muestran que, bajo votación sincera, estos equilibrios sostienen configuraciones de dos o tres partidos efectivos, mientras que bajo votación estratégica solo se sostienen una o dos. Este resultado es parcialmente consistente con la Ley de Duverger&nbsp;<span class="citation" data-cites="16_Duverger1951">(<a href="01-tema-a1.html#ref-16_Duverger1951" role="doc-biblioref">1951</a>)</span>, que predice una tendencia al bipartidismo bajo la regla de pluralidad, pero va más allá: identifica con precisión en qué condiciones puede sobrevivir en equilibrio un tercer partido, algo que la representación lineal de Downs-Hotelling no permite explicar por la propia inexistencia de equilibrio que demuestra Osborne.</p>
+<p>La circunferencia no es, por tanto, un simple giro geométrico sobre el modelo original, sino la vía formal que permite responder a una pregunta que el modelo lineal deja sin resolver: cómo pueden coexistir de forma estable más de dos partidos cuando los votantes mantienen preferencias unimodales sobre el espacio ideológico.</p>
+</section>
+<section id="a.2.-la-paradoja-liberal-de-amartya-sen" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-la-paradoja-liberal-de-amartya-sen">16.A.2.&nbsp;&nbsp;La paradoja liberal de Amartya Sen</h3>
+<p>Es imposible ser liberal y paretiano a la vez: no es posible respetar mínimamente la libertad de los individuos y al mismo tiempo alcanzar la optimalidad paretiana.</p>
+<p>La paradoja del liberal paretiano, paradoja liberal o paradoja de imposibilidad de Sen es un resultado de imposibilidad propuesto por Amartya Sen&nbsp;<span class="citation" data-cites="16_Sen1970">(<a href="01-tema-a1.html#ref-16_Sen1970" role="doc-biblioref">1970</a>)</span>, en la línea del teorema de Arrow. Afirma que, si la regla de elección social admite cualquier combinación de preferencias individuales, es imposible respetar a la vez el criterio del óptimo de Pareto y un principio de “libertad mínima”, según el cual al menos dos individuos deben ser decisivos sobre algún asunto de su esfera personal, de modo que su preferencia entre esas dos alternativas se convierta en la preferencia social<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a>.</p>
+<p>El aspecto más polémico es, por un lado, la contradicción con la noción del liberalismo económico, de que el mecanismo del mercado es suficiente para producir un óptimo de Pareto y por otro, la sugerencia que la capacidad de elección y libertad deben ser el rasgo definitorio de ese mecanismo de mercado, en lugar del criterio de bienestar económico de la economía del bienestar.</p>
+<p>La paradoja liberal cuestiona un axioma concreto de Arrow —la optimalidad paretiana débil— frente a la libertad individual, pero mantiene intacto el marco informativo del welfarismo: sigue evaluando el bienestar social únicamente a partir de niveles de utilidad. Sen&nbsp;<span class="citation" data-cites="16_Sen1979">(<a href="01-tema-a1.html#ref-16_Sen1979" role="doc-biblioref">1979</a>)</span> fue más allá y cuestionó ese propio marco: ¿es la utilidad, entendida como satisfacción subjetiva de preferencias, el espacio informativo adecuado para juzgar el bienestar de una persona? Su respuesta fue sustituir la utilidad por los funcionamientos, los distintos “seres y haceres” que una persona logra efectivamente alcanzar, desde funcionamientos elementales como estar bien nutrido hasta otros más complejos como participar en la vida de la comunidad. Dos individuos con la misma cesta de bienes pueden lograr funcionamientos muy distintos si uno de ellos padece, por ejemplo, una enfermedad que le impide aprovecharlos con normalidad.</p>
+<p>El conjunto de capacidad de una persona es el conjunto de todas las combinaciones de funcionamientos que le resulta factible alcanzar dada su dotación de bienes y sus circunstancias. Mide, por tanto, no lo que la persona efectivamente hace o es, sino la libertad real de la que dispone para elegir entre distintas formas de vida valiosas —una distinción que separa el enfoque de Sen tanto del welfarismo, que solo mira el resultado final, como de la disponibilidad de bienes primarios de Rawls&nbsp;<span class="citation" data-cites="16_Rawls1971">(<a href="01-tema-a1.html#ref-16_Rawls1971" role="doc-biblioref">1971</a>)</span>, que no tiene en cuenta que distintos individuos convierten los mismos recursos en funcionamientos con distinta eficacia—. Esta idea tuvo una consecuencia práctica de primer orden: si lo relevante no es la renta ni la utilidad, sino la capacidad real de alcanzar funcionamientos valiosos, los índices de bienestar deben construirse sobre indicadores multidimensionales —salud, educación, participación política— y no sobre una única variable monetaria agregada, como hace el Índice de Desarrollo Humano del Programa de las Naciones Unidas para el Desarrollo, elaborado desde 1990 con la colaboración directa de Sen.</p>
+</section>
+<section id="a.3.-análisis-coste-beneficio" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-análisis-coste-beneficio">16.A.3.&nbsp;&nbsp;Análisis coste-beneficio</h3>
+<p>El análisis coste-beneficio (ACB) es una técnica de asignación de recursos con un recorrido mucho más largo de lo que su uso extendido en la segunda mitad del siglo XX podría sugerir. Su origen teórico se remonta al ingeniero francés Dupuit&nbsp;<span class="citation" data-cites="16_Dupuit1844">(<a href="01-tema-a1.html#ref-16_Dupuit1844" role="doc-biblioref">1844</a>)</span>, que ya proponía valorar una obra pública sumando la disposición a pagar de sus usuarios. Esta idea se trasladó pronto a la práctica administrativa: en Estados Unidos, la Rivers and Harbors Act de 1902 exigió justificar los proyectos del Cuerpo de Ingenieros del Ejército por sus beneficios, y la Flood Control Act de 1936 formalizó el criterio de aprobar un proyecto siempre que sus beneficios, recayeran sobre quien recayeran, superasen los costes estimados. El aparato teórico que sostiene esta regla se consolidó poco después con el criterio de compensación de Kaldor&nbsp;<span class="citation" data-cites="16_Kaldor1939">(<a href="01-tema-a1.html#ref-16_Kaldor1939" role="doc-biblioref">1939</a>)</span> y Hicks&nbsp;<span class="citation" data-cites="16_Hicks1939">(<a href="01-tema-a1.html#ref-16_Hicks1939" role="doc-biblioref">1939</a>)</span>, que es precisamente el que fundamenta el ACB tal y como se describe más abajo. Toda esta tradición, con más de 120 años de recorrido a esas alturas, quedó recogida en la gran revisión clásica del campo, Prest y Turvey&nbsp;<span class="citation" data-cites="16_PrestTurvey1965">(<a href="01-tema-a1.html#ref-16_PrestTurvey1965" role="doc-biblioref">1965</a>)</span>, que sistematizó sus fundamentos y sus principales problemas prácticos justo antes de que el ACB se generalizara como herramienta habitual de evaluación de políticas públicas.</p>
+<p>El ACB parte de la existencia de diferencias entre los costes/beneficios privados y los sociales. Esta discrepancia lleva a que la asignación privada de los recursos, basada en la maximización de beneficios particulares, no sea óptima.</p>
+<p>Así, la función del ACB es la de considerar todos los costes y beneficios, privados y públicos, derivados de la provisión de un bien o servicio.</p>
+<p>El ACB, tal y como está planteado, tiene su base en el criterio de compensación de Kaldor-Hicks: al decidir sobre la conveniencia de un proyecto, se analiza el valor presente de beneficios y costes sociales, de manera que se aceptará el proyecto si los beneficios son mayores que los costes, aunque no recaigan sobre las mismas personas.</p>
+<p>El ACB es especialmente útil para la asignación de recursos públicos, dado que a menudo los bienes y servicios ofrecidos por este sector tienen externalidades importantes.</p>
+<p>El problema más grave del ACB proviene de la Teoría del second best. Supongamos una economía de mercado, con unos precios que no reflejan todos los costes y beneficios, pero que son los que emplean los agentes. Si el sector público utiliza precios sombra representativos de dichos costes y beneficios, nos habremos acercado en un sector (el público) al óptimo paretiano, pero, según Lipsey y Lancaster&nbsp;<span class="citation" data-cites="16_LipseyLancaster1956">(<a href="01-tema-a1.html#ref-16_LipseyLancaster1956" role="doc-biblioref">1956</a>)</span>, un movimiento en dirección al óptimo dejando aún imperfecciones en otros sectores, no implica necesariamente una mejor situación que la de partida, e incluso puede empeorarla.</p>
+</section>
+<section id="a.4.-la-tiranía-de-la-mayoría-y-la-tiranía-de-la-minoría-el-diseño-de-las-reglas-de-votación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-la-tiranía-de-la-mayoría-y-la-tiranía-de-la-minoría-el-diseño-de-las-reglas-de-votación">16.A.4.&nbsp;&nbsp;La tiranía de la mayoría y la tiranía de la minoría: el diseño de las reglas de votación</h3>
+<p>Como se ha visto al analizar la regla de la unanimidad, tanto la tiranía de la mayoría —atribuida a Wicksell— como la tiranía de la minoría —atribuida a Baumol— son riesgos inherentes a cualquier regla de decisión colectiva. Buchanan y Tullock&nbsp;<span class="citation" data-cites="16_BuchananTullock1962">(<a href="01-tema-a1.html#ref-16_BuchananTullock1962" role="doc-biblioref">1962</a>)</span> formalizan este dilema en su cálculo del consentimiento: a medida que aumenta la mayoría exigida para aprobar una decisión, disminuyen los costes externos, el riesgo de que una mayoría imponga su voluntad a una minoría, pero aumentan los costes de decisión, el tiempo y los recursos necesarios para alcanzar el acuerdo, y el riesgo de que una minoría bloquee la decisión. La regla óptima, ya vista anteriormente, es la que minimiza la suma de ambos costes, y no tiene por qué ser la misma para todas las decisiones.</p>
+<p>Las democracias constitucionales aplican precisamente este cálculo, calibrando el umbral de mayoría según la gravedad de la decisión que ha de aprobarse. En España, el artículo 167 de la Constitución exige una mayoría de tres quintos en cada Cámara para una reforma constitucional ordinaria, ampliable a dos tercios del Congreso si no hay acuerdo inicial. El artículo 168, en cambio, exige dos tercios en ambas Cámaras, disolución de las Cortes, nuevas elecciones y ratificación por dos tercios de las Cámaras resultantes, además de referéndum obligatorio, para reformar el Título Preliminar o los derechos fundamentales. El umbral crece con la irreversibilidad de la decisión y con el riesgo de tiranía de la mayoría que supondría adoptarla con una mayoría simple.</p>
+<p>El riesgo simétrico, la tiranía de la minoría, aparece cuando ese mismo umbral elevado se convierte en poder de veto. En el Consejo de la Unión Europea, una minoría de bloqueo formada por al menos cuatro Estados miembros que representen más del 35% de la población de la Unión puede impedir la aprobación de una decisión por mayoría cualificada, aunque el resto de Estados esté de acuerdo. La misma regla que protege a las minorías de una imposición mayoritaria es, al mismo tiempo, la que les permite paralizar la voluntad de la mayoría.</p>
+</section>
+<section id="a.5.-funciones-de-elección-social-no-manipulables-en-dominios-restringidos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-funciones-de-elección-social-no-manipulables-en-dominios-restringidos">16.A.5.&nbsp;&nbsp;Funciones de elección social no manipulables en dominios restringidos</h3>
+<p>El teorema de Gibbard-Satterthwaite muestra que, en un dominio universal de preferencias y con tres o más alternativas, toda regla de elección que no sea dictatorial es manipulable. El resultado deja abierta, sin embargo, una pregunta constructiva: si se restringe el dominio de preferencias admisibles, ¿es posible recuperar mecanismos de elección social eficientes y no manipulables? Cuando los individuos tienen preferencias unimodales sobre una única dimensión, el mismo supuesto que sostiene el teorema del votante mediano de Black&nbsp;<span class="citation" data-cites="16_Black1948">(<a href="01-tema-a1.html#ref-16_Black1948" role="doc-biblioref">1948</a>)</span> ya visto en el cuerpo del tema, la respuesta es afirmativa.</p>
+<p>Una función de elección social que selecciona siempre la alternativa preferida por el votante mediano resulta no manipulable: si un individuo declara unas preferencias distintas de las suyas, en el mejor de los casos consigue desplazar la mediana hacia una alternativa que le gusta menos que la mediana original, nunca hacia una que le guste más. Moulin&nbsp;<span class="citation" data-cites="16_Moulin1980">(<a href="01-tema-a1.html#ref-16_Moulin1980" role="doc-biblioref">1980</a>)</span> generaliza este resultado: toda función de elección social que satisface anonimato, unanimidad y no manipulabilidad en un dominio de preferencias unimodales es una mediana generalizada. Si&nbsp;<span class="math inline">\(n\)</span> es el número de individuos, el mecanismo fija de antemano&nbsp;<span class="math inline">\(n-1\)</span> “votos fantasma” —posiciones ficticias, independientes de los votos reales— y elige la mediana del conjunto formado por los&nbsp;<span class="math inline">\(n\)</span> picos declarados más esos&nbsp;<span class="math inline">\(n-1\)</span> votos fantasma.</p>
+<p>La posición de los votos fantasma determina el mecanismo resultante. Situándolos todos en el extremo inferior del dominio se elige el menor de los picos declarados, y situándolos todos en el superior, el mayor. Repartiéndolos entre ambos extremos se obtiene cualquier pico intermedio: con <span class="math inline">\(n-k\)</span> votos fantasma abajo y <span class="math inline">\(k-1\)</span> arriba se elige el <span class="math inline">\(k\)</span>-ésimo pico ordenado de menor a mayor. En particular, con un número impar de individuos, situar la mitad de los votos fantasma en cada extremo recupera la mediana simple de los votos reales, la regla más habitual en la práctica. El resultado muestra, en definitiva, que restringir el dominio de preferencias no es solo una simplificación técnica: es la vía que permite escapar de la imposibilidad de Gibbard-Satterthwaite sin renunciar ni a la eficiencia ni a la ausencia de manipulación.</p>
+</section>
+<section id="a.6.-el-mecanismo-de-vickrey-clarke-groves-y-la-revelación-de-preferencias" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-el-mecanismo-de-vickrey-clarke-groves-y-la-revelación-de-preferencias">16.A.6.&nbsp;&nbsp;El mecanismo de Vickrey-Clarke-Groves y la revelación de preferencias</h3>
+<p>Wicksell, como se ha visto en el cuerpo del tema, propuso la regla de la unanimidad para que nadie tuviera que financiar un bien público que no valora, pero esa misma regla invita a ocultar la propia valoración para pagar menos o arrancar concesiones. La teoría del diseño de mecanismos ofrece una solución distinta al mismo problema: en vez de exigir el acuerdo de todos, diseña las reglas del juego de forma que decir la verdad sea la mejor estrategia de cada individuo, sin necesidad de que este conozca ni confíe en el comportamiento de los demás.</p>
+<p>El ejemplo más sencillo es la subasta de Vickrey&nbsp;<span class="citation" data-cites="16_Vickrey1961">(<a href="01-tema-a1.html#ref-16_Vickrey1961" role="doc-biblioref">1961</a>)</span>: una subasta a sobre cerrado en la que cada postor presenta su oferta sin conocer las de los demás, gana quien puja más alto, pero paga el importe de la segunda oferta más alta. Si&nbsp;<span class="math inline">\(v_{1}\)</span> es la verdadera valoración del postor 1 y&nbsp;<span class="math inline">\(r_{2}\)</span> la oferta declarada por su rival, la ganancia del postor 1 si gana es&nbsp;<span class="math inline">\(v_{1}-r_{2}\)</span>, una cantidad que no depende de lo que él mismo declare mientras siga ganando: declarar su valoración real es, por tanto, una estrategia dominante, sin ningún incentivo a mentir.</p>
+<p>El mecanismo de Vickrey-Clarke-Groves (VCG) traslada esta misma idea a la provisión de un bien público. Cada individuo&nbsp;<span class="math inline">\(i\)</span> declara su valoración&nbsp;<span class="math inline">\(r_{i}\left(x\right)\)</span> de cada nivel&nbsp;<span class="math inline">\(x\)</span> del bien público, y se elige el nivel que maximiza la suma de las valoraciones declaradas. Para que declarar la verdad siga siendo la estrategia dominante de cada individuo, el mecanismo le cobra un impuesto —el llamado impuesto de Clarke— igual a la diferencia entre el bienestar máximo que alcanzarían los demás si ese individuo no participase y el bienestar que efectivamente alcanzan con su participación: solo pagan, por tanto, los individuos cuya presencia cambia realmente el resultado. El mecanismo VCG selecciona siempre el nivel eficiente del bien público y hace que decir la verdad sea una estrategia dominante para cada individuo, pero no está exento de limitaciones: en general genera un superávit presupuestario que no puede devolverse a los individuos sin alterar sus incentivos, por lo que la asignación final no es eficiente en el sentido de Pareto, no es inmune a la colusión entre varios de ellos, y exige revelar la valoración completa de cada alternativa posible, algo que puede resultar inabordable en problemas de gran escala.</p>
+</section>
+<section id="a.7.-funciones-de-bienestar-social-tipo-ces-e-índices-de-desigualdad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-funciones-de-bienestar-social-tipo-ces-e-índices-de-desigualdad">16.A.7.&nbsp;&nbsp;Funciones de bienestar social tipo CES e índices de desigualdad</h3>
+<p>La función de bienestar utilitarista y la maxi-min de Rawls, ya vistas en el cuerpo del tema, no son alternativas aisladas: son los dos casos extremos de una familia paramétrica más amplia, las funciones de bienestar colectivo de elasticidad constante (CES),</p>
+<p><span class="math display">\[W^{\rho}\left(u\right)=\left(\sum_{i\in N}u^{1-\rho}_{i}\right)^{\frac{1}{1-\rho}}\quad\text{si }\rho\neq1,\qquad W^{\rho}\left(u\right)=\sum_{i\in N}\ln\left(u_{i}\right)\quad\text{si }\rho=1\]</span></p>
+<p>donde&nbsp;<span class="math inline">\(\rho\geq0\)</span> mide el grado de aversión social a la desigualdad:&nbsp;<span class="math inline">\(\rho=0\)</span> devuelve la función utilitarista,&nbsp;<span class="math inline">\(\rho\to\infty\)</span> devuelve la maxi-min de Rawls&nbsp;<span class="citation" data-cites="16_Rawls1971">(<a href="01-tema-a1.html#ref-16_Rawls1971" role="doc-biblioref">1971</a>)</span>, y el caso intermedio&nbsp;<span class="math inline">\(\rho=1\)</span> se corresponde con la función de Nash,&nbsp;<span class="math inline">\(W^{N}\left(u\right)=\prod_{i\in N}u_{i}\)</span>, la misma especificación tipo Cobb-Douglas ya presentada en el cuerpo como función de Bernoulli-Nash.</p>
+<p>A cada función de esta familia que respeta el principio de Pigou-Dalton —una transferencia de utilidad de un individuo más rico a otro más pobre que no invierte su posición relativa nunca puede reducir el bienestar social— puede asociársele un índice de desigualdad. Las funciones CES generan, en concreto, los índices de Atkinson&nbsp;<span class="citation" data-cites="16_Atkinson1970">(<a href="01-tema-a1.html#ref-16_Atkinson1970" role="doc-biblioref">1970</a>)</span>, con el mismo parámetro&nbsp;<span class="math inline">\(\rho\)</span> interpretado ahora como el grado de aversión a la desigualdad del índice. Junto a ellos, el índice de Gini —definido a partir del área entre la curva de Lorenz y la línea de equidistribución perfecta— se corresponde con una función de bienestar que pondera más la utilidad de los individuos peor situados, aunque no pertenece a la familia CES.</p>
+</section>
+<section id="a.8.-la-ventana-de-overton-cómo-cambia-lo-políticamente-posible" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.8.-la-ventana-de-overton-cómo-cambia-lo-políticamente-posible">16.A.8.&nbsp;&nbsp;La ventana de Overton: cómo cambia lo políticamente posible</h3>
+<p>Los modelos de elección colectiva vistos en este Apéndice y en el cuerpo del tema —votante mediano, funciones de bienestar social, mecanismos de revelación de preferencias— comparten un supuesto que rara vez se cuestiona: el espacio de alternativas sobre el que se vota está dado de antemano. Sin embargo, ese espacio no es fijo, sino que se desplaza con el tiempo. El marco de la ventana de Overton, formulado por Joseph Overton y desarrollado tras su muerte por Russell&nbsp;<span class="citation" data-cites="16_Russell2006">(<a href="01-tema-a1.html#ref-16_Russell2006" role="doc-biblioref">2006</a>)</span>, describe precisamente ese fenómeno: el rango de políticas que una sociedad considera aceptables en un momento dado, desde lo impensable hasta la política vigente, y cómo ese rango se desplaza a lo largo del tiempo hasta que una opción antes marginal termina aprobada por mayoría. Cinco episodios históricos ilustran cómo ha operado este desplazamiento.</p>
+<section id="la-abolición-de-la-esclavitud" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="la-abolición-de-la-esclavitud">La abolición de la esclavitud</h5>
+<p>A comienzos del siglo XIX, abolir la esclavitud era una posición radical incluso en los círculos más progresistas. William Lloyd Garrison fundó en 1833 la American Anti-Slavery Society, y en las décadas siguientes campañas como la suya fueron desplazando la opinión pública del norte de Estados Unidos, de la tolerancia hacia el rechazo moral de la esclavitud, hasta que la abolición pasó de ser una posición marginal a convertirse en política aprobada en un país tras otro&nbsp;<span class="citation" data-cites="16_Drescher2009">(<a href="01-tema-a1.html#ref-16_Drescher2009" role="doc-biblioref">Drescher 2009</a>)</span>.</p>
+</section>
+<section id="el-sufragio-femenino" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-sufragio-femenino">El sufragio femenino</h5>
+<p>A mediados del siglo XIX, conceder el voto a las mujeres era una propuesta marginal incluso entre los círculos reformistas más avanzados de su tiempo. El desplazamiento hacia su aceptación no siguió un único camino: Nueva Zelanda se convirtió en 1893 en el primer país autogobernado del mundo en reconocer el voto femenino, tres décadas antes que la mayoría de las democracias occidentales. En el Reino Unido, la Women’s Social and Political Union de Emmeline Pankhurst, fundada en 1903, optó por la confrontación directa —manifestaciones, rotura de escaparates, huelgas de hambre en prisión—, hasta el punto de que Emily Davison murió en 1913 al lanzarse al paso del caballo del rey durante el Derby de Epsom&nbsp;<span class="citation" data-cites="16_Purvis2002">(<a href="01-tema-a1.html#ref-16_Purvis2002" role="doc-biblioref">Purvis 2002</a>)</span>. En Estados Unidos, en cambio, Carrie Chapman Catt condujo desde 1916 el llamado&nbsp;<em>Winning Plan</em>, una estrategia institucional de coordinación estado por estado y presión legislativa sostenida sobre el Congreso&nbsp;<span class="citation" data-cites="16_Baker2002">(<a href="01-tema-a1.html#ref-16_Baker2002" role="doc-biblioref">Baker 2002</a>)</span>. Confrontación y negociación institucional operaron así como dos estrategias distintas hacia el mismo desplazamiento, que se generalizó en la mayoría de las democracias occidentales en las primeras décadas del siglo XX.</p>
+</section>
+<section id="los-derechos-de-los-trabajadores" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="los-derechos-de-los-trabajadores">Los derechos de los trabajadores</h5>
+<p>Durante buena parte del siglo XIX, la protección laboral —jornadas máximas, edad mínima de acceso al empleo, condiciones de seguridad— no formaba parte del debate político: el trabajo infantil en fábricas y minas se aceptaba como un hecho normal de la vida económica. La Revolución Industrial expuso estas condiciones y dio inicio a una campaña de reforma que tardó décadas en traducirse en ley: en Estados Unidos, dos intentos de prohibición federal del trabajo infantil (1916 y 1919) fueron anulados por el Tribunal Supremo, y no fue hasta la Fair Labor Standards Act de 1938 —ya con el país sumido en la Gran Depresión— cuando la protección laboral moderna, incluida esa prohibición, se consolidó como política vigente&nbsp;<span class="citation" data-cites="16_Schmidt2010">(<a href="01-tema-a1.html#ref-16_Schmidt2010" role="doc-biblioref">Schmidt 2010</a>)</span>.</p>
+</section>
+<section id="el-matrimonio-igualitario" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-matrimonio-igualitario">El matrimonio igualitario</h5>
+<p>A finales del siglo XX, el reconocimiento legal de las parejas del mismo sexo era una posición marginal incluso en las democracias más consolidadas. España es un ejemplo especialmente claro de lo rápido que puede desplazarse la ventana: una encuesta de junio de 2004 ya mostraba un 66% de apoyo social al matrimonio igualitario, un año antes de que la Ley 13/2005 convirtiera al país en el tercero del mundo en reconocerlo, con una votación parlamentaria de 187 votos a favor. El proceso se repitió, con ritmos distintos, en buena parte de Europa durante la misma década&nbsp;<span class="citation" data-cites="16_Calvo2010">(<a href="01-tema-a1.html#ref-16_Calvo2010" role="doc-biblioref">Calvo 2010</a>)</span>.</p>
+</section>
+<section id="la-revolución-keynesiana" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="la-revolución-keynesiana">La revolución keynesiana</h5>
+<p>El desplazamiento no afecta solo a los derechos civiles, también a las propias ideas económicas que sustentan la política pública. Antes de la Gran Depresión, la intervención estatal en la economía se consideraba peligrosa bajo el consenso de laissez-faire dominante. Tras 1929, la obra de Keynes desplazó ese consenso: la intervención estatal pasó de ser vista como una amenaza a convertirse en la herramienta estabilizadora estándar de la política económica occidental hasta bien entrados los años setenta&nbsp;<span class="citation" data-cites="16_Hall1989">(<a href="01-tema-a1.html#ref-16_Hall1989" role="doc-biblioref">Hall 1989</a>)</span>.</p>
+<p>En los cinco casos, el mecanismo de elección colectiva en sí —votación por mayoría, representación parlamentaria— no cambió: lo que cambió fue el conjunto de alternativas que ese mecanismo consideraba elegibles. Esto recuerda que, por muy bien diseñada que esté una regla de decisión colectiva, su resultado depende siempre de un espacio de alternativas que la propia sociedad redefine con el tiempo.</p>
+</section>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-16_Albi2017" class="csl-entry" role="listitem">
+Albi Ibáñez, Emilio, José Manuel Gónzalez-Páramo, Rosa M. Urbanos, y Ignacio Zubiri. 2017. <em><span>Econom<span>í</span>a P<span>ú</span>blica I: Fundamentos. Presupuestos y Gastos</span></em>. Ariel.
+</div>
+<div id="ref-16_Arrow1950" class="csl-entry" role="listitem">
+Arrow, Kenneth J. 1950. <span>«<span>A Difficulty in the Concept of Social Welfare</span>»</span>. <em>Journal of Political Economy</em> 58 (4): 328-46. <a href="https://doi.org/10.1086/256963">https://doi.org/10.1086/256963</a>.
+</div>
+<div id="ref-16_Arrow1951" class="csl-entry" role="listitem">
+Arrow, Kenneth J. 1951. <em><span>Social Choice and Individual Values</span></em>. Yale University Press. <a href="http://www.jstor.org/stable/j.ctt1nqb90">http://www.jstor.org/stable/j.ctt1nqb90</a>.
+</div>
+<div id="ref-16_Atkinson1970" class="csl-entry" role="listitem">
+Atkinson, Anthony B. 1970. <span>«<span>On the Measurement of Inequality</span>»</span>. <em>Journal of Economic Theory</em> 2 (3): 244-63.
+</div>
+<div id="ref-16_Baker2002" class="csl-entry" role="listitem">
+Baker, Jean H., ed. 2002. <em><span>Votes for Women: The Struggle for Suffrage Revisited</span></em>. Oxford University Press.
+</div>
+<div id="ref-16_Bentham1789" class="csl-entry" role="listitem">
+Bentham, Jeremy. 1789. <em><span>An Introduction to the Principles of Morals and Legislation</span></em>. T. Payne; Son.
+</div>
+<div id="ref-16_Bergson1938" class="csl-entry" role="listitem">
+Bergson, Abram. 1938. <span>«<span>A Reformulation of Certain Aspects of Welfare Economics</span>»</span>. <em>The Quarterly Journal of Economics</em> 52 (2): 310-34.
+</div>
+<div id="ref-16_Bernoulli1738" class="csl-entry" role="listitem">
+Bernoulli, Daniel. 1738. <span>«<span>Specimen Theoriae Novae de Mensura Sortis</span>»</span>. <em>Commentarii Academiae Scientiarum Imperialis Petropolitanae</em> 5: 175-92.
+</div>
+<div id="ref-16_Black1948" class="csl-entry" role="listitem">
+Black, Duncan. 1948. <span>«<span>On the Rationale of Group Decision-making</span>»</span>. <em>Journal of Political Economy</em> 56 (1): 23-34. <a href="http://www.jstor.org/stable/1825026">http://www.jstor.org/stable/1825026</a>.
+</div>
+<div id="ref-16_Borda1781" class="csl-entry" role="listitem">
+Borda, Jean-Charles de. 1781. <span>«<span>M<span>é</span>moire sur les <span>é</span>lections au scrutin</span>»</span>. <em>Histoire de l’Acad<span class="nocase">é</span>mie Royale des Sciences</em>, 657-65.
+</div>
+<div id="ref-16_BuchananTullock1962" class="csl-entry" role="listitem">
+Buchanan, James M., y Gordon Tullock. 1962. <em><span>The Calculus of Consent: Logical Foundations of Constitutional Democracy</span></em>. University of Michigan Press.
+</div>
+<div id="ref-16_Calvo2010" class="csl-entry" role="listitem">
+Calvo, Kerman. 2010. <span>«<span>Reconocimiento, ciudadan<span>í</span>a y pol<span>í</span>ticas p<span>ú</span>blicas hacia las uniones homosexuales en Europa</span>»</span>. <em>Revista Espa<span class="nocase">ñ</span>ola de Investigaciones Sociol<span class="nocase">ó</span>gicas</em> 129: 37-59.
+</div>
+<div id="ref-16_Condorcet1785" class="csl-entry" role="listitem">
+Condorcet, Marquis de. 1785. <em>Essai sur l’application de l’analyse <span>à</span> la probabilit<span>é</span> des d<span>é</span>cisions rendues <span>à</span> la pluralit<span>é</span> des voix</em>.
+</div>
+<div id="ref-16_Downs1957" class="csl-entry" role="listitem">
+Downs, Anthony. 1957. <span>«<span>An Economic Theory of Political Action in a Democracy</span>»</span>. <em>Journal of Political Economy</em> 65 (2): 135-50. <a href="http://www.jstor.org/stable/1827369">http://www.jstor.org/stable/1827369</a>.
+</div>
+<div id="ref-16_Drescher2009" class="csl-entry" role="listitem">
+Drescher, Seymour. 2009. <em><span>Abolition: A History of Slavery and Antislavery</span></em>. Cambridge University Press.
+</div>
+<div id="ref-16_Dupuit1844" class="csl-entry" role="listitem">
+Dupuit, Jules. 1844. <span>«<span>De la mesure de l’utilit<span>é</span> des travaux publics</span>»</span>. <em>Annales des Ponts et Chauss<span class="nocase">é</span>es</em> 8: 332-75.
+</div>
+<div id="ref-16_Duverger1951" class="csl-entry" role="listitem">
+Duverger, Maurice. 1951. <em><span>Les Partis Politiques</span></em>. Armand Colin.
+</div>
+<div id="ref-16_Gibbard1973" class="csl-entry" role="listitem">
+Gibbard, Allan. 1973. <span>«<span>Manipulation of Voting Schemes: A General Result</span>»</span>. <em>Econometrica</em> 41 (4): 587-601. <a href="https://doi.org/10.2307/1914083">https://doi.org/10.2307/1914083</a>.
+</div>
+<div id="ref-16_Hall1989" class="csl-entry" role="listitem">
+Hall, Peter A., ed. 1989. <em><span>The Political Power of Economic Ideas: Keynesianism across Nations</span></em>. Princeton University Press.
+</div>
+<div id="ref-16_Harsanyi1955" class="csl-entry" role="listitem">
+Harsanyi, John C. 1955. <span>«<span>Cardinal Welfare, Individualistic Ethics, and Interpersonal Comparisons of Utility</span>»</span>. <em>Journal of Political Economy</em> 63 (4): 309-21.
+</div>
+<div id="ref-16_Hicks1939" class="csl-entry" role="listitem">
+Hicks, John R. 1939. <span>«<span>The Foundations of Welfare Economics</span>»</span>. <em>The Economic Journal</em> 49 (196): 696-712. <a href="https://doi.org/10.2307/2225023">https://doi.org/10.2307/2225023</a>.
+</div>
+<div id="ref-16_Hotelling1929" class="csl-entry" role="listitem">
+Hotelling, Harold. 1929. <span>«<span>Stability in Competition</span>»</span>. <em>The Economic Journal</em> 39 (153): 41-57. <a href="http://www.jstor.org/stable/2224214">http://www.jstor.org/stable/2224214</a>.
+</div>
+<div id="ref-16_Kaldor1939" class="csl-entry" role="listitem">
+Kaldor, Nicholas. 1939. <span>«<span>Welfare Propositions of Economics and Interpersonal Comparisons of Utility</span>»</span>. <em>The Economic Journal</em> 49 (195): 549-52.
+</div>
+<div id="ref-16_Kramer1973" class="csl-entry" role="listitem">
+Kramer, Gerald H. 1973. <span>«<span>On a Class of Equilibrium Conditions for Majority Rule</span>»</span>. <em>Econometrica</em> 41 (2): 285-97. <a href="http://www.jstor.org/stable/1913490">http://www.jstor.org/stable/1913490</a>.
+</div>
+<div id="ref-16_LipseyLancaster1956" class="csl-entry" role="listitem">
+Lipsey, Richard G., y Kelvin Lancaster. 1956. <span>«<span>The General Theory of Second Best</span>»</span>. <em>The Review of Economic Studies</em> 24 (1): 11-32.
+</div>
+<div id="ref-16_Moulin1980" class="csl-entry" role="listitem">
+Moulin, Hervé. 1980. <span>«<span>On Strategy-Proofness and Single Peakedness</span>»</span>. <em>Public Choice</em> 35 (4): 437-55.
+</div>
+<div id="ref-16_Nash1950" class="csl-entry" role="listitem">
+Nash, John F. 1950. <span>«<span>The Bargaining Problem</span>»</span>. <em>Econometrica</em> 18 (2): 155-62.
+</div>
+<div id="ref-16_Olson1965" class="csl-entry" role="listitem">
+Olson, M. 1965. <em><span>The Logic of Collective Action</span></em>. Harvard University Press.
+</div>
+<div id="ref-16_Osborne1995" class="csl-entry" role="listitem">
+Osborne, Martin J. 1995. <span>«<span>Spatial Models of Political Competition under Plurality Rule: A Survey of Some Explanations of the Number of Candidates and the Positions They Take</span>»</span>. <em>Canadian Journal of Economics</em> 28 (2): 261-301.
+</div>
+<div id="ref-16_PeetersSaranYuksel2016" class="csl-entry" role="listitem">
+Peeters, Ronald, Rene Saran, y Ayşe Müge Yüksel. 2016. <span>«<span>Strategic Party Formation on a Circle and Duverger<span>'</span>s Law</span>»</span>. <em>Social Choice and Welfare</em> 47 (3): 729-59. <a href="https://doi.org/10.1007/s00355-016-0990-z">https://doi.org/10.1007/s00355-016-0990-z</a>.
+</div>
+<div id="ref-16_PrestTurvey1965" class="csl-entry" role="listitem">
+Prest, A. R., y R. Turvey. 1965. <span>«<span>Cost-Benefit Analysis: A Survey</span>»</span>. <em>The Economic Journal</em> 75 (300): 683-735.
+</div>
+<div id="ref-16_Purvis2002" class="csl-entry" role="listitem">
+Purvis, June. 2002. <em><span>Emmeline Pankhurst: A Biography</span></em>. Routledge.
+</div>
+<div id="ref-16_Rawls1971" class="csl-entry" role="listitem">
+Rawls, John. 1971. <em><span>A Theory of Justice</span></em>. The Belknap Press of Harvard University Press.
+</div>
+<div id="ref-16_Russell2006" class="csl-entry" role="listitem">
+Russell, Nathan J. 2006. <em><span>An Introduction to the Overton Window of Political Possibilities</span></em>. Mackinac Center for Public Policy. <a href="https://www.mackinac.org/7504">https://www.mackinac.org/7504</a>.
+</div>
+<div id="ref-16_Salop1979" class="csl-entry" role="listitem">
+Salop, Steven C. 1979. <span>«<span>Monopolistic Competition with Outside Goods</span>»</span>. <em>The Bell Journal of Economics</em> 10 (1): 141-56. <a href="https://doi.org/10.2307/3003323">https://doi.org/10.2307/3003323</a>.
+</div>
+<div id="ref-16_Samuelson1947" class="csl-entry" role="listitem">
+Samuelson, Paul A. 1947. <em><span>Foundations of Economic Analysis</span></em>. Harvard University Press.
+</div>
+<div id="ref-16_Samuelson1954" class="csl-entry" role="listitem">
+Samuelson, Paul A. 1954. <span>«<span>The Pure Theory of Public Expenditure</span>»</span>. <em>The Review of Economics and Statistics</em> 36 (4): 387-89.
+</div>
+<div id="ref-16_Satterthwaite1975" class="csl-entry" role="listitem">
+Satterthwaite, Mark Allen. 1975. <span>«<span>Strategy-proofness and Arrow<span>'</span>s conditions: Existence and correspondence theorems for voting procedures and social welfare functions</span>»</span>. <em>Journal of Economic Theory</em> 10 (2): 187-217. <a href="https://doi.org/10.1016/0022-0531(75)90050-2">https://doi.org/10.1016/0022-0531(75)90050-2</a>.
+</div>
+<div id="ref-16_Schmidt2010" class="csl-entry" role="listitem">
+Schmidt, James D. 2010. <em><span>Industrial Violence and the Legal Origins of Child Labor</span></em>. Cambridge University Press.
+</div>
+<div id="ref-16_Sen1970" class="csl-entry" role="listitem">
+Sen, Amartya K. 1970. <span>«<span>The Impossibility of a Paretian Liberal</span>»</span>. <em>Journal of Political Economy</em> 78 (1): 152-57.
+</div>
+<div id="ref-16_Sen1979" class="csl-entry" role="listitem">
+Sen, Amartya K. 1979. <span>«<span>Personal Utilities and Public Judgements: Or What’s Wrong with Welfare Economics?</span>»</span> <em>The Economic Journal</em> 89 (355): 537-58.
+</div>
+<div id="ref-16_Vickrey1961" class="csl-entry" role="listitem">
+Vickrey, William. 1961. <span>«<span>Counterspeculation, Auctions, and Competitive Sealed Tenders</span>»</span>. <em>The Journal of Finance</em> 16 (1): 8-37. <a href="https://doi.org/10.1111/j.1540-6261.1961.tb02789.x">https://doi.org/10.1111/j.1540-6261.1961.tb02789.x</a>.
+</div>
+<div id="ref-16_Wicksell1896" class="csl-entry" role="listitem">
+Wicksell, Knut. 1896. <span>«A <span>New</span> <span>Principle</span> of <span>Just</span> <span>Taxation</span>»</span>. En <em>Classics in the <span>Theory</span> of <span>Public</span> <span>Finance</span> (1958)</em>, editado por Richard A. Musgrave y Alan T.1958 Peacock. Palgrave Macmillan UK. <a href="https://doi.org/10.1007/978-1-349-23426-4_6">https://doi.org/10.1007/978-1-349-23426-4_6</a>.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Rawls heredó las ideas de Rousseau, Hobbes y Locke sobre el contrato social<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Concretamente, Rawls indica que los individuos de la sociedad llegarían a un acuerdo social unánime basado en tres principios:</p>
+<ol type="1">
+<li><p>Principio de libertad, cada persona tiene derecho a la máxima libertad compatible con la libertad de los demás.</p></li>
+<li><p>Principio de diferencia, las desigualdades económicas y sociales solo son legítimas si derivan del esfuerzo realizado en condiciones de igualdad de oportunidades y, además, benefician a los más desfavorecidos.</p></li>
+<li><p>Prioridad entre principios, el principio de libertad prima sobre el de diferencia y, dentro de este, la igualdad de oportunidades prima sobre el beneficio de los más desfavorecidos.</p></li>
+</ol>
+<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn3"><p>La Función de Bienestar Social exige poder realizar comparaciones interpersonales de utilidad de carácter cardinal ya que, por definición, comparar entre dos óptimos globales implicará el incremento de la utilidad de un agente y la reducción de la del otro. Para decidir la superioridad hace falta conocer la intensidad de estos incrementos en <span class="math inline">\(u\left(x\right)\)</span> y compararlos entre los agentes. Esto choca con la teoría de la utilidad, que ha rechazado casi unánimemente las funciones de utilidad cardinal y el empleo de comparaciones interpersonales de utilidad. A pesar de esto, si se quieren tener en cuenta los trade-offs entre agentes, es necesario hacer comparaciones cardinales.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>Si se exigiera Pareto optimalidad fuerte, entonces para que la alternativa <span class="math inline">\(A\)</span> fuese preferida a la <span class="math inline">\(B\)</span> no haría falta que todos los individuos la prefiriesen, sino que bastaría con que un individuo la prefiriese y otros estuviesen indiferentes.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Por ejemplo, si la elección es entre gasto en sanidad y en educación, el resultado debe ser independiente de cómo valoren los individuos la sanidad y la educación en relación a un tercer bien (como, por ejemplo, la justicia).<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Como no existe ninguna regla que cumpla todos los axiomas, hay que conformarse con reglas que renuncien a alguno de ellos.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Lo que el Teorema de la imposibilidad de Arrow nos dice es que las reglas de votación no son un buen mecanismo de decisión, ya que todas ellas deben renunciar a alguna de las 5 propiedades mencionadas, y todas ellas se consideran propiedades básicas y deseables. Así, según Arrow, ningún sistema de votación es justo.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Sin embargo, hubo autores de la Economía del Bienestar que criticaron la teoría de Arrow:</p>
+<ul>
+<li><p>Little criticó que la regla de elección colectiva de Arrow simplemente actúe como una máquina que agrega valores y permite alcanzar una solución, pero que esta solución no representaría necesariamente los valores de la sociedad.</p></li>
+<li><p>Bergson, por su parte, introdujo una distinción entre aconsejar a un individuo y aconsejar a un funcionario. El objetivo real de la Economía del bienestar, dirá Bergson, es el primero, mientras que la regla de elección colectiva de Arrow indicaría al funcionario lo que debe de hacer.</p></li>
+</ul>
+<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn9"><p>Por su parte, una Función de Bienestar Social, como mecanismo de elección colectiva, si es individualista y anónima, cumple las condiciones U, AD, P y R del Teorema de Arrow. Sin embargo, al depender de los niveles de utilidad de los individuos –de la intensidad de sus preferencias– incumple la condición IAI.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Por tanto, existe un “precio” por emplear una regla de elección colectiva, que implicará renunciar a alguna de las condiciones (ningún sistema de votos es justo). Como ha señalado Winston Churchill: “la democracia es el menos malo de todos los sistemas”<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>Este sería el caso, por ejemplo, si se realizara un referéndum en un país sobre alguna cuestión pública.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>La relación entre las elecciones en una democracia directa y en una representativa depende del comportamiento de los votantes y de los políticos, e incluso de la estructura del proceso de toma de decisiones dentro del Sector Público.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>La intransitividad implica que no existe ningún equilibrio en votación mayoritaria ya que el proceso de votación se extendería indefinidamente sin que se alcanzara una decisión. Así, se vota entre <span class="math inline">\(A\)</span> y <span class="math inline">\(B\)</span>, se elegiría <span class="math inline">\(A\)</span> y el individuo 3 pediría que se votase entre <span class="math inline">\(C\)</span> y <span class="math inline">\(A\)</span>; entre estas dos alternativas saldría elegida la alternativa <span class="math inline">\(C\)</span> y el votante 2 pediría que se votase entre <span class="math inline">\(C\)</span> y <span class="math inline">\(B\)</span>, siendo elegida la alternativa <span class="math inline">\(B\)</span>, a continuación el votante 1 demandaría una votación entre <span class="math inline">\(A\)</span> y <span class="math inline">\(B\)</span>. De esta forma se volvería al punto de partida y la votación se repetiría de forma indefinida.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>El votante mediano y el medio coinciden si la distribución de las preferencias de los votantes es simétrica. En este tipo de distribución, la media (votante medio) y la mediana (votante mediano) se encuentran en el mismo punto, en el centro de la curva de preferencias.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>Esto es, exceptuando situaciones triviales en las que existe unanimidad, los ciclos son una realidad inherente a cualquier proceso de votación multidimensional. El modelo de votación, entonces, solo producirá resultados definidos y predecibles con alternativas unidimensionales.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>Por definición, la <span class="math inline">\(RMT\)</span> entre un bien y la renta es igual al coste marginal de producción de este bien.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>El nivel de gasto más preferido por un individuo será aquel para el que se iguale el beneficio marginal de la última unidad provista al coste (fiscal) marginal que tiene esa unidad para él.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>Una regla de elección colectiva es no manipulable –o a prueba de estrategias– si ningún individuo puede conseguir un resultado mejor para él declarando unas preferencias falsas. Toda regla no manipulable cumple la propiedad de Asociación Positiva (AP), que establece que si la regla de elección colectiva elige determinada alternativa <span class="math inline">\(x_{i}\)</span> y las preferencias de un individuo cambian de tal forma que <span class="math inline">\(x_{i}\)</span> mejora en su escala de valoración, si la ordenación relativa del resto de alternativas no varía, entonces la regla de elección debe seguir siendo <span class="math inline">\(x_{i}\)</span>. En otras palabras, si una persona pasa a valorar más una alternativa previamente escogida no debe cambiar la elección colectiva. Formalmente, si hay 3 alternativas y para el individuo <span class="math inline">\(j\)</span> <span class="math inline">\(x_{1}\succ x_{2}\succ x_{3}\)</span>, y la elección colectiva es <span class="math inline">\(x_{2}\)</span>, si las preferencias de <span class="math inline">\(j\)</span> pasan a ser <span class="math inline">\(x_{2}\succ x_{1}\succ x_{3}\)</span>, la elección colectiva debe seguir siendo <span class="math inline">\(x_{2}\)</span>.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>Fue elaborado por <span class="citation" data-cites="16_Downs1957">Downs (<a href="01-tema-a1.html#ref-16_Downs1957" role="doc-biblioref">1957</a>)</span>, pero se le añade el apellido Hotelling porque su funcionamiento y resultados son muy similares a los del modelo de localización espacial de <span class="citation" data-cites="16_Hotelling1929">Hotelling (<a href="01-tema-a1.html#ref-16_Hotelling1929" role="doc-biblioref">1929</a>)</span>.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>El modelo de Downs-Hotelling muestra cómo, en un sistema bipartidista con votación unidimensional en el espectro ideológico, los dos partidos tenderán a adoptar una ideología de centro, proponiendo un programa lo más similar posible a la ideología del votante mediano (principio de diferenciación mínima).</p>
+<p>Limitaciones del modelo:</p>
+<ul>
+<li><p>Cuando existen más de 2 partidos “voto útil o estratégico”.</p></li>
+<li><p>No solo cuenta ideología del partido (variables multidimensionales y problema de preferencias cíclicas).</p></li>
+<li><p>Abstención y el votante mediano no da victoria (votante mediano “efectivo” (los que votan) difiere del “real” (si vota toda la población)). Ejemplo: burócratas y funcionarios. Conclusión: Con más de 2 partidos, es difícil determinar si gana o no votante mediano. Probablemente, los partidos se sitúen en torno a él (ideología de “centro”).</p></li>
+</ul>
+<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></li>
+<li id="fn21"><p>Por ejemplo, si los individuos a la hora de votar tomaran en cuenta no solo el nivel del presupuesto sino también la estructura del mismo, es decir, no solo cuánto se gasta sino también en qué se gasta. Cada alternativa sería entonces un vector en el que se especificaría cuánto se gasta en cada uno de los programas de gasto y cómo se financia el gasto.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>El ejemplo canónico de esta paradoja, presente ya en el propio artículo original de Sen, es el de dos individuos, “Lascivo” y “Mojigato”, que deben decidir quién lee un único ejemplar de&nbsp;<em>El amante de Lady Chatterley</em>. Mojigato preferiría que el libro no lo leyera nadie, pero, si tiene que leerlo alguien, prefiere leerlo él mismo antes que verlo en manos de Lascivo. Lascivo disfrutaría leyéndolo, pero disfrutaría aún más viendo a Mojigato obligado a leerlo. Respetar la libertad de cada uno para decidir sobre su propia lectura conduce a un resultado que ambos consideran peor que la alternativa que señalaría el criterio de Pareto, lo que ilustra la incompatibilidad entre libertad individual y optimalidad paretiana.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./15-tema-a15.html" class="pagination-link" aria-label="Fallos del mercado y del sector público">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./17-tema-a17.html" class="pagination-link" aria-label="Sector Público. Crecimiento del gasto público">
+        <span class="nav-page-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

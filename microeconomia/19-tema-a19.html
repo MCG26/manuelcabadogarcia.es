@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { height: 1.2rem; margin-top: 1rem; color: #7a1f4b; letter-spacing: .3em; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: none; }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-titulo, #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.45); }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  function huella(texto) {
+    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
+      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
+    });
+  }
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (window.crypto && crypto.subtle) {
+      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
+    }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    c.innerHTML = '<div class="c-cabecera"><div class="c-nombre">Manuel Cabado Garc\u00eda</div>' +
+      '<div class="c-lema">Apuntes para la oposici\u00f3n al Cuerpo de Diplomados Comerciales del Estado</div></div>' +
+      '<div class="c-cuerpo"><div class="c-caja"><div class="c-titulo">Pr\u00f3ximamente</div>' +
+      '<div class="c-texto">Apuntes gratuitos del Tercer Ejercicio.<br>Estamos ultimando los detalles.</div>' +
+      '<div class="c-pista" aria-hidden="true"></div></div></div>';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Los instrumentos del Estado del Bienestar para redistribuir y proteger, bienes preferentes y prestaciones monetarias, su justificación y la medición de su impacto redistributivo.">
+
+<title>Tema A19. Estado del Bienestar, redistribución y protección social | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./20-tema-a20.html" rel="next">
+<link href="./18-tema-a18-pendiente.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-b75b20a0f7f2c99fe460d8a20facac43.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3e8f17cf44a877a37519f056e50d03fe.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A19. Estado del Bienestar, redistribución y protección social | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Los instrumentos del Estado del Bienestar para redistribuir y proteger, bienes preferentes y prestaciones monetarias, su justificación y la medición de su impacto redistributivo.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A19. Estado del Bienestar, redistribución y protección social | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Los instrumentos del Estado del Bienestar para redistribuir y proteger, bienes preferentes y prestaciones monetarias, su justificación y la medición de su impacto redistributivo.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A19. El Estado del Bienestar y los instrumentos de redistribución y protección social. Medición e indicadores del impacto redistributivo.",
+ "alternateName": "Estado del Bienestar, redistribución y protección social",
+ "description": "Los instrumentos del Estado del Bienestar para redistribuir y proteger, bienes preferentes y prestaciones monetarias, su justificación y la medición de su impacto redistributivo.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/19-tema-a19.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+  <a href="" class="quarto-reader-toggle quarto-navigation-tool px-1" onclick="window.quartoToggleReader(); return false;" title="Alternar modo lector">
+  <div class="quarto-reader-toggle-btn">
+  <i class="bi"></i>
+  </div>
+</a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./19-tema-a19.html"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">19.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#justificación-1" id="toc-justificación-1" class="nav-link" data-scroll-target="#justificación-1"><span class="header-section-number">19.2</span> Justificación<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto 30 segundos">1'30"</span></a></li>
+  <li><a href="#prestaciones-económicas" id="toc-prestaciones-económicas" class="nav-link" data-scroll-target="#prestaciones-económicas"><span class="header-section-number">19.3</span> Prestaciones económicas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></a>
+  <ul class="collapse">
+  <li><a href="#rasgos-generales" id="toc-rasgos-generales" class="nav-link" data-scroll-target="#rasgos-generales">Rasgos generales</a></li>
+  <li><a href="#pensiones-de-jubilación" id="toc-pensiones-de-jubilación" class="nav-link" data-scroll-target="#pensiones-de-jubilación">Pensiones de jubilación</a></li>
+  <li><a href="#prestaciones-por-desempleo" id="toc-prestaciones-por-desempleo" class="nav-link" data-scroll-target="#prestaciones-por-desempleo">Prestaciones por desempleo</a></li>
+  <li><a href="#programas-de-reducción-de-la-pobreza" id="toc-programas-de-reducción-de-la-pobreza" class="nav-link" data-scroll-target="#programas-de-reducción-de-la-pobreza">Programas de reducción de la pobreza</a></li>
+  </ul></li>
+  <li><a href="#provisión-de-bienes-preferentes" id="toc-provisión-de-bienes-preferentes" class="nav-link" data-scroll-target="#provisión-de-bienes-preferentes"><span class="header-section-number">19.4</span> Provisión de bienes preferentes<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos">5'</span></a>
+  <ul class="collapse">
+  <li><a href="#sanidad" id="toc-sanidad" class="nav-link" data-scroll-target="#sanidad">Sanidad</a></li>
+  <li><a href="#educación" id="toc-educación" class="nav-link" data-scroll-target="#educación">Educación</a></li>
+  <li><a href="#vivienda" id="toc-vivienda" class="nav-link" data-scroll-target="#vivienda">Vivienda</a></li>
+  <li><a href="#otros-bienes-preferentes" id="toc-otros-bienes-preferentes" class="nav-link" data-scroll-target="#otros-bienes-preferentes">Otros bienes preferentes</a></li>
+  </ul></li>
+  <li><a href="#impacto-redistributivo" id="toc-impacto-redistributivo" class="nav-link" data-scroll-target="#impacto-redistributivo"><span class="header-section-number">19.5</span> Impacto redistributivo<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></a></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">19.6</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1-modelo-de-generaciones-solapadas" id="toc-a.1-modelo-de-generaciones-solapadas" class="nav-link" data-scroll-target="#a.1-modelo-de-generaciones-solapadas">19.A.1&nbsp;&nbsp;Modelo de generaciones solapadas</a></li>
+  <li><a href="#a.2-cuentas-nocionales" id="toc-a.2-cuentas-nocionales" class="nav-link" data-scroll-target="#a.2-cuentas-nocionales">19.A.2&nbsp;&nbsp;Cuentas nocionales</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      document.startViewTransition(function () { cambiar(); });
+
+    };
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">El Estado del Bienestar y los instrumentos de redistribución y protección social. Medición e indicadores del impacto redistributivo.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="19.1">
+<h2 data-number="19.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">19.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>Según el último informe de Fedea&nbsp;<span class="citation" data-cites="19_LopezLabordaMarinOnrubia2026">(<a href="01-tema-a1.html#ref-19_LopezLabordaMarinOnrubia2026" role="doc-biblioref">López Laborda et&nbsp;al. 2026</a>)</span> sobre distribución de impuestos para el año 2023, el presupuesto público redujo la desigualdad de la renta de mercado en España un 31,9 %. Además, más de la mitad de los hogares españoles fueron perceptores netos del Estado, al recibir en prestaciones públicas más de lo que aportaron vía impuestos.</p>
+<p>Así, una de las mayores transformaciones que ha experimentado el sector público en los últimos 60 años en la mayoría de países desarrollados ha sido el cambio en las funciones que este ejerce, marcado por la mayor importancia concedida a la función distributiva:</p>
+<ul>
+<li><p>El medio principal utilizado por el sector público para cumplir con esta función es el presupuesto, entendido como un programa de ingresos y de gastos públicos.</p></li>
+<li><p>El resultado principal de dicha función es la construcción del Estado del Bienestar.</p></li>
+</ul>
+<p>Por consiguiente, el objetivo del tema es analizar los instrumentos redistributivos del Estado de Bienestar, sus efectos y sostenibilidad a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>Justificación.</p></li>
+<li><p>Prestaciones económicas.</p></li>
+<li><p>Provisión de bienes preferentes.</p></li>
+<li><p>Impacto redistributivo.</p></li>
+</ol>
+</section>
+<section id="justificación-1" class="level2" data-number="19.2">
+<h2 data-number="19.2" class="anchored" data-anchor-id="justificación-1"><span class="header-section-number">19.2</span> Justificación<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="1 minuto 30 segundos">1'30"</span></h2>
+<p>Comenzando con la justificación, la Economía del Bienestar muestra que las asignaciones Pareto-eficientes resultantes de un mercado perfectamente competitivo no tienen por qué ser las que maximicen el bienestar social. Es decir, la optimalidad de Pareto es una condición necesaria pero no suficiente para la maximización del bienestar.</p>
+<p>El Segundo Teorema del Bienestar establece que, con preferencias y tecnologías convexas, cualquier asignación eficiente puede alcanzarse como equilibrio competitivo mediante una redistribución previa vía transferencias de suma fija, dejando después actuar a los mecanismos del mercado. Por tanto, puede alcanzarse otra solución eficiente que, además, maximice el bienestar social<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.</p>
+<section id="estado-del-bienestar" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="estado-del-bienestar">Estado del Bienestar</h5>
+<p>De este modo, para garantizar su función distributiva, el Sector Público ha construido el Estado del Bienestar, que puede definirse como un conjunto de instrumentos redistributivos que el sector público utiliza para garantizar un cierto nivel de equidad y cobertura mínima de necesidades en la sociedad. No obstante, el sector público debe tratar de garantizar un equilibrio que no siempre es fácil de lograr: tiene que ser eficaz, eficiente y sostenible.</p>
+</section>
+<section id="pilares-de-la-redistribución" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="pilares-de-la-redistribución">Pilares de la redistribución</h5>
+<p>Así, en los países desarrollados, la función redistributiva del sector público se suele diseñar desde una perspectiva socio-liberal basada en 3 pilares<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>:</p>
+<ol type="1">
+<li><p>Equidad horizontal: no discriminación entre iguales.</p></li>
+<li><p>Equidad vertical: discriminación positiva entre diferentes (a favor del menos dotado).</p></li>
+<li><p>Igualdad de oportunidades (que es diferente de igualdad de resultados).</p></li>
+</ol>
+</section>
+<section id="instrumentos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="instrumentos">Instrumentos</h5>
+<p>Respecto a los instrumentos, aunque el sector público tiene tanto instrumentos presupuestarios como no presupuestarios<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a>, se opta por los primeros debido al alto coste de eficiencia de los segundos.</p>
+</section>
+<section id="distorsiones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="distorsiones">Distorsiones</h5>
+<p>Además, la mayor parte de la función redistribuidora del presupuesto se hace a través del gasto y no de los impuestos, pues la concepción moderna de la imposición (aportada fundamentalmente por la Nueva Macroeconomía Clásica) recomienda que esta sea neutral para evitar distorsiones en la toma de decisiones.</p>
+<p>A continuación, se analizarán los 2 principales instrumentos de gasto del Estado de Bienestar: las prestaciones económicas y la provisión de bienes preferentes.</p>
+</section>
+</section>
+<section id="prestaciones-económicas" class="level2" data-number="19.3">
+<h2 data-number="19.3" class="anchored" data-anchor-id="prestaciones-económicas"><span class="header-section-number">19.3</span> Prestaciones económicas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></h2>
+<p>Se trata de transferencias monetarias de libre disposición (pensiones, prestaciones por desempleo, prestaciones asistenciales, etc.). El receptor hace el uso que quiera de las mismas.</p>
+<section id="rasgos-generales" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="rasgos-generales">Rasgos generales</h3>
+<p>Comenzando con los rasgos generales, la clasificación de las prestaciones:</p>
+<ul>
+<li><p>Según el tipo de cobertura:</p>
+<ul>
+<li><p>Profesional (o bismarckiano): la cobertura se limita fundamentalmente a los asalariados. En puridad, el sistema propone una estricta proporcionalidad entre las cotizaciones y las prestaciones.</p></li>
+<li><p>Universal, heredero del Informe Beveridge&nbsp;<span class="citation" data-cites="19_Beveridge1942">(<a href="01-tema-a1.html#ref-19_Beveridge1942" role="doc-biblioref">1942</a>)</span>, la cobertura se ofrece a toda la población.</p></li>
+</ul></li>
+<li><p>Según el modo de financiación:</p>
+<ul>
+<li><p>No contributivo (o asistencial): se financia con cargo a los Presupuestos Generales del Estado, sin exigir cotizaciones previas. Su principal ventaja es la contribución a la equidad y su principal inconveniente es la presión que ejerce sobre el déficit.</p></li>
+<li><p>Contributivo: se financia a través de las cotizaciones de los afiliados.</p></li>
+</ul></li>
+</ul>
+<section id="categorías-de-prestaciones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="categorías-de-prestaciones">Categorías de prestaciones</h5>
+<p>Asimismo, las prestaciones económicas pueden agruparse en 2 categorías:</p>
+<ol type="1">
+<li><p>Programas de sustitución de rentas: ofrecen prestaciones que compensan la pérdida de rentas como consecuencia de determinados acontecimientos (pensiones contributivas, prestaciones por desempleo, etc.). Suelen ser profesionales y contributivas.</p></li>
+<li><p>Programas de reducción de la pobreza: ofrecen prestaciones que tratan de paliar situaciones de pobreza extrema, proporcionando unos ingresos mínimos a individuos cuyos ingresos son muy bajos o nulos (pensiones no contributivas, subsidios por desempleo, etc.). No exigen cotizaciones previas, se dirigen a quien acredita falta de recursos y se financian con impuestos generales.</p></li>
+</ol>
+</section>
+<section id="obligatoriedad-de-participación" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="obligatoriedad-de-participación">Obligatoriedad de participación</h5>
+<p>Por otro lado, la obligatoriedad de participación en los programas contributivos se debe a 4 motivos:</p>
+<ol type="1">
+<li><p>Paternalismo: se basa en la creencia de que el Estado conoce mejor los beneficios de tener un seguro, pues los individuos suelen subestimar los riesgos de un acontecimiento y podrían no asegurarse ante éste.</p></li>
+<li><p>Información asimétrica: selección adversa. Las aseguradoras no conocen la probabilidad de que una persona pierda su puesto de trabajo, por lo que fijarán unas primas en función del riesgo medio, con lo que las personas de bajo riesgo no contratarán el seguro. Las aseguradoras recalcularán entonces al alza la prima, repitiéndose el proceso hasta que los individuos con menor riesgo son expulsados completamente del mercado de seguros.</p></li>
+<li><p>Eficiencia: por la ley de los grandes números (risk pooling), cuanto mayor sea el número de asegurados con riesgos independientes, menor será el riesgo por asegurado, porque la pérdida media del grupo se vuelve casi predecible aunque no se sepa a quién afectará el siniestro.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></p></li>
+<li><p>Externalidad negativa: una pobreza generalizada puede generar tensión social, inestabilidad, delincuencia, inseguridad, etc.</p></li>
+</ol>
+</section>
+<section id="justificación-del-carácter-público" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="justificación-del-carácter-público">Justificación del carácter público</h5>
+<p>Además, existe justificación del carácter público de los programas contributivos. Así, la provisión pública de los programas contributivos se debe a 2 motivos:</p>
+<ol type="1">
+<li><p>Riesgos sociales. Se trata de riesgos que, de producirse, afectan a gran parte de la población, por lo que una aseguradora privada podría verse abocada a la quiebra (por ejemplo, desempleo). El sector público sí puede asegurar porque dispone de ingresos adicionales a las primas.</p></li>
+<li><p>Equidad. La provisión pública asegura que los individuos pagarán en función de su renta, y no en función de su riesgo (que sería la variable clave para las aseguradoras privadas).</p></li>
+</ol>
+<p>A continuación analizaremos las principales prestaciones económicas.</p>
+</section>
+</section>
+<section id="pensiones-de-jubilación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="pensiones-de-jubilación">Pensiones de jubilación</h3>
+<p>Definición: prestación económica periódica que compensa la pérdida de la capacidad del trabajador para generar rentas laborales por vejez. Las pensiones constituyen un pilar fundamental dentro del Estado de Bienestar<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>.</p>
+<section id="objetivos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="objetivos">Objetivos</h5>
+<p>Los sistemas de pensiones, entendidos como el conjunto de programas de transferencias de renta y de los correspondientes mecanismos financieros, persiguen fundamentalmente 3 objetivos:</p>
+<ol type="1">
+<li><p>Prevenir el riesgo de pobreza entre adultos de mayor edad.</p></li>
+<li><p>Permitir el mantenimiento del estándar de vida después de la jubilación.</p></li>
+<li><p>Promover la cohesión social.</p></li>
+</ol>
+</section>
+<section id="sistemas-de-pensiones" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="sistemas-de-pensiones">Sistemas de pensiones</h4>
+<p>Las pensiones de jubilación pueden seguir 2 sistemas:</p>
+<ul>
+<li><p>Capitalización: los trabajadores realizan contribuciones forzosas a una cuenta de ahorro de la cual el trabajador obtendrá su pensión cuando se jubile (ahorro forzoso, pero no redistribución). Sistema de Capitalización, actúa como un fondo privado de pensiones, donde el sector público invierte las cotizaciones, <span class="math inline">\(C\)</span>, recaudadas en un activo sin riesgo y, llegado el momento de la jubilación, se pagan las cotizaciones más los rendimientos que se hayan generado. El importe total disponible, <span class="math inline">\(A\)</span>, vendrá dado <span id="eq-a-19-1"><span class="math display">\[A=C\cdot\sum\limits_{t=0}^{J}\left(1+r\right)^{J-t} \tag{19.1}\]</span></span> y dependerá fundamentalmente del rendimiento obtenido que viene dado por el tipo de interés.</p></li>
+<li><p>De reparto (pay as you go): basado en un contrato implícito intergeneracional según el cual las prestaciones del período se cubren con las cotizaciones de ese mismo período (ahorro forzoso y redistribución intergeneracional). El sector público se compromete a pagar las pensiones futuras pero no el nivel de las mismas. La cuantía de la pensión media, <span class="math inline">\(P_{t}\)</span>, en cada momento será igual a los fondos disponibles, que serán el tipo de cotización, <span class="math inline">\(\tau\)</span>, por el salario medio, <span class="math inline">\(w_{t}\)</span>, y por el número de ocupados, <span class="math inline">\(L_{t}\)</span>, todo ello dividido entre el número de jubilados, <span class="math inline">\(J_{t}\)</span>: <span id="eq-a-19-2"><span class="math display">\[P_{t}=\dfrac{\tau\cdot w_{t}\cdot L_{t}}{J_{t}} \tag{19.2}\]</span></span></p></li>
+</ul>
+<section id="cuál-elegir" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="cuál-elegir">¿Cuál elegir?</h5>
+<p>La elección entre un sistema de capitalización y uno de reparto depende, en gran medida, de factores demográficos y económicos:</p>
+<ul>
+<li><p>En un sistema de reparto, el rendimiento de las pensiones está vinculado al crecimiento de la masa salarial y del empleo, descontando el crecimiento del número de jubilados. Es decir, la pensión media crece más cuanto más rápido aumenten los ingresos por cotizaciones respecto al número de beneficiarios.</p></li>
+<li><p>En un sistema de capitalización, el rendimiento depende exclusivamente del tipo de interés que generan las inversiones realizadas con las cotizaciones acumuladas.</p></li>
+</ul>
+<p>Por tanto, el sistema de reparto será más ventajoso que el de capitalización siempre que la siguiente expresión se cumpla:</p>
+<p><span id="eq-a-19-3"><span class="math display">\[\dfrac{\dot{w}}{w}+\dfrac{\dot{L}}{L}-\dfrac{\dot{J}}{J}&gt;r \tag{19.3}\]</span></span> donde <span class="math inline">\(\frac{\dot{w}}{w}\)</span> es la tasa de crecimiento de los salarios, <span class="math inline">\(\frac{\dot{L}}{L}\)</span> la del empleo, <span class="math inline">\(\frac{\dot{J}}{J}\)</span> la del número de jubilados, y <span class="math inline">\(r\)</span> el tipo de interés. Esta desigualdad refleja que, si el crecimiento económico y demográfico supera el rendimiento financiero, el sistema de reparto ofrece una rentabilidad mayor que la capitalización y puede mejorar el bienestar de todas las generaciones.</p>
+</section>
+</section>
+<section id="efectos-sobre-crecimiento-y-ahorro" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="efectos-sobre-crecimiento-y-ahorro">Efectos sobre crecimiento y ahorro</h4>
+<p>Bajo el sistema de reparto, los agentes pueden modificar sus decisiones de ahorro por distintos motivos:</p>
+<ul>
+<li><p>Efecto sustitución de la riqueza: los individuos perciben que las cotizaciones a la Seguridad Social se transformarán en renta futura, lo que les lleva a reducir su ahorro privado. Sin embargo, dado que en los sistemas de reparto las cotizaciones no se acumulan, sino que se destinan directamente al pago de pensiones actuales, este comportamiento puede provocar una disminución del ahorro nacional.</p></li>
+<li><p>Efecto jubilación: las pensiones públicas pueden inducir a jubilarse antes, y un periodo de jubilación más largo, financiado con menos años de trabajo, obliga a ahorrar más durante la vida activa.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Además, la incertidumbre sobre la cuantía de la pensión futura puede elevar el ahorro por precaución, especialmente si se perciben riesgos en la sostenibilidad del sistema.</p></li>
+<li><p>Efecto herencia: como el sistema de reparto transfiere renta de los hijos, que cotizan, a los padres, que cobran la pensión, los individuos que desean dejar un legado a sus descendientes tienden a incrementar su ahorro para compensarles.</p></li>
+</ul>
+<section id="análisis-gráfico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="análisis-gráfico">Análisis gráfico</h5>
+<p>Gráficamente, en un plano de consumo, renta y riqueza a lo largo del tiempo como el de la <a href="#fig-18-evolucion-de-la" class="quarto-xref">Figura&nbsp;<span>19.1</span></a>, se analizará el efecto sobre el ahorro de los sistemas de reparto y capitalización:</p>
+<ul>
+<li><p>Se parte de un modelo de ciclo vital, donde los agentes desean suavizar el consumo, <span class="math inline">\(C\)</span>, a lo largo de su vida, por lo que distribuirán el ahorro para conseguirlo.</p></li>
+<li><p>Recibirán una renta exógena, <span class="math inline">\(Y\)</span>, que consumirán y ahorrarán, por lo que acumularán riqueza, <span class="math inline">\(R\)</span>, hasta que se jubilen en el momento <span class="math inline">\(J\)</span>.</p></li>
+<li><p>Cuando se jubilan, al no recibir la renta laboral, comenzarán a desahorrar, por lo que irán disminuyendo paulatinamente la riqueza hasta el final de sus días.</p></li>
+<li><p>En un sistema de reparto, el proceso es el mismo pero mientras trabaja cotizará, así que la renta será menor, <span class="math inline">\(Y-\tau\)</span>, ahorrando menos hasta el momento <span class="math inline">\(J\)</span>.</p></li>
+<li><p>En el momento de jubilarse no solo consumirá lo ahorrado, sino que recibirá una pensión, <span class="math inline">\(P\)</span>, gracias a sus cotizaciones mientras trabajaba.</p></li>
+</ul>
+<p>Así, bajo un sistema de reparto el ahorro nacional disminuye respecto al sistema de capitalización.</p>
+<div id="fig-18-evolucion-de-la" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Evolución de la riqueza a lo largo del ciclo vital">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-18-evolucion-de-la-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;19.1: Evolución de la riqueza a lo largo del ciclo vital
+</figcaption>
+<div aria-describedby="fig-18-evolucion-de-la-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-19-efecto-sustitucion-de-riqueza.svg" class="img-fluid figure-img" alt="Evolución de la riqueza a lo largo del ciclo vital">
+</div>
+</figure>
+</div>
+</section>
+<section id="concepto-de-eficiencia-dinámica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="concepto-de-eficiencia-dinámica">Concepto de eficiencia dinámica</h5>
+<p>Esta menor acumulación de ahorro y capital bajo el sistema de reparto no es necesariamente negativa: su efecto sobre el bienestar depende de si la economía se encontraba o no en una situación de eficiencia dinámica.</p>
+<p>La eficiencia dinámica es la situación en la que no es posible aumentar el consumo de una generación sin reducir el de otra, lo que exige que el capital por trabajador no supere al de la Regla de Oro. Según la Regla de Oro del modelo de Solow, existe un nivel de capital por trabajador que maximiza el consumo por trabajador sostenible en el largo plazo.</p>
+<p>Ahora bien, esta conclusión no es general: depende de si la economía se encuentra o no en un régimen de sobreacumulación, es decir, si el nivel de capital por trabajador supera al de la Regla de Oro. Solo en ese caso, una reducción del ahorro agregado como la que provoca el sistema de reparto frente al de capitalización mejora el bienestar:</p>
+<ul>
+<li><p>En un sistema de capitalización, el ahorro agregado puede situarse por encima del nivel eficiente si la economía entra en sobreacumulación, en cuyo caso deja de ser dinámicamente eficiente.</p></li>
+<li><p>En cambio, en una economía en sobreacumulación, el sistema de reparto, al reducir el ahorro privado, acerca la economía al nivel de capital de la Regla de Oro y mejora el bienestar.</p></li>
+</ul>
+<p>La pregunta relevante, por tanto, es si las economías desarrolladas se encuentran realmente en régimen de sobreacumulación. Abel, Mankiw, Summers y Zeckhauser&nbsp;<span class="citation" data-cites="19_AbelMankiwSummersZeckhauser1989">(<a href="01-tema-a1.html#ref-19_AbelMankiwSummersZeckhauser1989" role="doc-biblioref">1989</a>)</span> contrastan la condición de eficiencia dinámica para Estados Unidos y el resto de países del G7 y concluyen que estas economías son, en general, dinámicamente eficientes, ya que la inversión bruta no supera de forma sistemática a los beneficios del capital. Sin embargo, este resultado no está exento de controversia: Blanchard&nbsp;<span class="citation" data-cites="19_Blanchard2019">(<a href="01-tema-a1.html#ref-19_Blanchard2019" role="doc-biblioref">2019</a>)</span>, en su discurso presidencial ante la American Economic Association, sostiene que la eficiencia dinámica debe evaluarse con el rendimiento del capital productivo y no con el tipo de interés libre de riesgo, lo que matiza el criterio original. En la misma línea, Geerolf&nbsp;<span class="citation" data-cites="19_Geerolf2018">(<a href="01-tema-a1.html#ref-19_Geerolf2018" role="doc-biblioref">2018</a>)</span> recalcula el criterio de AMSZ incorporando las rentas de la tierra –excluidas del capital productivo en el cálculo original– y no encuentra evidencia de eficiencia dinámica en ninguna de las economías avanzadas analizadas, señalando además una sobreacumulación de capital inequívoca en Japón y Corea del Sur.</p>
+<p>Por tanto, el argumento de la sobreacumulación no puede descartarse como una mera posibilidad teórica: sigue siendo objeto de debate empírico abierto entre la literatura clásica&nbsp;<span class="citation" data-cites="19_AbelMankiwSummersZeckhauser1989">(<a href="01-tema-a1.html#ref-19_AbelMankiwSummersZeckhauser1989" role="doc-biblioref">Abel et&nbsp;al. 1989</a>)</span> y revisiones más recientes&nbsp;<span class="citation" data-cites="19_Blanchard2019 19_Geerolf2018">(<a href="01-tema-a1.html#ref-19_Blanchard2019" role="doc-biblioref">Blanchard 2019</a>; <a href="01-tema-a1.html#ref-19_Geerolf2018" role="doc-biblioref">Geerolf 2018</a>)</span> que cuestionan si las economías desarrolladas son realmente dinámicamente eficientes.</p>
+</section>
+</section>
+<section id="problemas-y-reformas" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="problemas-y-reformas">Problemas y reformas</h4>
+<p>El principal desafío de los sistemas de pensiones en países desarrollados sigue siendo su sostenibilidad, especialmente en regímenes de reparto o mixtos. Las causas son múltiples:</p>
+<ul>
+<li><p>El desempleo reduce las cotizaciones;</p></li>
+<li><p>La devaluación salarial limita la base contributiva;</p></li>
+<li><p>El envejecimiento poblacional incrementa el número de pensionistas (se prevén 15 millones en 2050)<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>;</p></li>
+<li><p>El efecto sustitución de las pensiones, es decir, la sustitución de las pensiones que se extinguen por altas de mayor cuantía, eleva el gasto, ya que las nuevas pensiones son un 30% superiores a las que se extinguen;</p></li>
+<li><p>La robotización transforma la base productiva, reduciendo el empleo asalariado.</p></li>
+</ul>
+<p>España ha abordado el problema desde el lado del gasto con reformas en 2011 y 2013: aumento de la edad de jubilación, ampliación del periodo de cálculo, y un factor de sostenibilidad y un índice de revalorización que la Ley 21/2021 derogó. En 2025, se ha revalorizado un 2,8% la pensión contributiva y se han endurecido los requisitos para la jubilación anticipada. Por el lado de los ingresos, desde 2023 se aplica el Mecanismo de Equidad Intergeneracional (MEI), una cotización adicional que sube del 0,6% al 1,2% del salario hasta 2029, y desde 2025 la cuota de solidaridad sobre los salarios que superan la base máxima de cotización, que además sube de forma gradual. Otras propuestas son revisar bonificaciones y fomentar planes privados complementarios (modelo británico o mochila austriaca).</p>
+<p>También se propone permitir la compatibilidad plena entre pensión y empleo, incentivar la prolongación de la vida laboral y endurecer el acceso a la jubilación anticipada.</p>
+<section id="cuentas-nocionales" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="cuentas-nocionales">Cuentas nocionales</h5>
+<p>Además, se plantea implantar un sistema de cuentas nocionales, como en Suecia o Italia, que simula cuentas individuales vinculadas a las cotizaciones y a la esperanza de vida. Este modelo combina reparto y capitalización, mejora la equidad intergeneracional y refuerza la sostenibilidad del sistema. Las cuentas nocionales combinan elementos del reparto y la capitalización: simulan cuentas individuales como en la capitalización, pero sin acumular fondos reales, ya que se financian colectivamente como en el sistema de reparto.</p>
+</section>
+</section>
+</section>
+<section id="prestaciones-por-desempleo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="prestaciones-por-desempleo">Prestaciones por desempleo</h3>
+<p>Las prestaciones por desempleo son uno de los pilares del Estado del Bienestar en los países desarrollados<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>. Se definen como ayudas económicas periódicas destinadas a compensar la pérdida de ingresos por desempleo. Su existencia se justifica por razones de equidad, paternalismo y para corregir fallos de mercado como la selección adversa.</p>
+<section id="modelos-de-búsqueda-de-empleo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelos-de-búsqueda-de-empleo">Modelos de búsqueda de empleo</h5>
+<p>Desde la perspectiva de los modelos de búsqueda de empleo, estas prestaciones favorecen un mejor emparejamiento entre vacantes y trabajadores, lo que contribuye a mejorar la productividad agregada.</p>
+</section>
+<section id="problemas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problemas">Problemas</h5>
+<p>No obstante, presentan varios problemas.</p>
+<ul>
+<li><p>Por un lado, pueden generar una “trampa de pobreza”: como la prestación se pierde al encontrar empleo, aceptar un trabajo apenas aumenta la renta disponible, lo que equivale a un tipo marginal implícito cercano al 100% y eleva el salario de reserva. Además, su financiación reduce el salario neto de los ocupados, dado que las cotizaciones sociales suelen recaer sobre los trabajadores, y el desempleo prolongado deteriora el capital humano y la empleabilidad.</p></li>
+<li><p>Por otro lado, existe el riesgo de fomentar la economía sumergida, ya que algunos desempleados optan por trabajos no declarados para no perder la ayuda.</p></li>
+</ul>
+</section>
+<section id="trade-off-entre-eficiencia-y-equidad" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="trade-off-entre-eficiencia-y-equidad">Trade-off entre eficiencia y equidad</h5>
+<p>El diseño de los programas de desempleo enfrenta un equilibrio complejo entre eficiencia y equidad. La tasa de reposición, definida como <span class="math inline">\(\frac{w^{*}}{w}\cdot100\)</span>, donde <span class="math inline">\(w^{*}\)</span> es la prestación por desempleo y <span class="math inline">\(w\)</span> el salario anterior, representa el porcentaje del salario anterior cubierto por la prestación. Si esta tasa es elevada, el salario de reserva también lo será, lo que puede desincentivar la búsqueda de empleo y prolongar el tiempo en paro. Para evitar este efecto, es esencial que el salario ofrecido en el mercado supere significativamente al ingreso por desempleo. El objetivo no debe ser solo proteger al desempleado, sino fomentar su reincorporación laboral.</p>
+</section>
+<section id="soluciones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="soluciones">Soluciones</h5>
+<p>Entre las soluciones propuestas destacan:</p>
+<ul>
+<li><p>El rediseño de las prestaciones (ajustando duración y cuantía, o adaptándolas al ciclo económico) y el refuerzo de políticas activas de empleo, como formación obligatoria o incentivos fiscales a empresas que contraten desempleados.</p></li>
+<li><p>Según de Kerchove, Gabszewicz y Gérard-Varet&nbsp;<span class="citation" data-cites="19_DeKerchoveGabszewiczGerardVaret1995">(<a href="01-tema-a1.html#ref-19_DeKerchoveGabszewiczGerardVaret1995" role="doc-biblioref">1995</a>)</span>, los subsidios al empleo generan mayor bienestar que las prestaciones pasivas.</p></li>
+<li><p>También se plantea recurrir a empresas privadas de colocación para mejorar la eficiencia del sistema.</p></li>
+<li><p>Como innovación, la mochila austriaca, introducida en Austria en 2003, es un sistema que sustituye la indemnización por despido por una cuenta individual a la que el empleador aporta cada mes un porcentaje del salario, en torno al 1,5% <span class="citation" data-cites="19_DeSousaDiazSaavedraMarimon2019">(<a href="01-tema-a1.html#ref-19_DeSousaDiazSaavedraMarimon2019" role="doc-biblioref">Brogueira de Sousa et&nbsp;al. 2019</a>)</span>, y que el trabajador conserva al cambiar de empleo. Al no perder lo acumulado al cambiar de empresa, fomenta la movilidad laboral, y al igualar el coste del despido entre contratos reduce la dualidad del mercado laboral. Complementa, sin sustituirla, la prestación por desempleo, y lo no utilizado puede destinarse a la jubilación.</p></li>
+</ul>
+<p>En conjunto, el objetivo no debe ser solo proteger al desempleado, sino fomentar su reincorporación laboral. Convertir el seguro de desempleo en un verdadero seguro de empleo es clave para lograr un sistema más justo, dinámico y sostenible.</p>
+</section>
+</section>
+<section id="programas-de-reducción-de-la-pobreza" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="programas-de-reducción-de-la-pobreza">Programas de reducción de la pobreza</h3>
+<p>Además de las prestaciones contributivas que sustituyen rentas laborales, los sistemas de Seguridad Social incluyen prestaciones no contributivas destinadas a garantizar una renta mínima a personas con ingresos nulos o muy bajos. Estas ayudas responden a objetivos de equidad, redistribución y lucha contra la pobreza.</p>
+<section id="tipos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="tipos">Tipos</h5>
+<p>Las prestaciones no contributivas suelen replicar las contributivas (jubilación, desempleo, viudedad, invalidez, dependencia), pero se dirigen a quienes no cumplen los requisitos de cotización.</p>
+</section>
+<section id="problemas-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problemas-1">Problemas</h5>
+<p>Sin embargo, presentan problemas similares a los subsidios por desempleo: generan la llamada “trampa de pobreza” (cada euro adicional ganado reduce la ayuda en casi un euro, lo que desincentiva trabajar) y fomentan la economía sumergida. Además, no abordan la raíz del problema, ya que no mejoran la empleabilidad ni la capacidad de generar ingresos.</p>
+</section>
+<section id="solución" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="solución">Solución</h5>
+<p>Una solución es complementar estas prestaciones con programas de apoyo: incentivos fiscales a la contratación de colectivos vulnerables, formación profesional o estímulos a la educación.</p>
+</section>
+<section id="renta-básica-universal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="renta-básica-universal">Renta básica universal</h5>
+<p>Una propuesta más ambiciosa es la renta básica universal (RBU), que consiste en otorgar a cada ciudadano una cantidad periódica de dinero sin condiciones. Sus ventajas incluyen equidad, la garantía de un mínimo vital incluso para quien no fue previsor y reducción de las externalidades negativas de la pobreza. Además, responde a tres desafíos clave:</p>
+<ol type="1">
+<li><p>Automatización: La Cuarta Revolución Industrial amenaza millones de empleos poco cualificados. El reciclaje laboral es lento y, en muchos casos, inviable. La RBU evitaría la exclusión social de amplios sectores. Finlandia probó este modelo entre 2017 y 2018, pagando 560 €/mes a 2.000 personas. El experimento mejoró el bienestar, aunque no la empleabilidad<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>.</p></li>
+<li><p>Simplificación administrativa: Al ser universal, la RBU podría sustituir el complejo entramado de ayudas actuales, facilitando su gestión.</p></li>
+<li><p>Eliminación de la trampa de pobreza: La RBU no se retira al encontrar empleo, lo que incentiva la actividad laboral legal.</p></li>
+</ol>
+</section>
+<section id="problemas-renta-básica-universal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problemas-renta-básica-universal">Problemas renta básica universal</h5>
+<p>No obstante, plantea desafíos importantes:</p>
+<ul>
+<li><p>Efecto llamada: Podría atraer migración económica, comprometiendo la sostenibilidad del sistema.</p></li>
+<li><p>Financiación: Su coste sería elevado, salvo que sustituya al sistema actual mediante un “impuesto negativo sobre la renta”&nbsp;<span class="citation" data-cites="19_Friedman1962 19_TobinPechmanMieszkowski1967">(<a href="01-tema-a1.html#ref-19_Friedman1962" role="doc-biblioref">Friedman 1962</a>; <a href="01-tema-a1.html#ref-19_TobinPechmanMieszkowski1967" role="doc-biblioref">Tobin et&nbsp;al. 1967</a>)</span>, combinando la RBU con impuestos progresivos.<br>
+Gráficamente, en un plano de impuestos y renta como el de la <a href="#fig-18-impuesto-negativo-sobre" class="quarto-xref">Figura&nbsp;<span>19.2</span></a>, se representa la función impositiva <span class="math inline">\(T\left(Y\right)=t\cdot Y-D_{0}\)</span>, donde <span class="math inline">\(D_{0}\)</span> es el dividendo social que recibe todo ciudadano y <span class="math inline">\(t\)</span> el tipo impositivo. En este contexto, si la renta supera el umbral <span class="math inline">\(D_{0}/t\)</span>, como en <span class="math inline">\(Y_{1}\)</span>, pagará un impuesto neto como <span class="math inline">\(T_{1}\)</span>, y si es menor, recibirá una transferencia neta como <span class="math inline">\(T_{2}\)</span>.<br>
+Alternativamente, podría financiarse con una subida de impuestos, lo que implicaría distorsiones, pero también beneficios como mayor transparencia y afloramiento de empleo sumergido.</p></li>
+<li><p>En definitiva, la RBU representa una transformación profunda del Estado del Bienestar, con potencial para reducir la pobreza estructural, aunque requiere un diseño fiscal riguroso y consenso político amplio.</p></li>
+</ul>
+<div id="fig-18-impuesto-negativo-sobre" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Impuesto negativo sobre la renta">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-18-impuesto-negativo-sobre-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;19.2: Impuesto negativo sobre la renta
+</figcaption>
+<div aria-describedby="fig-18-impuesto-negativo-sobre-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-19-impuesto-negativo-sobre-la-renta.svg" class="img-fluid figure-img" alt="Impuesto negativo sobre la renta">
+</div>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="provisión-de-bienes-preferentes" class="level2" data-number="19.4">
+<h2 data-number="19.4" class="anchored" data-anchor-id="provisión-de-bienes-preferentes"><span class="header-section-number">19.4</span> Provisión de bienes preferentes<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="5 minutos">5'</span></h2>
+<p>Hasta ahora hemos analizado las prestaciones económicas del Estado del Bienestar, junto con sus desafíos y posibles soluciones. Ahora abordamos otra vía clave para garantizar equidad y redistribución: la provisión de bienes preferentes.</p>
+<section id="concepto" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="concepto">Concepto</h5>
+<p>Los bienes preferentes son bienes privados que el sector público provee o subvenciona porque considera que, si cada individuo decidiera por sí solo, se consumirían en una cantidad inferior a la socialmente deseable. Este concepto es dinámico y depende del consenso social sobre la dignidad humana y el rol del Estado. Sin embargo, existe acuerdo generalizado en que sanidad, educación y vivienda deben considerarse bienes preferentes. En España, su carácter prioritario está respaldado por la Constitución.</p>
+</section>
+<section id="justificación" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="justificación">Justificación</h5>
+<p>La intervención pública en estos ámbitos se justifica por múltiples razones: fallos de mercado, búsqueda de eficiencia, criterios de equidad, motivaciones políticas y la necesidad de corregir decisiones individuales que podrían ser perjudiciales para el bienestar colectivo.</p>
+</section>
+<section id="sanidad" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="sanidad">Sanidad</h3>
+<p>La sanidad se define como el conjunto de servicios destinados a preservar o recuperar la salud de la población, incluyendo atención médica y dispensación de medicamentos. Su provisión pública se justifica por razones de equidad (nadie debería quedar excluido por falta de recursos), paternalismo (protección de los menos precavidos), externalidades negativas (como epidemias o baja productividad) y problemas de selección adversa en mercados con información asimétrica.</p>
+<section id="modelos-de-provisión" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelos-de-provisión">Modelos de provisión</h5>
+<p>Existen dos grandes modelos de provisión pública:</p>
+<ul>
+<li><p>Modelo de Seguridad Social (modelo Bismarck)<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a>: Profesional, cubre a trabajadores y sus familias. Se financia mediante cotizaciones sociales proporcionales a la renta. Ventajas: mayor concienciación sobre el coste y contención del gasto. Ejemplos: Alemania, Suiza.</p></li>
+<li><p>Servicio Nacional de Salud (SNS, modelo Beveridge)<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a>: Universal, cubre a todos los residentes legales. Se financia con impuestos generales. Ventajas: mayor equidad y redistribución. Ejemplos: España (desde la Ley General de Sanidad de 1986), Reino Unido, Suecia, Italia.</p></li>
+</ul>
+</section>
+<section id="modelos-de-producción" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelos-de-producción">Modelos de producción</h5>
+<p>La producción de servicios sanitarios puede ser pública o privada, incluso dentro de sistemas de provisión pública:</p>
+<ul>
+<li><p>Producción privada: El paciente acude a centros privados, pero el Estado cubre total o parcialmente el coste. Ventajas: libertad de elección, competencia entre profesionales, mayor visibilidad del coste. Ejemplo: Francia.</p></li>
+<li><p>Producción pública: El Estado construye infraestructuras, contrata personal y presta directamente el servicio. Ejemplo: España.</p></li>
+</ul>
+</section>
+<section id="problemas-identificados" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="problemas-identificados">Problemas identificados</h5>
+<ul>
+<li><p>Producción privada:</p>
+<ul>
+<li><p>Incentivos perversos por demanda inducida (decidida por médicos).</p></li>
+<li><p>Pérdida de control del gasto público.</p></li>
+<li><p>Desabastecimiento en zonas rurales o poco rentables.</p></li>
+</ul></li>
+<li><p>Producción pública:</p>
+<ul>
+<li><p>Ineficiencia por falta de competencia y presión del mercado.</p></li>
+<li><p>Listas de espera, sobrecostes y calidad variable.</p></li>
+<li><p>Asignación automática de centro y médico, aunque algunas regiones como Madrid han implementado el modelo de “área única”<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> para permitir elección.</p></li>
+</ul></li>
+<li><p>Problemas generales:</p>
+<ul>
+<li><p>Envejecimiento poblacional: Aumenta la demanda y el gasto sanitario.</p></li>
+<li><p>Demanda excesiva: Por percepción nula del coste en el momento de uso, que genera riesgo moral, porque el paciente asegurado consume más servicios de los que pagaría de su bolsillo.</p></li>
+</ul></li>
+<li><p>Copago: Introducido como posible solución para racionalizar el uso. En España, el sistema se reformó en 2012<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a>, afectando especialmente a pensionistas. Sin embargo, el copago puede ser regresivo, inefectivo (por la inelasticidad de la demanda) y contraproducente si retrasa tratamientos.</p></li>
+</ul>
+</section>
+<section id="gasto-farmacéutico" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="gasto-farmacéutico">Gasto farmacéutico</h5>
+<p>España destina cerca del 19% del gasto sanitario a medicamentos, por encima del 15% de Alemania y de la media de la OCDE (16%). Para reducirlo se han adoptado medidas como:</p>
+<ul>
+<li><p>Centralización de compras.</p></li>
+<li><p>Prescripción por principio activo (genéricos).</p></li>
+<li><p>Ajuste del número de unidades por envase.</p></li>
+<li><p>Reformas en el copago farmacéutico desde 2012.</p></li>
+</ul>
+</section>
+</section>
+<section id="educación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="educación">Educación</h3>
+<p>La intervención pública en educación se justifica por múltiples razones:</p>
+<ul>
+<li><p>Externalidades positivas: las externalidades positivas que genera (como mayor productividad, cohesión social o innovación) provocan que, en ausencia de intervención, se infraproduzca<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>.</p></li>
+<li><p>Mercados de capital imperfectos, dificultan que individuos con alto potencial puedan financiar su formación.</p></li>
+<li><p>Equidad: desde una perspectiva de equidad, la Teoría del Capital Humano de Becker&nbsp;<span class="citation" data-cites="19_Becker1964">(<a href="01-tema-a1.html#ref-19_Becker1964" role="doc-biblioref">1964</a>)</span> señala que la educación incrementa la productividad y los salarios; si solo los más ricos acceden a ella, la desigualdad se acentúa.</p></li>
+</ul>
+<section id="modelos-de-provisión-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelos-de-provisión-1">Modelos de provisión</h5>
+<ul>
+<li><p>En España coexisten la provisión pública y privada. Dentro de la pública, la producción puede ser también privada, como ocurre en los colegios concertados.</p></li>
+<li><p>Educación obligatoria: Desde los 6 hasta los 16 años, la enseñanza es obligatoria y gratuita desde los 3 años. En el curso 2016/2017, el 68% de los alumnos asistía a centros públicos, el 26% a concertados y el 6% a privados. España es uno de los países europeos con menor proporción de alumnos en escuelas puramente públicas.</p></li>
+<li><p>Educación universitaria: El 87% de los estudiantes cursa estudios en universidades públicas, donde se paga una matrícula que cubre aproximadamente el 20% del coste. Las privadas concentran más alumnos en áreas como ciencias de la salud.</p></li>
+</ul>
+</section>
+<section id="retos-y-propuestas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="retos-y-propuestas">Retos y propuestas</h5>
+<ul>
+<li><p>Primaria y secundaria: El debate gira en torno a si el Estado debe apostar por centros públicos o concertados. Aunque el gasto por alumno es menor en los concertados, esto se explica por factores como mayor número de alumnos por clase, menores salarios docentes y menor presencia de estudiantes con necesidades especiales. Además, la escuela pública garantiza cobertura territorial, incluso en zonas poco rentables.</p>
+<ul>
+<li><p>La solución pasa por mantener ambos modelos, pero con reformas:</p></li>
+<li><p>Introducir más competencia en la pública (por ejemplo, rankings ajustados por contexto socioeconómico).</p></li>
+<li><p>Reforzar el control estatal en la concertada (evitar selección de alumnos o cuotas excluyentes).</p></li>
+</ul></li>
+<li><p>Universitaria:</p>
+<ul>
+<li><p>Combatir la regresividad de las tasas con precios ajustados a la renta y más becas.</p></li>
+<li><p>Mejorar eficiencia mediante préstamos, tasas más altas en segundas matrículas y contabilidad de costes.</p></li>
+<li><p>Fomentar la colaboración con el sector privado para adaptar la oferta formativa al mercado laboral.</p></li>
+<li><p>Abordar la sobrecualificación incentivando la formación profesional, clave para cubrir vacantes en sectores técnicos y especializados.</p></li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="vivienda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="vivienda">Vivienda</h3>
+<p>El acceso a una vivienda digna es un pilar fundamental del Estado del Bienestar, justificado por razones de equidad y por las externalidades positivas que genera, como la reducción de la delincuencia o la mejora de la cohesión social.</p>
+<section id="oferta-y-demanda" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="oferta-y-demanda">Oferta y demanda</h5>
+<p>El sector público puede intervenir para facilitar el acceso a la vivienda desde dos vías:</p>
+<ul>
+<li><p>Por el lado de la demanda: mediante incentivos fiscales a la compra o ayudas directas al arrendatario. Sin embargo, los incentivos a la propiedad pueden ser contraproducentes si la oferta es inelástica, ya que benefician principalmente a promotores y encarecen el mercado. Además, fomentan la inmovilidad laboral, agravando el paro friccional.</p></li>
+<li><p>Por el lado de la oferta: a través de la construcción de viviendas de protección oficial, el aumento del suelo urbanizable o incentivos fiscales a los arrendadores para dinamizar el mercado del alquiler.</p></li>
+</ul>
+<p>Además, las políticas públicas deben considerar la eficiencia energética y funcional de los edificios, promoviendo construcciones sostenibles que reduzcan el impacto ambiental y los costes a largo plazo.</p>
+<p>Una estrategia equilibrada entre propiedad y alquiler, junto con una planificación urbana inclusiva, es clave para garantizar el derecho a la vivienda en contextos de creciente desigualdad y presión demográfica.</p>
+</section>
+<section id="ejemplos-en-españa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="ejemplos-en-españa">Ejemplos en España</h5>
+<ul>
+<li><p>El Plan 2022–2025 introdujo el Bono Alquiler Joven, impulsó la rehabilitación energética mediante fondos europeos y fomentó la colaboración con entidades sociales para ampliar el parque de vivienda asequible. Ambos planes reflejan una apuesta por equilibrar propiedad y alquiler, mejorar la eficiencia energética y garantizar el acceso a vivienda digna en todo el territorio.</p></li>
+<li><p>Como proyecto, el Plan Estatal de Vivienda 2026–2030 triplicará la inversión pública hasta 7.000 millones, consolidará un parque público de vivienda asequible con calificación permanente, reforzará la rehabilitación en zonas rurales y creará una base de datos transparente de precios.</p></li>
+</ul>
+</section>
+</section>
+<section id="otros-bienes-preferentes" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="otros-bienes-preferentes">Otros bienes preferentes</h3>
+<p>Además de sanidad, educación y vivienda, existen otros bienes que, por su impacto en la equidad y el bienestar colectivo, pueden considerarse preferentes en el marco del Estado del Bienestar.</p>
+<ul>
+<li><p>Seguridad ciudadana es un bien esencial que garantiza la integridad física y la convivencia pacífica. Su provisión pública responde a la necesidad de proteger a todos los ciudadanos, especialmente a los más vulnerables, frente a riesgos que no podrían afrontar individualmente.</p></li>
+<li><p>Justicia cumple una función redistributiva y de garantía de derechos. El acceso universal a la tutela judicial efectiva, consagrado en el artículo 24 de la Constitución Española, evita que la resolución de conflictos dependa del poder adquisitivo, reforzando la cohesión social y la confianza institucional.</p></li>
+<li><p>Medioambiente se ha consolidado como bien preferente por sus externalidades positivas sobre la salud, el desarrollo sostenible y la calidad de vida. La protección ambiental no solo beneficia a las generaciones presentes, sino que preserva recursos para las futuras, lo que justifica la intervención pública.</p></li>
+<li><p>Conectividad digital, en el contexto actual, se ha convertido en un requisito básico para el acceso a la información, la educación, el empleo y la participación democrática. La brecha digital reproduce desigualdades sociales, por lo que garantizar el acceso universal a internet y a competencias digitales es ya una prioridad política.</p></li>
+<li><p>Cultura es un vehículo de desarrollo personal, integración social y participación ciudadana. Su acceso equitativo permite combatir la exclusión, fomentar el pensamiento crítico y preservar la identidad colectiva.</p></li>
+</ul>
+</section>
+</section>
+<section id="impacto-redistributivo" class="level2" data-number="19.5">
+<h2 data-number="19.5" class="anchored" data-anchor-id="impacto-redistributivo"><span class="header-section-number">19.5</span> Impacto redistributivo<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="6 minutos">6'</span></h2>
+<p>El sector público desempeña un papel clave en la redistribución de la renta, tanto a través de los ingresos como del gasto:</p>
+<ul>
+<li><p>Un sistema impositivo progresivo —donde quienes tienen más contribuyen proporcionalmente más— potencia la capacidad redistributiva del Estado.</p></li>
+<li><p>Por otro lado, el gasto público orientado a servicios sociales, transferencias y políticas inclusivas puede reducir las brechas económicas.</p></li>
+</ul>
+<p>La eficacia de esta redistribución se refleja en indicadores como el índice de Gini, que mide el grado de desigualdad: cuanto más bajo es su valor, menor es la desigualdad que queda tras la intervención pública.</p>
+<section id="índice-de-gini" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="índice-de-gini">Índice de Gini</h5>
+<p>El Índice de Gini es una medida de desigualdad en la distribución de la renta o riqueza dentro de una población. Se basa en la curva de Lorenz, que representa gráficamente el porcentaje acumulado de renta que posee cada porcentaje acumulado de población, ordenada de menor a mayor renta. El índice se calcula como el área entre la curva de Lorenz y la línea de perfecta igualdad, dividida por el área total bajo esa línea. Su valor oscila entre 0 y 1: un Gini de 0 indica igualdad perfecta (todos tienen la misma renta), mientras que un Gini de 1 representa desigualdad extrema (una sola persona concentra toda la renta). Aunque no mide pobreza directamente, es útil para comparar niveles de desigualdad entre países o a lo largo del tiempo, como recoge la&nbsp;<a href="#fig-19-indice-de-gini" class="quarto-xref">Figura&nbsp;<span>19.3</span></a>.</p>
+<div id="fig-19-indice-de-gini" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Índice de Gini">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-19-indice-de-gini-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;19.3: Índice de Gini
+</figcaption>
+<div aria-describedby="fig-19-indice-de-gini-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-19-indice-de-gini.svg" class="img-fluid figure-img" alt="Índice de Gini">
+</div>
+</figure>
+</div>
+<p>A pesar de la relevancia y el peso del gasto público en los presupuestos fiscales, su análisis desde una perspectiva distributiva es relativamente reciente y aún limitado. Tradicionalmente, la atención se ha centrado en la incidencia distributiva de los ingresos públicos, debido en parte a las dificultades metodológicas para definir y medir el impacto del gasto.</p>
+</section>
+<section id="enfoques-de-gasto" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="enfoques-de-gasto">Enfoques de gasto</h5>
+<p>En este contexto, De Wulf&nbsp;<span class="citation" data-cites="19_DeWulf1981">(<a href="01-tema-a1.html#ref-19_DeWulf1981" role="doc-biblioref">1981</a>)</span> presentó cuatro enfoques principales centrados en el gasto exclusivamente:</p>
+<ol type="1">
+<li><p>Incidencia impacto: asigna el gasto público a quienes lo perciben directamente.</p></li>
+<li><p>Incidencia normativa o legal: analiza en beneficio de quién se realizan los gastos, según su diseño institucional.</p></li>
+<li><p>Incidencia sobre precios relativos: estudia cómo el gasto público afecta los precios de los factores y productos, alterando la distribución indirectamente.</p></li>
+<li><p>Incidencia del beneficio: evalúa el efecto del gasto sobre el bienestar de los beneficiarios, en términos de utilidad percibida.</p></li>
+</ol>
+</section>
+<section id="identificación-de-beneficiarios" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="identificación-de-beneficiarios">Identificación de beneficiarios</h5>
+<p>El enfoque más sencillo consiste en identificar a los beneficiarios directos y asumir que solo ellos mejoran su bienestar. Sin embargo, este método presenta dos limitaciones:</p>
+<ol type="1">
+<li><p>Equilibrio general: no considera que el GP también beneficia a quienes participan en su provisión (profesores, personal sanitario, funcionarios, etc.).</p></li>
+<li><p>Externalidades: muchos gastos generan efectos positivos sobre terceros, como ocurre con la sanidad o la educación pública.</p></li>
+</ol>
+</section>
+<section id="beneficio-del-gasto-entre-individuos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="beneficio-del-gasto-entre-individuos">Beneficio del gasto entre individuos</h5>
+<p>Para distribuir el beneficio del gasto entre unidades individuales, se distingue entre:</p>
+<ul>
+<li><p>Gastos divisibles: bienes privados provistos por el sector público, como la sanidad o las transferencias monetarias. El beneficio se imputa directamente al consumidor.</p></li>
+<li><p>Gastos no divisibles: bienes públicos que benefician al conjunto de la sociedad, como la defensa, la justicia o las infraestructuras, sin un beneficiario identificable.</p></li>
+</ul>
+</section>
+<section id="evidencia-empírica-para-españa" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="evidencia-empírica-para-españa">Evidencia empírica para España</h4>
+<p>El Décimo Informe del Observatorio de FEDEA&nbsp;<span class="citation" data-cites="19_LopezLabordaMarinOnrubia2026">(<a href="01-tema-a1.html#ref-19_LopezLabordaMarinOnrubia2026" role="doc-biblioref">López Laborda et&nbsp;al. 2026</a>)</span> cuantifica el impacto distributivo de impuestos y prestaciones sobre los hogares españoles en 2023, con especial énfasis en el efecto del gasto público. La renta de mercado ampliada creció un 8,7 %, aumentando ligeramente su desigualdad (Gini) de 0,5601 a 0,5636<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a>. Sobre ese horizonte, el estudio analiza prestaciones monetarias, sanidad y educación, y la carga fiscal.</p>
+<section id="prestaciones-monetarias" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="prestaciones-monetarias">Prestaciones monetarias</h5>
+<p>Las prestaciones monetarias (pensiones, desempleo, invalidez, asistencia social y ayudas diversas) aumentaron un 6,4 % en 2023, aunque su peso relativo en la renta bruta cayó al 20,3 % (0,3 puntos menos que en 2022):</p>
+<ul>
+<li><p>Su efecto redistributivo, medido por el índice de Reynolds y Smolensky&nbsp;<span class="citation" data-cites="19_ReynoldsSmolensky1977">(<a href="01-tema-a1.html#ref-19_ReynoldsSmolensky1977" role="doc-biblioref">1977</a>)</span>, corrigió un 23,1 % de la desigualdad previa, frente al 23,9 % en 2022.</p></li>
+<li><p>Índice de Gini tras prestaciones monetarias: 0,4333</p></li>
+<li><p>Las pensiones de jubilación aportaron el 15,3 % de esa corrección, seguidas de supervivencia (4,0 %), desempleo (2,1 %) e invalidez (1,7 %).</p></li>
+</ul>
+</section>
+<section id="sistema-fiscal" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="sistema-fiscal">Sistema fiscal</h5>
+<p>El sistema fiscal, con un tipo medio efectivo del 35,5 % de la renta bruta, redujo la desigualdad en un 1,55 %, frente al 2,65 % de 2022.</p>
+<ul>
+<li><p>El IRPF, con un tipo medio del 10,4%, sigue siendo la principal herramienta redistributiva, aunque su capacidad cayó del 4,88 % al 4,42 %.</p></li>
+<li><p>Índice de Gini tras impuestos: 0,4266</p></li>
+<li><p>El Impuesto sobre Sociedades, imputado solo a accionistas residentes, elevó su tipo medio del 0,9 % al 1,1 % de la renta bruta, mientras que patrimonio y especiales apenas influyeron.</p></li>
+<li><p>Las cotizaciones sociales aumentaron la desigualdad en 1,86 % (frente al 0,85 % de 2022).</p></li>
+</ul>
+</section>
+<section id="gasto-en-especie" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="gasto-en-especie">Gasto en especie</h5>
+<p>El gasto en especie de sanidad y educación completó la redistribución: su peso en la renta bruta se situó en el 8,7 % (sanidad) y el 5,2 % (educación), y redujo la desigualdad un 10,0 % (8,5 % sanidad, 3,0 % educación).</p>
+<ul>
+<li><p>Sanidad pública benefició al 100 % de hogares, con subsidios medios efectivos del 31,6 % para el primer quintil y apenas 1,3 % para el tramo más alto.</p></li>
+<li><p>En educación, los hogares del primer quintil recibieron subsidios del 12,1 %, frente al 0,9 % del último centil.</p></li>
+<li><p>Índice de Gini tras gasto en especie: 0,3838</p></li>
+</ul>
+</section>
+<section id="total-combinado" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="total-combinado">Total combinado</h5>
+<p>Combinando impuestos, prestaciones monetarias y en especie, la intervención pública disminuye la desigualdad de la renta de mercado en un 31,9 %.</p>
+<ul>
+<li><p>Del total de esa corrección, el 72,4 % procede de las prestaciones monetarias, el 23,8 % de sanidad y educación, y solo el 3,7 % de la imposición.</p></li>
+<li><p>La redistribución neta muestra que el 60 % de hogares de menores ingresos (tres primeros quintiles) son beneficiarios netos, con subsidios efectivos que van del 81,5 % de su renta bruta en el primer quintil al 14,9 % en el tercero.</p></li>
+<li><p>Los dos quintiles superiores son contribuyentes netos: del –4,6 % para el cuarto quintil al –23,1 % para los centiles 91-99, con el centil más rico (el 1 % superior) en –19,7 %.</p></li>
+<li><p>Índice de Gini final (tras todas intervenciones): 0,3838</p></li>
+</ul>
+</section>
+<section id="índice-de-gini-ajustado-por-ciclo-vital" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="índice-de-gini-ajustado-por-ciclo-vital">Índice de Gini ajustado por ciclo vital</h5>
+<p>Una aproximación preliminar desde la perspectiva de ciclo vital, que ajusta el índice de Gini por edad del sustentador, revela menor desigualdad inicial:</p>
+<ul>
+<li><p>Gini ajustado inicial: 0,5074</p></li>
+<li><p>Gini ajustado final (tras intervención pública): 0,3793</p></li>
+<li><p>La corrección global baja del 31,9 % al 25,3 %.</p></li>
+</ul>
+</section>
+<section id="otros-gastos" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="otros-gastos">Otros gastos</h5>
+<p>Incluyendo en el análisis otros gastos no monetarios del sector público (defensa, medio ambiente, servicios generales, vivienda, asuntos económicos y protección social):</p>
+<ul>
+<li><p>Impacto redistributivo adicional: –9,1 puntos porcentuales</p></li>
+<li><p>Corrección total estimada: 41 %</p></li>
+<li><p>Índice de Gini final estimado con todos gastos públicos: <span class="math inline">\(\approx\)</span><!-- -->0,3325</p></li>
+</ul>
+</section>
+<section id="enfoque-alternativo-pensiones-como-salario-diferido" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="enfoque-alternativo-pensiones-como-salario-diferido">Enfoque alternativo: pensiones como salario diferido</h5>
+<p>Como novedad, el Décimo Informe presenta un enfoque alternativo al tratamiento habitual de las prestaciones contributivas: las pensiones y parte de las prestaciones por desempleo pasan a considerarse retribuciones salariales diferidas, integradas en la renta de mercado en lugar de en las prestaciones públicas, mientras que las cotizaciones sociales se tratan como ahorro forzoso y dejan de computar como tributo.</p>
+<ul>
+<li><p>Bajo este enfoque, el Gini de la renta de mercado ampliada baja de 0,5636 a 0,4782.</p></li>
+<li><p>El efecto redistributivo conjunto de impuestos y prestaciones pasa del 31,9 % (enfoque tradicional) al 19,7 %.</p></li>
+<li><p>Las prestaciones monetarias explican el 41,6 % de la reducción, los impuestos el 13 %, y sanidad y educación el 45,4 %.</p></li>
+<li><p>Si se añaden los gastos públicos no clasificados (ver apartado anterior), la corrección se eleva al 30,4 %.</p></li>
+</ul>
+</section>
+<section id="comparación-internacional" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="comparación-internacional">Comparación internacional</h5>
+<p>A nivel internacional, según las cuentas distributivas nacionales, España corrige el 32,5 % de la desigualdad primaria, situándose por debajo de la media del 40 % observada en Europa occidental. Esta diferencia se explica, en parte, por la menor capacidad redistributiva del sistema fiscal español, que apenas aporta el 2,8 % de la corrección total, frente a más del 10 % en otros países europeos. En cambio, más del 90 % del efecto redistributivo en España proviene de prestaciones monetarias, sanidad, educación y otros gastos públicos. Esta estructura sitúa a España en una posición intermedia dentro del modelo de bienestar europeo, con margen de mejora fiscal.</p>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="19.6">
+<h2 data-number="19.6" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">19.6</span> Conclusiones<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span><span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, existen dos visiones sobre el papel del sector público en la economía:</p>
+<ol type="1">
+<li><p>La visión optimista sostiene que el Estado, mediante el gasto público, garantiza servicios esenciales, reduce desigualdades y promueve la movilidad social, actuando como herramienta clave para la cohesión y el desarrollo económico.</p></li>
+<li><p>La visión pesimista advierte que una mala asignación de recursos puede generar ineficiencias, favorecer intereses particulares y limitar el crecimiento, especialmente si no se evalúa el impacto redistributivo de cada partida.</p></li>
+</ol>
+<p>Por ello, el foco debe situarse en la calidad del gasto: no basta con gastar más, sino con gastar mejor. La redistribución efectiva exige transparencia, rendición de cuentas y políticas públicas orientadas a reducir brechas sociales. En definitiva, el verdadero reto no es cuánto gasta el Estado, sino cómo lo hace y a quién beneficia.</p>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1-modelo-de-generaciones-solapadas" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1-modelo-de-generaciones-solapadas">19.A.1&nbsp;&nbsp;Modelo de generaciones solapadas</h3>
+<p>El modelo de generaciones solapadas (Overlapping Generations, OLG) mencionado en el cuerpo del tema tiene dos versiones principales. Samuelson&nbsp;<span class="citation" data-cites="19_Samuelson1958">(<a href="01-tema-a1.html#ref-19_Samuelson1958" role="doc-biblioref">1958</a>)</span> desarrolla la versión de intercambio puro, sin capital ni producción, centrada en el papel del dinero como depósito de valor intergeneracional. Diamond&nbsp;<span class="citation" data-cites="19_Diamond1965">(<a href="01-tema-a1.html#ref-19_Diamond1965" role="doc-biblioref">1965</a>)</span> extiende el modelo incorporando capital físico y producción. Es esta segunda versión la que realmente sustenta la comparación entre reparto y capitalización desarrollada en el cuerpo del tema.</p>
+<section id="el-modelo-de-diamond-1965" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-modelo-de-diamond-1965">El modelo de Diamond (1965)</h5>
+<p>En el modelo de Diamond, los individuos viven dos periodos, juventud y vejez, y en cada periodo conviven ambas generaciones. Los jóvenes trabajan, consumen una parte de su salario y ahorran el resto. Los viejos consumen la totalidad del ahorro acumulado más su rendimiento, sin dejar herencia, ya que saben que no vivirán un tercer periodo. Bajo utilidad logarítmica, el ahorro óptimo resulta una proporción constante del salario, independiente del tipo de interés, siendo <span class="math inline">\(\beta\)</span> el factor de descuento intertemporal: <span id="eq-a-19-4"><span class="math display">\[s_{t}=\dfrac{\beta}{1+\beta}\cdot y_{t} \tag{19.4}\]</span></span></p>
+<p>El equilibrio del mercado de fondos prestables iguala el ahorro agregado de los jóvenes con el stock de capital del periodo siguiente, lo que da lugar a la ecuación fundamental de acumulación de capital del modelo: <span id="eq-a-19-5"><span class="math display">\[k_{t+1}=\dfrac{1}{1+n}\cdot\dfrac{\beta}{1+\beta}\cdot\left[f(k_{t})-f'(k_{t})\cdot k_{t}\right] \tag{19.5}\]</span></span> donde <span class="math inline">\(k_{t}\)</span> es el capital por trabajador, <span class="math inline">\(n\)</span> la tasa de crecimiento poblacional y <span class="math inline">\(f(\cdot)\)</span> la función de producción neoclásica por trabajador. El estado estacionario resultante, aunque único y estable en los casos habituales, no tiene por qué ser eficiente en el sentido de Pareto.</p>
+</section>
+<section id="eficiencia-dinámica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="eficiencia-dinámica">Eficiencia dinámica</h5>
+<p>A diferencia de los modelos de horizonte infinito, el equilibrio competitivo del modelo de generaciones solapadas puede no ser eficiente incluso sin ningún fallo de mercado, porque el primer teorema del bienestar supone un número finito de agentes, y en este modelo se suceden infinitas generaciones. Cuando el tipo de interés de equilibrio es inferior a la tasa de crecimiento de la población, la economía sufre sobreacumulación de capital, situación conocida como ineficiencia dinámica: todas las generaciones podrían aumentar su consumo reduciendo el ahorro agregado. Esta es precisamente la posibilidad que se discute en el apartado “Concepto de eficiencia dinámica” del cuerpo del tema, donde Abel, Mankiw, Summers y Zeckhauser&nbsp;<span class="citation" data-cites="19_AbelMankiwSummersZeckhauser1989">(<a href="01-tema-a1.html#ref-19_AbelMankiwSummersZeckhauser1989" role="doc-biblioref">1989</a>)</span> concluyen que las economías desarrolladas no suelen encontrarse en ese régimen, aunque Blanchard&nbsp;<span class="citation" data-cites="19_Blanchard2019">(<a href="01-tema-a1.html#ref-19_Blanchard2019" role="doc-biblioref">2019</a>)</span> y Geerolf&nbsp;<span class="citation" data-cites="19_Geerolf2018">(<a href="01-tema-a1.html#ref-19_Geerolf2018" role="doc-biblioref">2018</a>)</span> lo cuestionan con datos más recientes.</p>
+</section>
+<section id="aplicación-a-los-sistemas-de-pensiones" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="aplicación-a-los-sistemas-de-pensiones">Aplicación a los sistemas de pensiones</h5>
+<p>El modelo de Diamond permite formalizar la elección entre reparto y capitalización ya vista en el cuerpo del tema. En un sistema de capitalización, el ahorro forzoso sustituye exactamente al ahorro voluntario, por lo que el stock de capital de la economía no varía. En un sistema de reparto, la rentabilidad implícita de las cotizaciones no es el tipo de interés de mercado, sino la tasa de crecimiento conjunta de la población y de los salarios. El sistema de reparto mejora el bienestar de todas las generaciones frente a la capitalización cuando esa tasa conjunta supera al tipo de interés de mercado —la condición de rentabilidad ya vista en el cuerpo del tema, en el apartado “¿Cuál elegir?”, es esta misma desigualdad expresada en tasas de crecimiento continuas—. Esta condición es conocida en la literatura como condición de Aaron&nbsp;<span class="citation" data-cites="19_Aaron1966">(<a href="01-tema-a1.html#ref-19_Aaron1966" role="doc-biblioref">1966</a>)</span>, quien formalizó por primera vez bajo qué circunstancias demográficas un sistema de reparto resulta preferible a uno de capitalización.</p>
+</section>
+</section>
+<section id="a.2-cuentas-nocionales" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2-cuentas-nocionales">19.A.2&nbsp;&nbsp;Cuentas nocionales</h3>
+<p>Las cuentas nocionales de contribución definida (<em>Notional Defined Contribution</em>, NDC), implantadas en países como Suecia o Italia y mencionadas en el cuerpo del tema, simulan cuentas de capitalización individual sin acumular fondos reales: las cotizaciones se contabilizan en una cuenta nocional que se revaloriza cada año a un tipo de interés nocional, pero se siguen financiando colectivamente, como en un sistema de reparto puro.</p>
+<p>La OCDE&nbsp;<span class="citation" data-cites="19_OECD2005">(<a href="01-tema-a1.html#ref-19_OECD2005" role="doc-biblioref">2005</a>)</span> compara formalmente las cuentas nocionales con los otros dos grandes diseños de pensiones contributivas, prestación definida y sistema de puntos, y muestra que los tres comparten una estructura algebraica equivalente. La pensión nocional del individuo puede escribirse: <span id="eq-a-19-6"><span class="math display">\[NA=\sum^{R}_{i=0}w_{i}\cdot\dfrac{c}{A}\cdot(1+r_{N})^{R-i} \tag{19.6}\]</span></span></p>
+<p>donde <span class="math inline">\(w_{i}\)</span> es el salario de cada año de cotización, <span class="math inline">\(c\)</span> el tipo de cotización, <span class="math inline">\(r_{N}\)</span> el tipo de interés nocional aplicado al capital acumulado y <span class="math inline">\(A\)</span> el factor de anualización, que traduce el capital nocional acumulado en el momento de la jubilación en una pensión periódica ajustada a la esperanza de vida.</p>
+<p>Esta expresión es formalmente equivalente a la de un sistema de prestación definida o de puntos: en los tres casos, la tasa de acumulación efectiva de derechos puede expresarse como el cociente entre dos parámetros de diseño, de modo que decisiones aparentemente distintas —revalorizar el salario computable, fijar el valor de un punto o elegir el tipo de interés nocional— tienen efectos equivalentes sobre la pensión final.</p>
+<p>El elemento clave para la sostenibilidad del sistema es la elección del tipo de interés nocional <span class="math inline">\(n\)</span>. Cuando se fija igual a la tasa de crecimiento de los salarios y del empleo —la misma magnitud que aparece en la condición de Aaron del apartado anterior—, el sistema replica de forma automática el rendimiento implícito de un reparto puro, ajustando la pensión a la evolución demográfica sin necesidad de reformas discrecionales periódicas. Es, en ese sentido, una forma de reparto con contabilidad individual que traslada explícitamente el riesgo demográfico al propio diseño del sistema. Cichon&nbsp;<span class="citation" data-cites="19_Cichon1999">(<a href="01-tema-a1.html#ref-19_Cichon1999" role="doc-biblioref">1999</a>)</span> resume esta naturaleza híbrida con una expresión ya clásica: las cuentas nocionales son “vino viejo en botellas nuevas”, el mismo reparto de siempre, mejor comunicado gracias a la ficción de una cuenta individual.</p>
+<p>El diseño de cuentas nocionales se ha implantado en varios países desde mediados de los años noventa. Suecia fue pionera, legislando la reforma en 1994 e implementándola en 1999. Italia lo hizo con la reforma Dini de 1995, Letonia en 1996, y Polonia, legislada en 1996, la aplicó desde 1999. Noruega se sumó más tarde, legislando en 2009 e implementando en 2011 una versión modificada del modelo sueco con ajuste automático por esperanza de vida. Fuera de Europa, Mongolia y Kirguistán han adoptado también elementos de cuentas nocionales, a diferencia de Kazajistán, que optó por un sistema de capitalización individual plena.</p>
+<p>Un desarrollo posterior de este diseño es el Mecanismo de Ajuste Automático (<em>Automatic Balance Mechanism</em>, ABM), estudiado formalmente por Vidal-Meliá, Boado-Penas y Settergren&nbsp;<span class="citation" data-cites="19_VidalMeliaBoadoPenasSettergren2009">(<a href="01-tema-a1.html#ref-19_VidalMeliaBoadoPenasSettergren2009" role="doc-biblioref">2009</a>)</span>: cuando el balance actuarial del sistema —cociente entre los activos, que incluyen el fondo de reserva y el valor de las cotizaciones futuras, y los pasivos por pensiones— cae por debajo de 1, el tipo de interés nocional se reduce automáticamente hasta restaurar el equilibrio, sin necesidad de una reforma legislativa expresa. El mecanismo sueco se activó por primera vez en 2010, como consecuencia de la crisis financiera de 2008, reduciendo las pensiones nominales en 2010, 2011 y de nuevo en 2014 —la primera vez que un sistema público de pensiones se ajustó a la baja de forma automática, sin una decisión política discrecional—.</p>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-19_Aaron1966" class="csl-entry" role="listitem">
+Aaron, Henry. 1966. <span>«The Social Insurance Paradox»</span>. <em>Canadian Journal of Economics and Political Science</em> 32 (3): 371-74.
+</div>
+<div id="ref-19_AbelMankiwSummersZeckhauser1989" class="csl-entry" role="listitem">
+Abel, Andrew B., N. Gregory Mankiw, Lawrence H. Summers, y Richard J. Zeckhauser. 1989. <span>«Assessing Dynamic Efficiency: Theory and Evidence»</span>. <em>The Review of Economic Studies</em> 56 (1): 1-19.
+</div>
+<div id="ref-19_Becker1964" class="csl-entry" role="listitem">
+Becker, Gary S. 1964. <em>Human Capital: A Theoretical and Empirical Analysis, with Special Reference to Education</em>. National Bureau of Economic Research / Columbia University Press.
+</div>
+<div id="ref-19_Beveridge1942" class="csl-entry" role="listitem">
+Beveridge, William. 1942. <em>Social Insurance and Allied Services</em>. Cmd. 6404. HMSO.
+</div>
+<div id="ref-19_Blanchard2019" class="csl-entry" role="listitem">
+Blanchard, Olivier. 2019. <span>«Public Debt and Low Interest Rates»</span>. <em>American Economic Review</em> 109 (4): 1197-229.
+</div>
+<div id="ref-19_DeSousaDiazSaavedraMarimon2019" class="csl-entry" role="listitem">
+Brogueira de Sousa, João, Julián Díaz-Saavedra, y Ramon Marimon. 2019. <em><span>Introducing an Austrian Backpack in Spain</span></em>. Working Paper. European University Institute, ADEMU Project.
+</div>
+<div id="ref-19_Cichon1999" class="csl-entry" role="listitem">
+Cichon, Michael. 1999. <span>«Notional Defined-Contribution Schemes: Old Wine in New Bottles?»</span> <em>International Social Security Review</em> 52 (4): 87-105.
+</div>
+<div id="ref-19_DeWulf1981" class="csl-entry" role="listitem">
+De Wulf, Luc. 1981. <span>«Incidence of Budgetary Outlays: Where Do We Go from Here?»</span> <em>Public Finance / Finances Publiques</em> 36 (1): 55-76.
+</div>
+<div id="ref-19_Diamond1965" class="csl-entry" role="listitem">
+Diamond, Peter A. 1965. <span>«National Debt in a Neoclassical Growth Model»</span>. <em>The American Economic Review</em> 55 (5): 1126-50.
+</div>
+<div id="ref-19_Friedman1962" class="csl-entry" role="listitem">
+Friedman, Milton. 1962. <em>Capitalism and Freedom</em>. University of Chicago Press.
+</div>
+<div id="ref-19_Geerolf2018" class="csl-entry" role="listitem">
+Geerolf, François. 2018. <em>Reassessing Dynamic Efficiency</em>. Working Paper. UCLA.
+</div>
+<div id="ref-19_DeKerchoveGabszewiczGerardVaret1995" class="csl-entry" role="listitem">
+Kerchove, Anne-Marie de, Jean J. Gabszewicz, y Louis-André Gérard-Varet. 1995. <em>Unemployment Benefits versus Employment Subsidies: A Welfare Appraisal</em>. CORE Discussion Paper No. 1995041. CORE, Universit<span>é</span> catholique de Louvain.
+</div>
+<div id="ref-19_LopezLabordaMarinOnrubia2026" class="csl-entry" role="listitem">
+López Laborda, Julio, Carmen Marín González, y Jorge Onrubia. 2026. <em>Observatorio sobre el reparto de los impuestos y las prestaciones entre los hogares espa<span>ñ</span>oles. D<span>é</span>cimo informe – 2022 y 2023</em>. EEE 2026-13. Fundaci<span>ó</span>n de Estudios de Econom<span>í</span>a Aplicada (FEDEA).
+</div>
+<div id="ref-19_OECD2005" class="csl-entry" role="listitem">
+OECD. 2005. <em>Pensions at a Glance: Public Policies across <span>OECD</span> Countries</em>. OECD Publishing.
+</div>
+<div id="ref-19_ReynoldsSmolensky1977" class="csl-entry" role="listitem">
+Reynolds, Morgan, y Eugene Smolensky. 1977. <em>Public Expenditures, Taxes, and the Distribution of Income: The United States, 1950, 1961, 1970</em>. Academic Press.
+</div>
+<div id="ref-19_Samuelson1958" class="csl-entry" role="listitem">
+Samuelson, Paul A. 1958. <span>«An Exact Consumption-Loan Model of Interest with or without the Social Contrivance of Money»</span>. <em>Journal of Political Economy</em> 66 (6): 467-82.
+</div>
+<div id="ref-19_TobinPechmanMieszkowski1967" class="csl-entry" role="listitem">
+Tobin, James, Joseph A. Pechman, y Peter M. Mieszkowski. 1967. <span>«Is a Negative Income Tax Practical?»</span> <em>Yale Law Journal</em> 77 (1): 1-27.
+</div>
+<div id="ref-19_VidalMeliaBoadoPenasSettergren2009" class="csl-entry" role="listitem">
+Vidal-Meliá, Carlos, María del Carmen Boado-Penas, y Ole Settergren. 2009. <span>«Automatic Balance Mechanisms in Pay-As-You-Go Pension Systems»</span>. <em>The Geneva Papers on Risk and Insurance – Issues and Practice</em> 34 (2): 287-317.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Trade-off eficiencia-equidad: no obstante, es prácticamente imposible introducir un sistema de impuestos y transferencias que no distorsione las decisiones y el comportamiento de los agentes económicos, por lo que pueden surgir pérdidas de eficiencia y aparecer con fuerza el trade-off equidad vs.&nbsp;eficiencia.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Diferencia entre igualdad y equidad: la igualdad consiste en dar a todos lo mismo, mientras que la equidad reparte bienes o servicios en función de los méritos, necesidades o características de cada individuo.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Se trata de la regulación. Su mayor presencia se encuentra en el mercado de trabajo: salario mínimo, regulación de entrada (edad mínima) y salida (jubilación), etc. No obstante, también suele regular en busca de la equidad en otros ámbitos: alimentos, vivienda, energía, etc.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>La intuición es que una aseguradora no sabe quién enfermará este año, pero sí, con mucha precisión, cuántos de cada mil asegurados lo harán. Formalmente, si cada uno de los <span class="math inline">\(N\)</span> asegurados afronta una pérdida independiente de varianza <span class="math inline">\(\sigma^{2}\)</span>, la varianza de la pérdida media es <span class="math inline">\(\sigma^{2}/N\)</span>, que tiende a cero al crecer <span class="math inline">\(N\)</span>.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>En España, constituyen la prestación económica más importante, situándose en torno al 12% del PIB y 4 de cada 10 euros de los PGE<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>La intuición es que, si la pensión se pierde al seguir trabajando, prolongar la vida laboral apenas compensa, de modo que muchos se retiran antes y necesitan haber ahorrado para más años sin salario.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>La AIReF proyecta que el gasto en pensiones pasará del 12,9 % del PIB en 2023 al 16,1 % en 2050, con cerca de 6 millones de pensionistas adicionales. Fuente: AIReF, Informe de evaluación de la regla de gasto de pensiones, 2025.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>En 2024, España destinó cerca de 22.000 millones de euros a prestaciones por desempleo, impulsado por el aumento del SMI, mayor cuantía media por beneficiario y persistencia del desempleo estructural.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>El grupo tratamiento trabajó de media 78 días frente a unos 72 del grupo de control (efecto empleo casi nulo, confirma el texto), pero declaró mayor satisfacción vital (7,3 frente a 6,8 sobre 10) y menos síntomas de malestar psicológico que el grupo de control. Fuente: Kela, resultados finales del experimento, 2020.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>El modelo debe su nombre al canciller alemán Otto von Bismarck, que implantó el primer sistema de seguro social obligatorio del mundo mediante la Ley del Seguro de Enfermedad de 1883, en vigor desde diciembre de 1884 y financiada con cotizaciones de empresarios y trabajadores. La medida respondía a una estrategia política para frenar el auge del movimiento socialista alemán, ofreciendo protección social desde el propio Estado.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>El modelo toma su nombre del Informe Beveridge&nbsp;<span class="citation" data-cites="19_Beveridge1942">(<a href="01-tema-a1.html#ref-19_Beveridge1942" role="doc-biblioref">1942</a>)</span>, que sentó las bases del Estado del Bienestar británico de posguerra y de su Servicio Nacional de Salud (NHS), creado en 1948 como sistema universal financiado con impuestos generales y no con cotizaciones ligadas al empleo.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Ley 6/2009, de 16 de noviembre, de Libertad de Elección en la Sanidad de la Comunidad de Madrid, desarrollada por el Decreto 51/2010, de 29 de julio, que permite elegir médico y hospital en toda la región, no solo en el área sanitaria de residencia.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>Real Decreto-ley 16/2012, de 20 de abril, que eliminó la gratuidad farmacéutica para pensionistas: copago del 10 %, con un tope mensual de 8 € para rentas anuales inferiores a 18.000 € (18 € y 60 € para tramos de renta superiores).<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>La conexión formal entre capital humano/educación y crecimiento de largo plazo la formaliza Paul Romer, “Endogenous Technological Change”,&nbsp;<em>Journal of Political Economy</em>, 98(5), 1990, pp.&nbsp;S71-S102 — Nobel de Economía 2018 por integrar la innovación tecnológica en el análisis del crecimiento a largo plazo.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>El índice de Gini se expresa a veces en escala 0–100 (como en las estadísticas oficiales del INE) y otras en escala decimal 0–1 (como en el informe de FEDEA), sin que ello suponga ninguna contradicción: son la misma medida en dos escalas distintas.</p>
+<p>El informe de FEDEA descompone además el proceso redistributivo paso a paso, partiendo de una renta de mercado con Gini 0,5636 (56,36), que se reduce a 0,4333 tras prestaciones monetarias, a 0,4266 tras impuestos y a 0,3838 con sanidad y educación, mostrando cómo cada intervención pública contribuye a reducir la desigualdad paso a paso.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./18-tema-a18-pendiente.html" class="pagination-link" aria-label="Poder de mercado y regulación óptima">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./20-tema-a20.html" class="pagination-link" aria-label="Teoría de la imposición">
+        <span class="nav-page-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<p>© 2026 Manuel Cabado García · Diplomado Comercial del Estado · Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a></p>
+</div>
+    <div class="nav-footer-right">
+      <ul class="footer-items list-unstyled">
+    <li class="nav-item compact">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">
+      <i class="bi bi-linkedin" role="img" aria-label="LinkedIn">
+</i> 
+    </a>
+  </li>  
+</ul>
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
