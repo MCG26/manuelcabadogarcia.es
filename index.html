@@ -148,9 +148,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-dc652b49620150434dd1b13aa65f9769.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-dd7cba1d792a7dcc4888ab45f2731ffc.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-dc652b49620150434dd1b13aa65f9769.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-3f545269c528404f82cbe93487c7dd2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-f961245105ddab52611de999259009f2.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-3f545269c528404f82cbe93487c7dd2d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -519,7 +519,15 @@ ul.task-list li input[type="checkbox"] {
 
     window.quartoToggleColorScheme = function () {
 
-      document.startViewTransition(function () { cambiar(); });
+      // .transicion-lenta: el dia/noche dura 1,8 s (la navegacion entre paginas, 0,3 s)
+
+      var raiz = document.documentElement;
+
+      raiz.classList.add('transicion-lenta');
+
+      var t = document.startViewTransition(function () { cambiar(); });
+
+      t.finished.finally(function () { raiz.classList.remove('transicion-lenta'); });
 
     };
 
