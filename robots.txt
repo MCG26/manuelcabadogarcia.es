@@ -1,1 +1,2 @@
-Sitemap: https://manuelcabadogarcia.es/sitemap.xml
+User-agent: *
+Disallow: /
