@@ -34,10 +34,42 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
   try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
   if (abierta) { return; }
   document.documentElement.classList.add('cortina');
-  function huella(texto) {
-    return crypto.subtle.digest('SHA-256', new TextEncoder().encode(texto)).then(function (b) {
-      return Array.from(new Uint8Array(b)).map(function (x) { return x.toString(16).padStart(2, '0'); }).join('');
-    });
+  // SHA-256 propio (texto ASCII): crypto.subtle solo existe en paginas https, y la
+  // cortina tiene que funcionar tambien por http (p. ej. antes de tener el certificado)
+  function huella(ascii) {
+    function rot(v, n) { return (v >>> n) | (v << (32 - n)); }
+    var max = Math.pow(2, 32), res = '', palabras = [], bits = ascii.length * 8;
+    var h = [], k = [], n = 0, compuesto = {}, i, j;
+    for (var c = 2; n < 64; c++) {
+      if (!compuesto[c]) {
+        for (i = 0; i < 313; i += c) { compuesto[i] = c; }
+        h[n] = (Math.pow(c, 0.5) * max) | 0;
+        k[n++] = (Math.pow(c, 1 / 3) * max) | 0;
+      }
+    }
+    ascii += String.fromCharCode(128);
+    while (ascii.length % 64 - 56) { ascii += String.fromCharCode(0); }
+    for (i = 0; i < ascii.length; i++) { palabras[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8; }
+    palabras[palabras.length] = (bits / max) | 0;
+    palabras[palabras.length] = bits;
+    for (j = 0; j < palabras.length;) {
+      var w = palabras.slice(j, j += 16), viejo = h;
+      h = h.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2], a = h[0], e = h[4];
+        var t1 = h[7] + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & h[5]) ^ ((~e) & h[6])) + k[i] +
+          (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+            (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & h[1]) ^ (a & h[2]) ^ (h[1] & h[2]));
+        h = [(t1 + t2) | 0].concat(h);
+        h[4] = (h[4] + t1) | 0;
+      }
+      for (i = 0; i < 8; i++) { h[i] = (h[i] + viejo[i]) | 0; }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) { var b = (h[i] >> (j * 8)) & 255; res += (b < 16 ? '0' : '') + b.toString(16); }
+    }
+    return res;
   }
   var tituloReal = '';
   function abrir() {
@@ -47,9 +79,7 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     var c = document.getElementById('cortina'); if (c) { c.remove(); }
   }
   function comprobar(texto, esperada) {
-    if (window.crypto && crypto.subtle) {
-      huella(texto).then(function (h) { if (h === esperada) { abrir(); } });
-    }
+    if (huella(texto) === esperada) { abrir(); }
   }
   function pista(n) {
     var p = document.querySelector('#cortina .c-pista');
