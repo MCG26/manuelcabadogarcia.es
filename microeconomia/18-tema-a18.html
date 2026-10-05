@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { font-size: 2rem; color: #7a1f4b; letter-spacing: .4em; text-shadow: 0 0 6px #f7f4ec, 0 0 12px #f7f4ec; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2748.00%27 height=%2724%27 viewBox=%270 0 48 24%27%3E%3Cdefs%3E%3Cfilter id=%27h%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeGaussianBlur in=%27SourceGraphic%27 stdDeviation=%270.90%27 result=%27b%27/%3E%3CfeColorMatrix in=%27b%27 type=%27luminanceToAlpha%27 result=%27a%27/%3E%3CfeFlood flood-color=%27%233EE6A8%27 flood-opacity=%271%27 result=%27c%27/%3E%3CfeComposite in=%27c%27 in2=%27a%27 operator=%27in%27 result=%27g%27/%3E%3CfeMerge%3E%3CfeMergeNode in=%27SourceGraphic%27/%3E%3CfeMergeNode in=%27g%27/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%27url%28%23h%29%27%3E%3Cg fill=%27%231E1D1B%27 stroke=%27%23A6F7D2%27 stroke-opacity=%270.6%27 stroke-width=%271.00%27%3E%3Cg id=%27o%27%3E%3Ccircle r=%2723%27/%3E%3Ccircle r=%2717%27/%3E%3Ccircle r=%2711%27/%3E%3Ccircle r=%275%27/%3E%3C/g%3E%3Cuse href=%27%23o%27 x=%2724%27 y=%2712%27/%3E%3Cuse href=%27%23o%27 x=%270%27 y=%2724%27/%3E%3Cuse href=%27%23o%27 x=%2748%27 y=%2724%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.6), 0 0 4px #1e1d1b; }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  // SHA-256 propio (texto ASCII): crypto.subtle solo existe en paginas https, y la
+  // cortina tiene que funcionar tambien por http (p. ej. antes de tener el certificado)
+  function huella(ascii) {
+    function rot(v, n) { return (v >>> n) | (v << (32 - n)); }
+    var max = Math.pow(2, 32), res = '', palabras = [], bits = ascii.length * 8;
+    var h = [], k = [], n = 0, compuesto = {}, i, j;
+    for (var c = 2; n < 64; c++) {
+      if (!compuesto[c]) {
+        for (i = 0; i < 313; i += c) { compuesto[i] = c; }
+        h[n] = (Math.pow(c, 0.5) * max) | 0;
+        k[n++] = (Math.pow(c, 1 / 3) * max) | 0;
+      }
+    }
+    ascii += String.fromCharCode(128);
+    while (ascii.length % 64 - 56) { ascii += String.fromCharCode(0); }
+    for (i = 0; i < ascii.length; i++) { palabras[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8; }
+    palabras[palabras.length] = (bits / max) | 0;
+    palabras[palabras.length] = bits;
+    for (j = 0; j < palabras.length;) {
+      var w = palabras.slice(j, j += 16), viejo = h;
+      h = h.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2], a = h[0], e = h[4];
+        var t1 = h[7] + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & h[5]) ^ ((~e) & h[6])) + k[i] +
+          (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+            (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & h[1]) ^ (a & h[2]) ^ (h[1] & h[2]));
+        h = [(t1 + t2) | 0].concat(h);
+        h[4] = (h[4] + t1) | 0;
+      }
+      for (i = 0; i < 8; i++) { h[i] = (h[i] + viejo[i]) | 0; }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) { var b = (h[i] >> (j * 8)) & 255; res += (b < 16 ? '0' : '') + b.toString(16); }
+    }
+    return res;
+  }
+  var tituloReal = '';
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    if (tituloReal) { document.title = tituloReal; }
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (huella(texto) === esperada) { abrir(); }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
+    // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
+    c.innerHTML = '<div class="c-cuerpo"><div class="c-pista" aria-hidden="true"></div></div>';
+    tituloReal = document.title;
+    document.title = 'Próximamente';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Los instrumentos de regulación del poder de mercado, sus efectos y limitaciones, y la regulación óptima cuando el regulador dispone de menos información que la empresa.">
+
+<title>Tema A18. Poder de mercado y regulación óptima | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./19-tema-a19.html" rel="next">
+<link href="./17-tema-a17.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-8d068eaf3b5a19116fb6a25181a8e8d6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-2437140e16cf1f5fab2adafa32683610.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-8d068eaf3b5a19116fb6a25181a8e8d6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<!-- Letra Latin Modern: se pide lo primero de todo para que el nombre y las
+     pestanas no salgan un instante con otra letra al cambiar de pagina -->
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-regular.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A18. Poder de mercado y regulación óptima | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Los instrumentos de regulación del poder de mercado, sus efectos y limitaciones, y la regulación óptima cuando el regulador dispone de menos información que la empresa.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A18. Poder de mercado y regulación óptima | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Los instrumentos de regulación del poder de mercado, sus efectos y limitaciones, y la regulación óptima cuando el regulador dispone de menos información que la empresa.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A18. Poder de mercado y regulación óptima: instrumentos, efectos y limitaciones. Desarrollos en presencia de información asimétrica. Aplicaciones prácticas.",
+ "alternateName": "Poder de mercado y regulación óptima",
+ "description": "Los instrumentos de regulación del poder de mercado, sus efectos y limitaciones, y la regulación óptima cuando el regulador dispone de menos información que la empresa.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/18-tema-a18.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./18-tema-a18.html"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">18.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#poder-de-mercado-y-regulación-con-información-completa-instrumentos-efectos-y-limitaciones" id="toc-poder-de-mercado-y-regulación-con-información-completa-instrumentos-efectos-y-limitaciones" class="nav-link" data-scroll-target="#poder-de-mercado-y-regulación-con-información-completa-instrumentos-efectos-y-limitaciones"><span class="header-section-number">18.2</span> Poder de mercado y regulación con información completa: instrumentos, efectos y limitaciones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="6 minutos">6'</span></a>
+  <ul class="collapse">
+  <li><a href="#poder-de-mercado-y-justificación-de-la-regulación" id="toc-poder-de-mercado-y-justificación-de-la-regulación" class="nav-link" data-scroll-target="#poder-de-mercado-y-justificación-de-la-regulación">Poder de mercado y justificación de la regulación</a></li>
+  <li><a href="#tarificación-con-información-completa" id="toc-tarificación-con-información-completa" class="nav-link" data-scroll-target="#tarificación-con-información-completa">Tarificación con información completa</a></li>
+  <li><a href="#regulación-de-la-tasa-de-rendimiento-y-teoría-positiva" id="toc-regulación-de-la-tasa-de-rendimiento-y-teoría-positiva" class="nav-link" data-scroll-target="#regulación-de-la-tasa-de-rendimiento-y-teoría-positiva">Regulación de la tasa de rendimiento y teoría positiva</a></li>
+  </ul></li>
+  <li><a href="#desarrollos-en-presencia-de-información-asimétrica" id="toc-desarrollos-en-presencia-de-información-asimétrica" class="nav-link" data-scroll-target="#desarrollos-en-presencia-de-información-asimétrica"><span class="header-section-number">18.3</span> Desarrollos en presencia de información asimétrica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="5 minutos 30 segundos">5'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#selección-adversa-de-loeb-y-magat-a-baron-y-myerson" id="toc-selección-adversa-de-loeb-y-magat-a-baron-y-myerson" class="nav-link" data-scroll-target="#selección-adversa-de-loeb-y-magat-a-baron-y-myerson">Selección adversa: de Loeb y Magat a Baron y Myerson</a></li>
+  <li><a href="#selección-adversa-y-riesgo-moral-laffont-y-tirole" id="toc-selección-adversa-y-riesgo-moral-laffont-y-tirole" class="nav-link" data-scroll-target="#selección-adversa-y-riesgo-moral-laffont-y-tirole">Selección adversa y riesgo moral: Laffont y Tirole</a></li>
+  <li><a href="#implicaciones-regulación-por-incentivos" id="toc-implicaciones-regulación-por-incentivos" class="nav-link" data-scroll-target="#implicaciones-regulación-por-incentivos">Implicaciones: regulación por incentivos</a></li>
+  <li><a href="#compromiso-y-captura" id="toc-compromiso-y-captura" class="nav-link" data-scroll-target="#compromiso-y-captura">Compromiso y captura</a></li>
+  </ul></li>
+  <li><a href="#regulación-óptima-con-varias-empresas" id="toc-regulación-óptima-con-varias-empresas" class="nav-link" data-scroll-target="#regulación-óptima-con-varias-empresas"><span class="header-section-number">18.4</span> Regulación óptima con varias empresas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos">4'</span></a>
+  <ul class="collapse">
+  <li><a href="#competencia-por-comparación" id="toc-competencia-por-comparación" class="nav-link" data-scroll-target="#competencia-por-comparación">Competencia por comparación</a></li>
+  <li><a href="#competencia-por-el-mercado" id="toc-competencia-por-el-mercado" class="nav-link" data-scroll-target="#competencia-por-el-mercado">Competencia por el mercado</a></li>
+  <li><a href="#relaciones-verticales-y-precio-de-acceso" id="toc-relaciones-verticales-y-precio-de-acceso" class="nav-link" data-scroll-target="#relaciones-verticales-y-precio-de-acceso">Relaciones verticales y precio de acceso</a></li>
+  <li><a href="#mercados-de-dos-caras" id="toc-mercados-de-dos-caras" class="nav-link" data-scroll-target="#mercados-de-dos-caras">Mercados de dos caras</a></li>
+  </ul></li>
+  <li><a href="#aplicaciones-prácticas" id="toc-aplicaciones-prácticas" class="nav-link" data-scroll-target="#aplicaciones-prácticas"><span class="header-section-number">18.5</span> Aplicaciones prácticas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="3 minutos">3'</span></a>
+  <ul class="collapse">
+  <li><a href="#redes-eléctricas-y-gasistas-en-españa" id="toc-redes-eléctricas-y-gasistas-en-españa" class="nav-link" data-scroll-target="#redes-eléctricas-y-gasistas-en-españa">Redes eléctricas y gasistas en España</a></li>
+  <li><a href="#el-price-cap-en-la-práctica-rpix-riio-y-aena" id="toc-el-price-cap-en-la-práctica-rpix-riio-y-aena" class="nav-link" data-scroll-target="#el-price-cap-en-la-práctica-rpix-riio-y-aena">El price cap en la práctica: RPI–X, RIIO y Aena</a></li>
+  <li><a href="#regulación-del-acceso-en-las-telecomunicaciones" id="toc-regulación-del-acceso-en-las-telecomunicaciones" class="nav-link" data-scroll-target="#regulación-del-acceso-en-las-telecomunicaciones">Regulación del acceso en las telecomunicaciones</a></li>
+  <li><a href="#topes-de-emergencia-y-plataformas-digitales" id="toc-topes-de-emergencia-y-plataformas-digitales" class="nav-link" data-scroll-target="#topes-de-emergencia-y-plataformas-digitales">Topes de emergencia y plataformas digitales</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">18.6</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-derivación-de-los-precios-de-ramsey-boiteux" id="toc-a.1.-derivación-de-los-precios-de-ramsey-boiteux" class="nav-link" data-scroll-target="#a.1.-derivación-de-los-precios-de-ramsey-boiteux">18.A.1.&nbsp;&nbsp;Derivación de los precios de Ramsey-Boiteux</a></li>
+  <li><a href="#a.2.-precios-pico-valle" id="toc-a.2.-precios-pico-valle" class="nav-link" data-scroll-target="#a.2.-precios-pico-valle">18.A.2.&nbsp;&nbsp;Precios pico-valle</a></li>
+  <li><a href="#a.3.-modelo-de-averch-johnson" id="toc-a.3.-modelo-de-averch-johnson" class="nav-link" data-scroll-target="#a.3.-modelo-de-averch-johnson">18.A.3.&nbsp;&nbsp;Modelo de Averch-Johnson</a></li>
+  <li><a href="#a.4.-selección-adversa-con-dos-tipos-baron-y-myerson" id="toc-a.4.-selección-adversa-con-dos-tipos-baron-y-myerson" class="nav-link" data-scroll-target="#a.4.-selección-adversa-con-dos-tipos-baron-y-myerson">18.A.4.&nbsp;&nbsp;Selección adversa con dos tipos: Baron y Myerson</a></li>
+  <li><a href="#a.5.-laffont-y-tirole-esfuerzo-renta-y-menú-de-contratos" id="toc-a.5.-laffont-y-tirole-esfuerzo-renta-y-menú-de-contratos" class="nav-link" data-scroll-target="#a.5.-laffont-y-tirole-esfuerzo-renta-y-menú-de-contratos">18.A.5.&nbsp;&nbsp;Laffont y Tirole: esfuerzo, renta y menú de contratos</a></li>
+  <li><a href="#a.6.-precio-de-acceso-a-la-red" id="toc-a.6.-precio-de-acceso-a-la-red" class="nav-link" data-scroll-target="#a.6.-precio-de-acceso-a-la-red">18.A.6.&nbsp;&nbsp;Precio de acceso a la red</a></li>
+  <li><a href="#a.7.-formas-de-separación-vertical-en-las-industrias-de-red" id="toc-a.7.-formas-de-separación-vertical-en-las-industrias-de-red" class="nav-link" data-scroll-target="#a.7.-formas-de-separación-vertical-en-las-industrias-de-red">18.A.7.&nbsp;&nbsp;Formas de separación vertical en las industrias de red</a></li>
+  <li><a href="#a.8.-marco-normativo-de-referencia" id="toc-a.8.-marco-normativo-de-referencia" class="nav-link" data-scroll-target="#a.8.-marco-normativo-de-referencia">18.A.8.&nbsp;&nbsp;Marco normativo de referencia</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  // El modo lectura de Quarto se quito (2026-10-04), pero los navegadores que lo
+
+  // activaron guardan "quarto-reader-mode" y Quarto lo seguiria aplicando (indices
+
+  // escondidos y recuadros flotantes encima de la cabecera). Se borra antes de que
+
+  // Quarto lo lea (su quarto.js es un modulo diferido, va despues de esto).
+
+  try { localStorage.removeItem('quarto-reader-mode'); } catch (e) {}
+
+
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      // .transicion-lenta: el dia/noche dura 1,8 s (la navegacion entre paginas, 0,3 s)
+
+      var raiz = document.documentElement;
+
+      raiz.classList.add('transicion-lenta');
+
+      var t = document.startViewTransition(function () { cambiar(); });
+
+      t.finished.finally(function () { raiz.classList.remove('transicion-lenta'); });
+
+    };
+
+  });
+
+
+
+  // Reloj de arena + tiempo (1', 7'...) siempre juntos: sin esto el navegador puede
+
+  // partir la linea entre la imagen y el texto y el tiempo queda colgando solo
+
+  // (pasaba en el indice "En esta pagina")
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.tiempo').forEach(function (t) {
+
+      var reloj = t.previousElementSibling;
+
+      if (!reloj || !reloj.querySelector('img[src*="emojis"]') || t.parentNode.classList.contains('reloj-tiempo')) { return; }
+
+      var junto = document.createElement('span');
+
+      junto.className = 'reloj-tiempo';
+
+      t.parentNode.insertBefore(junto, reloj);
+
+      junto.appendChild(reloj);
+
+      junto.appendChild(t);
+
+    });
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima: instrumentos, efectos y limitaciones. Desarrollos en presencia de información asimétrica. Aplicaciones prácticas.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="18.1">
+<h2 data-number="18.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">18.1</span> Introducción <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En octubre de 2014 la Real Academia Sueca de Ciencias concedió el Premio de Ciencias Económicas en memoria de Alfred Nobel a Jean Tirole “por su análisis del poder de mercado y su regulación”&nbsp;<span class="citation" data-cites="18_NobelTirole2014">(<a href="01-tema-a1.html#ref-18_NobelTirole2014" role="doc-biblioref">The Royal Swedish Academy of Sciences 2014</a>)</span>. El premio reconocía una línea de trabajo que responde a una pregunta clásica: qué debe hacer el sector público cuando en un mercado hay una sola empresa, o muy pocas, capaces de fijar precios por encima de su coste.</p>
+<p>Los teoremas fundamentales de la economía del bienestar garantizan que un mercado competitivo asigna los recursos de forma eficiente, pero solo si se cumplen sus supuestos. Cuando una empresa tiene poder de mercado, la asignación deja de ser eficiente y la intervención pública puede estar justificada. El caso extremo es el monopolio natural, propio de actividades como el transporte y la distribución de electricidad, gas o agua, en las que resulta más barato que una sola empresa abastezca todo el mercado. En ellas la competencia no solo no es posible, sino que tampoco sería deseable, y la defensa de la competencia deja paso a la regulación. Surgen así varias cuestiones:</p>
+<ul>
+<li><p>¿Qué instrumentos tiene el regulador para acercar el resultado al óptimo social y qué efectos y limitaciones tiene cada uno?</p></li>
+<li><p>¿Cómo cambia el problema cuando la empresa regulada sabe más que el regulador sobre sus costes y su esfuerzo?</p></li>
+<li><p>¿Qué puede hacer el regulador cuando hay varias empresas, ya sea para compararlas entre sí, para hacerlas competir por el mercado o para ordenar su acceso a la red?</p></li>
+<li><p>¿Cómo se aplican estos principios en la regulación real de las redes energéticas, las telecomunicaciones o las plataformas digitales?</p></li>
+</ul>
+<p>Por consiguiente, el objetivo del presente tema es responder a las cuestiones anteriores, para lo que estudiaremos:</p>
+<ol type="1">
+<li><p>El poder de mercado y los instrumentos de la regulación con información completa, con sus efectos y limitaciones.</p></li>
+<li><p>Los desarrollos de la nueva economía de la regulación en presencia de información asimétrica, incluida la regulación por incentivos.</p></li>
+<li><p>La regulación óptima cuando hay varias empresas: competencia por comparación, competencia por el mercado, acceso a las redes y plataformas.</p></li>
+<li><p>Las aplicaciones prácticas en España, la Unión Europea y el Reino Unido.</p></li>
+</ol>
+</section>
+<section id="poder-de-mercado-y-regulación-con-información-completa-instrumentos-efectos-y-limitaciones" class="level2" data-number="18.2">
+<h2 data-number="18.2" class="anchored" data-anchor-id="poder-de-mercado-y-regulación-con-información-completa-instrumentos-efectos-y-limitaciones"><span class="header-section-number">18.2</span> Poder de mercado y regulación con información completa: instrumentos, efectos y limitaciones <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="6 minutos">6'</span></h2>
+<p>Comenzando por los fundamentos, antes de comparar instrumentos conviene precisar en qué mercado se mide el poder de mercado, qué es, por qué preocupa y en qué casos la respuesta adecuada es regular y no solo defender la competencia.</p>
+<section id="poder-de-mercado-y-justificación-de-la-regulación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="poder-de-mercado-y-justificación-de-la-regulación">Poder de mercado y justificación de la regulación</h3>
+<section id="mercado-relevante" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="mercado-relevante">Mercado relevante</h5>
+<p>El mercado relevante es el conjunto de productos y de zonas geográficas que compiten entre sí lo bastante como para disciplinar los precios de una empresa.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Para delimitarlo se usa el test del monopolista hipotético, o SSNIP (por las siglas en inglés de una subida pequeña pero significativa y no transitoria del precio), que introdujeron las directrices de concentraciones de Estados Unidos&nbsp;<span class="citation" data-cites="18_DOJ1982">(<a href="01-tema-a1.html#ref-18_DOJ1982" role="doc-biblioref">U.S. Department of Justice 1982</a>)</span>. Se pregunta si a un monopolista hipotético de un conjunto candidato de productos le resultaría rentable una subida del orden del 5 al 10 %. Si no le resulta rentable, porque los clientes se pasarían a otros productos, estos se añaden al conjunto y se repite el test.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> El mercado relevante es el marco en el que se miden las cuotas y el poder de mercado, y el primer paso de la regulación ex ante de sectores como las telecomunicaciones.</p>
+</section>
+<section id="poder-de-mercado" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="poder-de-mercado">Poder de mercado</h5>
+<p>El poder de mercado es la capacidad de una empresa para fijar de forma rentable y duradera un precio superior a su coste marginal.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Su medida habitual es el índice que propuso Lerner&nbsp;<span class="citation" data-cites="18_Lerner1934">(<a href="01-tema-a1.html#ref-18_Lerner1934" role="doc-biblioref">1934</a>)</span>,&nbsp;<span class="math inline">\(IL\)</span>, que relaciona el margen entre el precio,&nbsp;<span class="math inline">\(P\)</span>, y el coste marginal,&nbsp;<span class="math inline">\(CMg\)</span>, con el propio precio. En el óptimo de un monopolista ese margen es igual a la inversa del valor absoluto de la elasticidad-precio de la demanda,&nbsp;<span class="math inline">\(\left|\varepsilon\right|\)</span>: <span class="math display">\[IL=\dfrac{P-CMg}{P}=\dfrac{1}{\left|\varepsilon\right|}\]</span> El índice vale cero en competencia perfecta y es mayor cuanto más rígida es la demanda que afronta la empresa.</p>
+<p>El poder de mercado genera tres tipos de ineficiencia, que sirven después para valorar cada instrumento de regulación:</p>
+<ol type="1">
+<li><p>Ineficiencia asignativa: al fijar un precio superior al coste marginal se produce menos de lo socialmente óptimo y aparece una pérdida irrecuperable de bienestar, el triángulo de Harberger&nbsp;<span class="citation" data-cites="18_Harberger1954">(<a href="01-tema-a1.html#ref-18_Harberger1954" role="doc-biblioref">1954</a>)</span>.</p></li>
+<li><p>Ineficiencia productiva: sin la presión de los competidores, la empresa no tiene incentivos para producir al mínimo coste, lo que Leibenstein&nbsp;<span class="citation" data-cites="18_Leibenstein1966">(<a href="01-tema-a1.html#ref-18_Leibenstein1966" role="doc-biblioref">1966</a>)</span> denominó ineficiencia X.</p></li>
+<li><p>Ineficiencia dinámica: el poder de mercado persistente puede frenar la innovación y la inversión, aunque la evidencia empírica sobre este efecto no es concluyente.</p></li>
+</ol>
+<p>La respuesta pública depende del origen del poder de mercado&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">Braeutigam 1989</a>)</span>. Si procede de conductas estratégicas de las empresas o de barreras legales, la competencia sigue siendo posible y el instrumento adecuado es la defensa de la competencia, que actúa ex post sancionando conductas y controlando concentraciones. Si procede de la propia estructura de costes de la actividad, la competencia deja de ser deseable y la respuesta es la regulación económica, que actúa ex ante sobre los precios, la entrada y la calidad.</p>
+</section>
+<section id="monopolio-natural" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="monopolio-natural">Monopolio natural</h5>
+<p>Un monopolio natural es un mercado en el que la función de costes es subaditiva, es decir, en el que producir toda la cantidad demandada con una sola empresa cuesta menos que repartirla entre varias.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> Formalmente, si&nbsp;<span class="math inline">\(C\left(Q\right)\)</span> es el coste de producir la cantidad total,&nbsp;<span class="math inline">\(Q\)</span>, y&nbsp;<span class="math inline">\(q_{i}\)</span> la producción de cada una de las&nbsp;<span class="math inline">\(n\)</span> empresas entre las que podría repartirse: <span class="math display">\[C\left(Q\right)&lt;\sum\limits_{i=1}^{n}C\left(q_{i}\right),\qquad Q=\sum\limits_{i=1}^{n}q_{i}\]</span> Con un solo producto, las economías de escala son condición suficiente, pero no necesaria, para la subaditividad&nbsp;<span class="citation" data-cites="18_Baumol1977 18_BaumolPanzarWillig1982">(<a href="01-tema-a1.html#ref-18_Baumol1977" role="doc-biblioref">Baumol 1977</a>; <a href="01-tema-a1.html#ref-18_BaumolPanzarWillig1982" role="doc-biblioref">Baumol et&nbsp;al. 1982</a>)</span>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p>
+<p>No obstante, el monopolio natural plantea un dilema: mantener una sola empresa preserva la eficiencia productiva, pero dejarla sin regular sacrifica la eficiencia asignativa. Además, puede no ser sostenible, porque a un entrante puede resultarle rentable servir solo una parte de la demanda aunque con ello se pierda la ventaja de costes. Por eso la regulación debe ocuparse también de las condiciones de entrada, ya sea prohibiéndola o subastando el derecho de exclusiva. Resolver ese dilema de la mejor manera posible es, precisamente, el objeto de la regulación óptima.</p>
+</section>
+<section id="regulación-óptima" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="regulación-óptima">Regulación óptima</h5>
+<p>La regulación óptima es la elección de las reglas de precios, entrada y calidad que maximizan el bienestar social, medido como la suma del excedente de los consumidores y el beneficio de la empresa, sujeta a que la empresa regulada sea viable y a lo que el regulador puede observar.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> Para ello dispone de varios instrumentos: la fijación de precios, el control de la entrada, la exigencia de calidad y, como alternativa a regular una empresa privada, la propiedad pública de la empresa. Cada instrumento se valora por sus efectos sobre las tres eficiencias y por sus limitaciones, que proceden de la información, del compromiso del regulador y del riesgo de captura.</p>
+<p>A continuación, el análisis comenzará por el caso más favorable al regulador, aquel en que conoce todo sobre la empresa, e introducirá después las limitaciones de información y de compromiso que aparecen en la práctica.</p>
+</section>
+</section>
+<section id="tarificación-con-información-completa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="tarificación-con-información-completa">Tarificación con información completa</h3>
+<p>La teoría tradicional supone que el regulador conoce los costes y la demanda de la empresa, y que esta produce al mínimo coste. La pregunta es entonces qué precio fijar.</p>
+<section id="precio-igual-al-coste-marginal" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="precio-igual-al-coste-marginal">Precio igual al coste marginal</h4>
+<p>La primera respuesta, que se remonta a Dupuit&nbsp;<span class="citation" data-cites="18_Dupuit1844">(<a href="01-tema-a1.html#ref-18_Dupuit1844" role="doc-biblioref">1844</a>)</span> y que formalizó Hotelling&nbsp;<span class="citation" data-cites="18_Hotelling1938">(<a href="01-tema-a1.html#ref-18_Hotelling1938" role="doc-biblioref">1938</a>)</span>, es la regla de eficiencia de la competencia perfecta,&nbsp;<span class="math inline">\(P=CMg\)</span>. Con ella se alcanza el óptimo de primer orden, porque cada unidad se produce mientras el valor que le dan los consumidores supera su coste. El problema aparece en el monopolio natural típico, en el que la producción eficiente se sitúa en el tramo decreciente del coste medio,&nbsp;<span class="math inline">\(CMe\)</span>. Allí el coste marginal es menor que el coste medio y la empresa incurre en pérdidas, como muestra la&nbsp;<a href="#fig-18-reglas-de-precio-del-monopolio-natural" class="quarto-xref">Figura&nbsp;<span>18.1</span></a>. Si, en cambio, la producción eficiente se situara en el tramo creciente del coste medio, el precio igual al coste marginal no causaría pérdidas, pero el monopolio podría no ser sostenible y la regulación tendría que limitar la entrada.</p>
+<p>Hotelling proponía cubrir ese déficit con impuestos de suma fija, pero la propuesta tiene tres limitaciones.</p>
+<ol type="1">
+<li><p>Los impuestos realmente disponibles distorsionan otros mercados, así que cada euro de subvención cuesta a la sociedad más de un euro.</p></li>
+<li><p>Hacer pagar a los contribuyentes un servicio que no usan es discutible en términos de equidad.</p></li>
+<li><p>Por último, una empresa que sabe que sus pérdidas serán cubiertas pierde el incentivo a controlar sus costes.</p></li>
+</ol>
+<p>Además, Coase&nbsp;<span class="citation" data-cites="18_Coase1946">(<a href="01-tema-a1.html#ref-18_Coase1946" role="doc-biblioref">1946</a>)</span> añadió una crítica de fondo: si el precio no cubre el coste total, el regulador nunca sabe si los usuarios valoran el servicio lo suficiente como para justificar su existencia.</p>
+</section>
+<section id="precio-igual-al-coste-medio" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="precio-igual-al-coste-medio">Precio igual al coste medio</h4>
+<p>La alternativa más simple es exigir que el precio cubra exactamente el coste medio,&nbsp;<span class="math inline">\(P=CMe\)</span>, de modo que la empresa no tenga pérdidas ni beneficios extraordinarios. Es un óptimo de segundo orden: la producción queda por debajo de la eficiente y reaparece una pérdida de eficiencia asignativa, aunque menor que la del monopolio sin regular. Su limitación principal es de incentivos, porque si el precio se revisa para cubrir cualquier coste, la empresa no gana nada reduciéndolo.</p>
+<p>Gráficamente, en un plano de precio,&nbsp;<span class="math inline">\(P\)</span>, y cantidad,&nbsp;<span class="math inline">\(Q\)</span>, como el de la&nbsp;<a href="#fig-18-reglas-de-precio-del-monopolio-natural" class="quarto-xref">Figura&nbsp;<span>18.1</span></a>, se representan la demanda,&nbsp;<span class="math inline">\(D\)</span>, el ingreso marginal,&nbsp;<span class="math inline">\(IMg\)</span>, el coste medio decreciente,&nbsp;<span class="math inline">\(CMe\)</span>, y el coste marginal constante,&nbsp;<span class="math inline">\(CMg\)</span>. Así:</p>
+<ul>
+<li><p>Sin regular, el monopolio produce la cantidad&nbsp;<span class="math inline">\(Q_{M}\)</span>, en la que el ingreso marginal iguala al coste marginal, y cobra el precio&nbsp;<span class="math inline">\(P_{M}\)</span>.</p></li>
+<li><p>Con la regla del coste medio, produce&nbsp;<span class="math inline">\(Q_{Me}\)</span> al precio&nbsp;<span class="math inline">\(P_{Me}\)</span>, con una pérdida de eficiencia pequeña (el triángulo sombreado).</p></li>
+<li><p>Con la regla del coste marginal, produce la cantidad eficiente,&nbsp;<span class="math inline">\(Q_{C}\)</span>, al precio&nbsp;<span class="math inline">\(P_{C}\)</span>, con un déficit igual al rectángulo sombreado, que coincide con el coste fijo porque el coste marginal es constante.</p></li>
+</ul>
+<div id="fig-18-reglas-de-precio-del-monopolio-natural" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Reglas de precio en el monopolio natural">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-18-reglas-de-precio-del-monopolio-natural-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;18.1: Reglas de precio en el monopolio natural
+</figcaption>
+<div aria-describedby="fig-18-reglas-de-precio-del-monopolio-natural-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-18-monopolio-natural-reglas-de-precio.svg" class="img-fluid figure-img" alt="Reglas de precio en el monopolio natural">
+</div>
+</figure>
+</div>
+</section>
+<section id="tarifas-no-lineales" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="tarifas-no-lineales">Tarifas no lineales</h4>
+<p>Una tercera vía renuncia a cobrar un precio único por unidad. En la tarifa en dos partes&nbsp;<span class="citation" data-cites="18_Coase1946 18_Oi1971">(<a href="01-tema-a1.html#ref-18_Coase1946" role="doc-biblioref">Coase 1946</a>; <a href="01-tema-a1.html#ref-18_Oi1971" role="doc-biblioref">Oi 1971</a>)</span>, cada usuario paga una cuota fija,&nbsp;<span class="math inline">\(A\)</span>, que reparte el coste fijo de la empresa,&nbsp;<span class="math inline">\(CF\)</span>, entre sus&nbsp;<span class="math inline">\(n\)</span> usuarios, y un precio por unidad,&nbsp;<span class="math inline">\(p\)</span>, igual al coste marginal. La factura,&nbsp;<span class="math inline">\(T\)</span>, de un usuario que consume&nbsp;<span class="math inline">\(q\)</span> unidades es entonces: <span class="math display">\[T=A+p\cdot q,\qquad A=\dfrac{CF}{n},\qquad p=CMg\]</span> En el margen el precio es eficiente y la cuota cubre el déficit, como lo haría un impuesto de suma fija pagado solo por los usuarios.</p>
+<p>Su limitación es la exclusión, porque los usuarios cuyo excedente es menor que la cuota abandonan el mercado. Por eso suele ofrecerse un menú de tarifas, en el que cada usuario elige entre pagar solo un precio por unidad superior al coste marginal o pagar la cuota fija con un precio igual al coste marginal. Nadie empeora respecto al precio único y los grandes consumidores mejoran, por lo que el menú supone una mejora paretiana&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">Braeutigam 1989</a>)</span>.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> La factura eléctrica española, con un término de potencia y un término de energía, responde a esta lógica.</p>
+<p>Por otro lado, cuando una misma capacidad atiende demandas que varían a lo largo del día o del año, como ocurre con la electricidad, la tarificación según la carga formalizada por Steiner&nbsp;<span class="citation" data-cites="18_Steiner1957">(<a href="01-tema-a1.html#ref-18_Steiner1957" role="doc-biblioref">1957</a>)</span> carga el coste de la capacidad sobre los usuarios de las horas punta, que son quienes obligan a instalarla, y cobra en las horas valle solo el coste de operación.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+</section>
+<section id="precios-de-ramsey-boiteux" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="precios-de-ramsey-boiteux">Precios de Ramsey-Boiteux</h4>
+<p>Cuando la empresa produce varios bienes y no puede discriminar entre usuarios, la cuestión es cómo repartir el coste fijo entre los precios. La respuesta de Boiteux&nbsp;<span class="citation" data-cites="18_Boiteux1956">(<a href="01-tema-a1.html#ref-18_Boiteux1956" role="doc-biblioref">1956</a>)</span>, análoga a la que Ramsey&nbsp;<span class="citation" data-cites="18_Ramsey1927">(<a href="01-tema-a1.html#ref-18_Ramsey1927" role="doc-biblioref">1927</a>)</span> había dado para la imposición óptima, consiste en maximizar el bienestar sujeto a que la empresa no tenga pérdidas.</p>
+<p>Baumol y Bradford&nbsp;<span class="citation" data-cites="18_BaumolBradford1970">(<a href="01-tema-a1.html#ref-18_BaumolBradford1970" role="doc-biblioref">1970</a>)</span> difundieron después el resultado y mostraron la equivalencia entre ambos problemas: si las demandas de los bienes son independientes, el margen del precio de cada bien,&nbsp;<span class="math inline">\(P_{i}\)</span>, sobre su coste marginal,&nbsp;<span class="math inline">\(CMg_{i}\)</span>, debe ser inversamente proporcional al valor absoluto de la elasticidad-precio de su demanda,&nbsp;<span class="math inline">\(\left|\varepsilon_{i}\right|\)</span>, en una proporción que depende del multiplicador de la restricción de beneficio,&nbsp;<span class="math inline">\(\lambda\)</span>, que mide cuánto bienestar se pierde por exigir que la empresa cubra sus costes: <span id="eq-18-ramsey-boiteux"><span class="math display">\[\dfrac{P_{i}-CMg_{i}}{P_{i}}=\dfrac{\lambda}{1+\lambda}\cdot\dfrac{1}{\left|\varepsilon_{i}\right|} \tag{18.1}\]</span></span> El cociente&nbsp;<span class="math inline">\(\lambda/\left(1+\lambda\right)\)</span> es el número de Ramsey, comprendido entre cero y uno.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> Que la restricción obligue significa que, sin ella, el regulador fijaría precios distintos. Cuanto mayor es el coste fijo que hay que cubrir, más tiene que alejarse de los precios eficientes y más bienestar cuesta cada euro de beneficio que exige a la empresa, que es lo que mide&nbsp;<span class="math inline">\(\lambda\)</span>:</p>
+<ul>
+<li><p>Si la restricción apenas obliga,&nbsp;<span class="math inline">\(\lambda\)</span> tiende a cero y el precio tiende al coste marginal.</p></li>
+<li><p>Si obliga mucho, el número de Ramsey tiende a uno y los precios se acercan a los de monopolio.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p></li>
+</ul>
+<p>Así, esta es la regla de la elasticidad inversa aplicada a los precios públicos, que carga más margen sobre los bienes de demanda más rígida.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></p>
+<p>Gráficamente, en dos planos de precio,&nbsp;<span class="math inline">\(P_{i}\)</span>, y cantidad,&nbsp;<span class="math inline">\(Q_{i}\)</span>, como los de la&nbsp;<a href="#fig-18-precios-de-ramsey-boiteux" class="quarto-xref">Figura&nbsp;<span>18.2</span></a>, se representan un mercado de demanda rígida,&nbsp;<span class="math inline">\(D_{1}\)</span>, y otro de demanda elástica,&nbsp;<span class="math inline">\(D_{2}\)</span>, con el mismo coste marginal constante,&nbsp;<span class="math inline">\(CMg\)</span>. Así:</p>
+<ul>
+<li><p>En el mercado 1, el precio de Ramsey,&nbsp;<span class="math inline">\(P^{R}_{1}\)</span>, queda muy por encima del coste marginal.</p></li>
+<li><p>En el mercado 2, el margen es menor.</p></li>
+<li><p>En ambos, las cantidades de Ramsey,&nbsp;<span class="math inline">\(Q^{R}_{1}\)</span> y&nbsp;<span class="math inline">\(Q^{R}_{2}\)</span>, se reducen en la misma proporción respecto a las eficientes,&nbsp;<span class="math inline">\(Q^{C}_{1}\)</span> y&nbsp;<span class="math inline">\(Q^{C}_{2}\)</span>, pero en el mercado de demanda rígida eso exige un margen mucho mayor.</p></li>
+<li><p>Los rectángulos son los ingresos que cubren el coste fijo y los triángulos, las pérdidas de eficiencia.</p></li>
+</ul>
+<p>Sin embargo, los precios de Ramsey-Boiteux tienen tres limitaciones.</p>
+<ol type="1">
+<li><p>Son regresivos, porque los bienes de demanda rígida suelen ser de primera necesidad y pesan más en el gasto de los hogares de menor renta.</p></li>
+<li><p>Exigen conocer elasticidades y costes que, en la práctica, solo conoce bien la propia empresa.</p></li>
+<li><p>Por último, solo son óptimos si no hay otras distorsiones en la economía, pues en caso contrario la teoría del segundo óptimo&nbsp;<span class="citation" data-cites="18_LipseyLancaster1956">(<a href="01-tema-a1.html#ref-18_LipseyLancaster1956" role="doc-biblioref">Lipsey y Lancaster 1956</a>)</span> obliga a tenerlas en cuenta.</p></li>
+</ol>
+<div id="fig-18-precios-de-ramsey-boiteux" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Precios de Ramsey-Boiteux con dos mercados">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-18-precios-de-ramsey-boiteux-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;18.2: Precios de Ramsey-Boiteux con dos mercados
+</figcaption>
+<div aria-describedby="fig-18-precios-de-ramsey-boiteux-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-18-precios-de-ramsey.svg" class="img-fluid figure-img" alt="Precios de Ramsey-Boiteux con dos mercados">
+</div>
+</figure>
+</div>
+</section>
+</section>
+<section id="regulación-de-la-tasa-de-rendimiento-y-teoría-positiva" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="regulación-de-la-tasa-de-rendimiento-y-teoría-positiva">Regulación de la tasa de rendimiento y teoría positiva</h3>
+<p>En la práctica, ningún regulador conoce costes y elasticidades con la precisión que exigen las reglas anteriores. Durante buena parte del siglo XX, sobre todo en Estados Unidos, se optó por un mecanismo mucho más sencillo: limitar la rentabilidad de la empresa.</p>
+<section id="regulación-de-la-tasa-de-rendimiento" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="regulación-de-la-tasa-de-rendimiento">Regulación de la tasa de rendimiento</h4>
+<p>La regulación de la tasa de rendimiento, o por coste del servicio, es la que fija precios que permiten a la empresa recuperar sus costes de operación y obtener sobre el capital invertido,&nbsp;<span class="math inline">\(K\)</span>, una tasa de rendimiento máxima,&nbsp;<span class="math inline">\(s\)</span>, superior al coste de oportunidad del capital,&nbsp;<span class="math inline">\(r\)</span>, pero inferior a la que obtendría sin regular. Si los ingresos totales,&nbsp;<span class="math inline">\(IT\left(K,L\right)\)</span>, dependen del capital y del trabajo,&nbsp;<span class="math inline">\(L\)</span>, cuyo precio es el salario,&nbsp;<span class="math inline">\(w\)</span>, la restricción puede escribirse también en términos del beneficio económico,&nbsp;<span class="math inline">\(\pi=IT\left(K,L\right)-w\cdot L-r\cdot K\)</span>: <span class="math display">\[\dfrac{IT\left(K,L\right)-w\cdot L}{K}\leq s\quad\Longleftrightarrow\quad\pi\leq\left(s-r\right)\cdot K\]</span> Averch y Johnson&nbsp;<span class="citation" data-cites="18_AverchJohnson1962">(<a href="01-tema-a1.html#ref-18_AverchJohnson1962" role="doc-biblioref">1962</a>)</span> demostraron que, como cada unidad adicional de capital eleva en&nbsp;<span class="math inline">\(s-r\)</span> el beneficio máximo permitido, la empresa elige una combinación de factores con más capital del que minimiza los costes. Es el efecto Averch-Johnson o sobrecapitalización.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<p>Gráficamente, en un plano de capital,&nbsp;<span class="math inline">\(K\)</span>, y trabajo,&nbsp;<span class="math inline">\(L\)</span>, como el de la&nbsp;<a href="#fig-18-efecto-averch-johnson-en-el-plano-k-l" class="quarto-xref">Figura&nbsp;<span>18.3</span></a>, se representan la isocuanta&nbsp;<span class="math inline">\(q_{0}\)</span> y tres isocostes. Así:</p>
+<ul>
+<li><p>La combinación que minimiza los costes de producir&nbsp;<span class="math inline">\(q_{0}\)</span> es&nbsp;<span class="math inline">\(E\)</span>, donde la isocuanta es tangente al isocoste&nbsp;<span class="math inline">\(CT_{E}\)</span>, cuya pendiente es el cociente entre el salario y el coste del capital.</p></li>
+<li><p>La empresa regulada se comporta como si el capital fuera más barato y elige la combinación&nbsp;<span class="math inline">\(AJ\)</span>, tangente a un isocoste más inclinado,&nbsp;<span class="math inline">\(\widetilde{CT}\)</span>, con más capital y menos trabajo.</p></li>
+<li><p>A los precios reales de los factores, esa combinación cuesta&nbsp;<span class="math inline">\(CT_{AJ}\)</span>, más que&nbsp;<span class="math inline">\(CT_{E}\)</span>.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p></li>
+</ul>
+<p>Su ventaja es informativa, porque solo exige observar beneficios contables y capital, comprobables mediante auditoría, y da a la empresa seguridad para recuperar inversiones hundidas.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></p>
+<p>Sus limitaciones son la ineficiencia productiva, la ausencia de incentivos a reducir costes, porque cualquier coste se traslada al precio, y una estructura de precios que no sigue la lógica de Ramsey-Boiteux. Tampoco incentiva la innovación, porque cualquier ahorro de costes se traslada al precio en la siguiente revisión. Además, el regulador debe fijar&nbsp;<span class="math inline">\(s\)</span> sin conocer la tecnología de la empresa.</p>
+<div id="fig-18-efecto-averch-johnson-en-el-plano-k-l" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Efecto Averch-Johnson en el plano capital-trabajo">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-18-efecto-averch-johnson-en-el-plano-k-l-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;18.3: Efecto Averch-Johnson en el plano capital-trabajo
+</figcaption>
+<div aria-describedby="fig-18-efecto-averch-johnson-en-el-plano-k-l-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-18-efecto-averch-johnson-k-l.svg" class="img-fluid figure-img" alt="Efecto Averch-Johnson en el plano capital-trabajo">
+</div>
+</figure>
+</div>
+</section>
+<section id="teoría-positiva-de-la-regulación" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="teoría-positiva-de-la-regulación">Teoría positiva de la regulación</h4>
+<p>Los instrumentos anteriores suponen un regulador benevolente, y la Escuela de Chicago puso en duda ese supuesto. Stigler&nbsp;<span class="citation" data-cites="18_Stigler1971">(<a href="01-tema-a1.html#ref-18_Stigler1971" role="doc-biblioref">1971</a>)</span> sostuvo que la regulación es un bien que se intercambia en un mercado político y que, por regla general, la adquiere la propia industria y se diseña en su beneficio, porque los productores son pocos, están bien organizados y tienen mucho en juego, mientras que los consumidores están dispersos. Es la teoría de la captura del regulador.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></p>
+<p>Peltzman&nbsp;<span class="citation" data-cites="18_Peltzman1976">(<a href="01-tema-a1.html#ref-18_Peltzman1976" role="doc-biblioref">1976</a>)</span> generalizó el argumento: el regulador maximiza su apoyo político y reparte las rentas entre productores y consumidores, con lo que el precio regulado queda entre el competitivo y el de monopolio. Becker&nbsp;<span class="citation" data-cites="18_Becker1983">(<a href="01-tema-a1.html#ref-18_Becker1983" role="doc-biblioref">1983</a>)</span> lo modelizó como una competencia entre grupos de presión en la que los costes de eficiencia de la regulación limitan su propio alcance, porque cuanto mayor es la pérdida irrecuperable, más se resiste el grupo perjudicado. La implicación de política es que la limitación de la regulación no es solo informativa sino también institucional, y justifica reguladores independientes, reglas transparentes y la evaluación de resultados.</p>
+</section>
+</section>
+</section>
+<section id="desarrollos-en-presencia-de-información-asimétrica" class="level2" data-number="18.3">
+<h2 data-number="18.3" class="anchored" data-anchor-id="desarrollos-en-presencia-de-información-asimétrica"><span class="header-section-number">18.3</span> Desarrollos en presencia de información asimétrica <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="5 minutos 30 segundos">5'30"</span></h2>
+<p>Los instrumentos anteriores tropiezan con una misma dificultad: la empresa regulada conoce mejor que el regulador sus costes y el esfuerzo que dedica a reducirlos. Desde finales de los años setenta, la nueva economía de la regulación trató este problema como una relación entre un principal, el regulador, y un agente, la empresa, y se preguntó cuál es la mejor regulación posible dada esa asimetría de información&nbsp;<span class="citation" data-cites="18_LaffontTirole1993 18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_LaffontTirole1993" role="doc-biblioref">Laffont y Tirole 1993</a>; <a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007</a>)</span>.</p>
+<section id="información-asimétrica-en-la-regulación" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="información-asimétrica-en-la-regulación">Información asimétrica en la regulación</h5>
+<p>Hay información asimétrica en la regulación cuando la empresa regulada conoce variables relevantes que el regulador no puede observar. El problema adopta dos formas:</p>
+<ol type="1">
+<li><p>Selección adversa cuando la empresa conoce su tecnología, por ejemplo si es de coste alto o bajo, y puede declarar costes superiores a los reales.</p></li>
+<li><p>Riesgo moral cuando el regulador no observa el esfuerzo de los gestores por reducir costes, y entonces un coste alto puede deberse a una mala tecnología o a la falta de esfuerzo.</p></li>
+</ol>
+<p>En los dos casos, el regulador solo consigue que la empresa revele lo que sabe o se esfuerce si le deja una parte del excedente, que es la renta informativa.</p>
+</section>
+<section id="renta-informativa" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="renta-informativa">Renta informativa</h5>
+<p>La renta informativa es el beneficio extraordinario que el regulador debe dejar a la empresa eficiente para que no le compense hacerse pasar por ineficiente.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a> Toda la teoría gira en torno a un mismo conflicto: reducir esa renta exige distorsionar la producción o el esfuerzo de la empresa, y mejorar la eficiencia exige dejarle más renta.</p>
+</section>
+<section id="selección-adversa-de-loeb-y-magat-a-baron-y-myerson" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="selección-adversa-de-loeb-y-magat-a-baron-y-myerson">Selección adversa: de Loeb y Magat a Baron y Myerson</h3>
+<p>Loeb y Magat&nbsp;<span class="citation" data-cites="18_LoebMagat1979">(<a href="01-tema-a1.html#ref-18_LoebMagat1979" role="doc-biblioref">1979</a>)</span> fueron los primeros en plantear la regulación como un problema de información:</p>
+<ul>
+<li><p>Proponían dejar que la empresa fijara libremente su precio y pagarle una subvención igual al excedente de los consumidores.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p></li>
+<li><p>Al apropiarse de todo el excedente, la empresa elige por sí misma un precio igual al coste marginal, cualquiera que sea su coste y sin necesidad de revelarlo.</p></li>
+<li><p>El mecanismo es eficiente, pero transfiere a la empresa todo el excedente y exige conocer la demanda, por lo que solo es aceptable si los fondos públicos no tienen coste social y no importa redistribuir renta hacia la empresa&nbsp;<span class="citation" data-cites="18_LaffontMartimort2002">(<a href="01-tema-a1.html#ref-18_LaffontMartimort2002" role="doc-biblioref">Laffont y Martimort 2002, 18</a>)</span>.</p></li>
+</ul>
+<p>Por su parte, Baron y Myerson&nbsp;<span class="citation" data-cites="18_BaronMyerson1982">(<a href="01-tema-a1.html#ref-18_BaronMyerson1982" role="doc-biblioref">1982</a>)</span> convirtieron el problema en uno de segundo óptimo al suponer que el regulador valora menos el beneficio de la empresa que el excedente de los consumidores, de modo que dejarle rentas tiene un coste.</p>
+<p>En la versión más sencilla, la empresa produce una cantidad,&nbsp;<span class="math inline">\(q\)</span>, que los consumidores valoran en&nbsp;<span class="math inline">\(S\left(q\right)\)</span>, con un coste marginal que solo ella conoce y que puede ser bajo,&nbsp;<span class="math inline">\(\underline{\theta}\)</span>, con probabilidad&nbsp;<span class="math inline">\(\nu\)</span>, o alto,&nbsp;<span class="math inline">\(\overline{\theta}\)</span>, con probabilidad&nbsp;<span class="math inline">\(1-\nu\)</span>.</p>
+<p>Llamando&nbsp;<span class="math inline">\(\Delta\theta=\overline{\theta}-\underline{\theta}\)</span> a la diferencia de costes, el regulador ofrece un menú de contratos, uno para cada tipo, con una cantidad y una transferencia,&nbsp;<span class="math inline">\((\underline{q},\underline{t})\)</span> y&nbsp;<span class="math inline">\(\left(\overline{q},\overline{t}\right)\)</span>. La renta de cada tipo es lo que cobra menos lo que le cuesta producir,&nbsp;<span class="math inline">\(\underline{U}=\underline{t}-\underline{\theta}\cdot\underline{q}\)</span> y&nbsp;<span class="math inline">\(\overline{U}=\overline{t}-\overline{\theta}\cdot\overline{q}\)</span>. El regulador elige el menú que maximiza el bienestar esperado sujeto a dos restricciones:</p>
+<ul>
+<li><p>Compatibilidad de incentivos: cada tipo prefiere el contrato pensado para él. Para la empresa de coste bajo,&nbsp;<span class="math inline">\(\underline{U}\geq\overline{U}+\Delta\theta\cdot\overline{q}\)</span>, porque si eligiera el contrato de la de coste alto cobraría su transferencia y produciría&nbsp;<span class="math inline">\(\overline{q}\)</span> con un coste menor.</p></li>
+<li><p>Participación: cada tipo acepta su contrato,&nbsp;<span class="math inline">\(\underline{U}\geq0\)</span> y&nbsp;<span class="math inline">\(\overline{U}\geq0\)</span>.</p></li>
+</ul>
+<p>Si, para simplificar, el regulador no da ningún peso al beneficio de la empresa, en el óptimo solo son activas la compatibilidad de la empresa de coste bajo y la participación de la de coste alto, de modo que la de coste alto no obtiene renta y la de coste bajo obtiene una renta informativa igual a lo que ganaría produciendo con su coste más bajo la cantidad pensada para la de coste alto&nbsp;<span class="citation" data-cites="18_LaffontMartimort2002">(<a href="01-tema-a1.html#ref-18_LaffontMartimort2002" role="doc-biblioref">Laffont y Martimort 2002, 41-43</a>)</span>: <span class="math display">\[\overline{U}=0,\qquad\underline{U}=\Delta\theta\cdot\overline{q}\]</span> Sustituyendo estas rentas, el regulador elige las dos cantidades para maximizar el excedente esperado menos la renta que deja a la empresa de coste bajo: <span class="math display">\[\max_{\underline{q},\overline{q}}\;\nu\cdot\left[S(\underline{q})-\underline{\theta}\cdot\underline{q}\right]+\left(1-\nu\right)\cdot\left[S\left(\overline{q}\right)-\overline{\theta}\cdot\overline{q}\right]-\nu\cdot\Delta\theta\cdot\overline{q}\]</span> Como esa renta crece con la cantidad que se pide a la empresa de coste alto, el regulador la reduce por debajo de la eficiente. La empresa de coste bajo produce la cantidad de información completa,&nbsp;<span class="math inline">\(S^{\prime}(\underline{q})=\underline{\theta}\)</span>, lo que se conoce como ausencia de distorsión en el extremo superior, y la de coste alto produce hasta que el valor marginal para los consumidores,&nbsp;<span class="math inline">\(S^{\prime}\left(\overline{q}\right)\)</span>, iguala su coste marginal más un recargo informativo: <span id="eq-18-baron-myerson"><span class="math display">\[S^{\prime}\left(\overline{q}\right)=\overline{\theta}+\dfrac{\nu}{1-\nu}\cdot\Delta\theta \tag{18.2}\]</span></span> El recargo es mayor cuanto más probable es que la empresa sea eficiente y cuanto mayor es la diferencia de costes. De ahí que, con información asimétrica, la regulación óptima sea un menú de contratos que acepta cierta ineficiencia asignativa para extraer rentas, con un precio de la empresa menos eficiente superior a su coste marginal.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></p>
+</section>
+<section id="selección-adversa-y-riesgo-moral-laffont-y-tirole" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="selección-adversa-y-riesgo-moral-laffont-y-tirole">Selección adversa y riesgo moral: Laffont y Tirole</h3>
+<p>Laffont y Tirole&nbsp;<span class="citation" data-cites="18_LaffontTirole1986">(<a href="01-tema-a1.html#ref-18_LaffontTirole1986" role="doc-biblioref">1986</a>)</span> añadieron el riesgo moral y una justificación distinta del coste de las rentas: cada euro transferido a la empresa se financia con impuestos distorsionantes y cuesta a la sociedad&nbsp;<span class="math inline">\(1+\lambda\)</span> euros, donde&nbsp;<span class="math inline">\(\lambda\)</span> es el coste sombra de los fondos públicos. El coste observado de prestar el servicio,&nbsp;<span class="math inline">\(C\)</span>, depende de un parámetro de eficiencia que solo conoce la empresa,&nbsp;<span class="math inline">\(\beta\)</span>, y del esfuerzo de sus gestores,&nbsp;<span class="math inline">\(e\)</span>, que el regulador no observa y que les supone una desutilidad creciente y convexa,&nbsp;<span class="math inline">\(\psi\left(e\right)\)</span>: <span class="math display">\[C=\beta-e\]</span> El regulador observa el coste, pero no puede separar qué parte se debe a la tecnología y cuál al esfuerzo: un coste bajo puede proceder de una empresa eficiente o de una ineficiente que se esfuerza mucho.</p>
+<p>La solución es un menú de contratos lineales. La empresa anuncia un coste previsto,&nbsp;<span class="math inline">\(C^{a}\)</span>, y recibe un pago total,&nbsp;<span class="math inline">\(TR\)</span>, formado por un pago fijo,&nbsp;<span class="math inline">\(a\)</span>, y una fracción,&nbsp;<span class="math inline">\(b\)</span>, de la desviación entre el coste real y el anunciado, ambos dependientes del anuncio: <span class="math display">\[TR=a\left(C^{a}\right)+b\left(C^{a}\right)\cdot\left(C-C^{a}\right)\]</span></p>
+<p>De esta forma:</p>
+<ul>
+<li><p>Con&nbsp;<span class="math inline">\(b=0\)</span>, contrato de precio fijo, la empresa asume todo el sobrecoste y se queda con todo el ahorro, lo que da el máximo incentivo al esfuerzo.</p></li>
+<li><p>Con&nbsp;<span class="math inline">\(b=1\)</span>, contrato de reembolso de costes o cost plus, el regulador cubre cualquier desviación y la empresa no tiene incentivo alguno a reducir costes.</p></li>
+</ul>
+<p>En el óptimo, la empresa eficiente elige un contrato próximo al de precio fijo, ejerce el esfuerzo eficiente y obtiene una renta informativa. La ineficiente elige un contrato con mayor reembolso de costes, no obtiene renta y se le induce un esfuerzo inferior al eficiente, porque exigirle más esfuerzo aumentaría la renta que hay que dejar a la eficiente&nbsp;<span class="citation" data-cites="18_LaffontTirole1993">(<a href="01-tema-a1.html#ref-18_LaffontTirole1993" role="doc-biblioref">Laffont y Tirole 1993</a>)</span>.</p>
+<p>Laffont y Tirole mostraron además que, bajo ciertas condiciones de separabilidad de los costes, la fijación de precios y los incentivos pueden tratarse por separado: los precios siguen una regla de tipo Ramsey-Boiteux, en la que el coste de los fondos públicos hace de multiplicador, y la extracción de rentas se resuelve con el menú de transferencias. Los esquemas reales se interpretan con este menú: el price cap es un contrato de alto poder, próximo al de precio fijo, y la regulación por coste del servicio es uno de bajo poder, próximo al cost plus.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></p>
+</section>
+<section id="implicaciones-regulación-por-incentivos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="implicaciones-regulación-por-incentivos">Implicaciones: regulación por incentivos</h3>
+<p>Estos resultados dan fundamento teórico al paso, desde los años ochenta, de la regulación por coste del servicio a mecanismos que desvinculan el precio de los costes declarados por la empresa, un paso impulsado también por la sobrecapitalización y por las privatizaciones británicas.</p>
+<section id="precio-máximo-o-price-cap" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="precio-máximo-o-price-cap">Precio máximo o price cap</h4>
+<p>El price cap es una regulación que fija una senda de precios máximos para una cesta de servicios que crece con la inflación menos un factor de eficiencia,&nbsp;<span class="math inline">\(X\)</span>, durante un periodo regulatorio de varios años. Lo propuso Littlechild&nbsp;<span class="citation" data-cites="18_Littlechild1983">(<a href="01-tema-a1.html#ref-18_Littlechild1983" role="doc-biblioref">1983</a>)</span> para British Telecom. Si&nbsp;<span class="math inline">\(P_{t}\)</span> es el precio máximo en el año&nbsp;<span class="math inline">\(t\)</span> e&nbsp;<span class="math inline">\(IPC\)</span> la tasa de inflación: <span class="math display">\[P_{t}=P_{t-1}\cdot\left(1+IPC-X\right)\]</span> Como el precio no depende de los costes que la empresa logre, cada euro que ahorra durante el periodo es un euro de beneficio. El price cap incentiva así la eficiencia productiva y traslada las ganancias al consumidor a través de&nbsp;<span class="math inline">\(X\)</span> y de las revisiones periódicas, en las que el precio vuelve a alinearse con los costes.</p>
+<p>Cuanto más largo es el periodo, mayor es el incentivo, pero más tarda el consumidor en beneficiarse. Cuando el tope se aplica a la media ponderada de una cesta, la empresa elige los precios relativos y, si las ponderaciones son las cantidades, tiende a una estructura próxima a la de Ramsey-Boiteux que el regulador no necesita calcular&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007, 1609-12</a>)</span>.</p>
+<p>Sus limitaciones son la dificultad de fijar el precio inicial y&nbsp;<span class="math inline">\(X\)</span> sin información sobre los costes, la tentación de empeorar la calidad para ahorrar costes, que obliga a regularla por separado, y el efecto trinquete: si la empresa anticipa que sus ahorros se trasladarán a un&nbsp;<span class="math inline">\(X\)</span> más exigente en la siguiente revisión, reduce su esfuerzo al acercarse el final del periodo. Además, la empresa puede ahorrar aplazando inversiones de larga vida y, si obtiene beneficios elevados, el regulador puede verse presionado a revisar la senda antes de tiempo, lo que resta credibilidad al esquema.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+</section>
+<section id="esquemas-intermedios" class="level4 unnumbered">
+<h4 class="unnumbered anchored" data-anchor-id="esquemas-intermedios">Esquemas intermedios</h4>
+<p>Entre el coste del servicio, que no da incentivos pero tampoco deja rentas, y el price cap, que da incentivos máximos pero puede dejar rentas elevadas, existen esquemas intermedios. En el reparto de beneficios o escala móvil, la empresa retiene solo una parte de los beneficios que superan una banda de rentabilidad y comparte el resto con los consumidores.</p>
+</section>
+</section>
+<section id="compromiso-y-captura" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="compromiso-y-captura">Compromiso y captura</h3>
+<p>El modelo básico supone que el regulador se compromete a respetar el contrato y que es benevolente. Relajar estos supuestos explica buena parte de los problemas que se observan en la práctica.</p>
+<section id="compromiso-y-efecto-trinquete" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="compromiso-y-efecto-trinquete">Compromiso y efecto trinquete</h5>
+<p>El efecto trinquete es la tendencia de una empresa regulada a ocultar su eficiencia o reducir su esfuerzo cuando anticipa que sus buenos resultados endurecerán el contrato siguiente. Si el contrato se revisa periódicamente, la empresa que revela costes bajos hoy recibirá mañana un contrato más exigente.<br>
+Anticipándolo, la empresa eficiente oculta su eficiencia o modera su esfuerzo, y el regulador debe dejarle rentas mayores para que revele su tipo&nbsp;<span class="citation" data-cites="18_Weitzman1980 18_FreixasGuesnerieTirole1985">(<a href="01-tema-a1.html#ref-18_Weitzman1980" role="doc-biblioref">Weitzman 1980</a>; <a href="01-tema-a1.html#ref-18_FreixasGuesnerieTirole1985" role="doc-biblioref">Freixas et&nbsp;al. 1985</a>)</span>.<br>
+Es un problema de inconsistencia temporal como el que Kydland y Prescott&nbsp;<span class="citation" data-cites="18_KydlandPrescott1977">(<a href="01-tema-a1.html#ref-18_KydlandPrescott1977" role="doc-biblioref">1977</a>)</span> analizaron en la política económica, y su remedio es el compromiso: periodos regulatorios largos, reglas fijadas de antemano y reguladores con reputación que proteger. El intervalo entre revisiones, o retraso regulatorio, actúa en el mismo sentido, porque mientras el precio no se revisa la empresa se queda con los ahorros. Por eso un price cap que se reajusta a los costes observados funciona como una regulación por coste del servicio con un retraso fijado de antemano, y la frecuencia óptima de las revisiones equilibra el incentivo a reducir costes con la eficiencia asignativa&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007, 1624-25</a>)</span>.</p>
+</section>
+<section id="captura-del-regulador" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="captura-del-regulador">Captura del regulador</h5>
+<p>Laffont y Tirole&nbsp;<span class="citation" data-cites="18_LaffontTirole1991">(<a href="01-tema-a1.html#ref-18_LaffontTirole1991" role="doc-biblioref">1991</a>)</span> formalizaron la captura como una colusión entre la empresa y el regulador, que dispone de información que el legislador no tiene. Cuanto más poderosos son los incentivos, mayores son las rentas en juego y mayor el riesgo de que la empresa pague al regulador para que oculte lo que sabe. Por eso, cuando el riesgo de captura es alto, conviene usar contratos de menor poder, más próximos al reembolso de costes, aunque se pierda eficiencia productiva.</p>
+</section>
+</section>
+</section>
+<section id="regulación-óptima-con-varias-empresas" class="level2" data-number="18.4">
+<h2 data-number="18.4" class="anchored" data-anchor-id="regulación-óptima-con-varias-empresas"><span class="header-section-number">18.4</span> Regulación óptima con varias empresas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos">4'</span></h2>
+<p>Hasta aquí se ha supuesto una única empresa regulada. Cuando hay varias, el regulador dispone de una fuente adicional de información: al igual que una auditoría de costes, la comparación entre empresas similares o la competencia por obtener la concesión reducen las rentas que hay que dejar a cada una&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007</a>)</span>. La presencia de varias empresas plantea además un problema nuevo, el del acceso de los rivales a la red del antiguo monopolista.</p>
+<section id="competencia-por-comparación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="competencia-por-comparación">Competencia por comparación</h3>
+<p>La competencia por comparación&nbsp;<span class="citation" data-cites="18_Shleifer1985">(<a href="01-tema-a1.html#ref-18_Shleifer1985" role="doc-biblioref">Shleifer 1985</a>)</span> aprovecha la existencia de varias empresas reguladas en mercados similares, como las distribuidoras eléctricas de distintas zonas, y fija el precio de cada una según los costes de las demás, no según los suyos. Ninguna puede mejorar su retribución inflando sus costes y solo gana si es más eficiente que la media. Así se induce la reducción de costes sin que el regulador necesite conocer la tecnología. Sus limitaciones son el riesgo de colusión entre las empresas comparadas y la heterogeneidad de sus entornos, que obliga a corregir las comparaciones. Shleifer mostró que el mecanismo se puede extender a empresas heterogéneas siempre que sus diferencias sean observables, ajustando la referencia por esas características. Él mismo citaba como ejemplo el pago de Medicare a los hospitales estadounidenses por grupos de diagnóstico, que fija un importe por caso a partir de los costes de hospitales comparables. La comparación funciona porque las empresas similares comparten perturbaciones de coste comunes, así que permite separar la parte del coste que no depende del esfuerzo de cada una&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007</a>)</span>.</p>
+</section>
+<section id="competencia-por-el-mercado" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="competencia-por-el-mercado">Competencia por el mercado</h3>
+<p>Demsetz&nbsp;<span class="citation" data-cites="18_Demsetz1968">(<a href="01-tema-a1.html#ref-18_Demsetz1968" role="doc-biblioref">1968</a>)</span> cuestionó la necesidad misma de regular: si no puede haber competencia en el mercado, puede haberla por el mercado. Basta con subastar el derecho a prestar el servicio en exclusiva durante un periodo y adjudicarlo a quien ofrezca el precio más bajo para unas condiciones de calidad dadas.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a> Si se puja por un precio único, la competencia lleva el precio al coste medio, un óptimo de segundo orden, sin que el regulador necesite conocer los costes. La subasta selecciona además a la empresa más eficiente, que es la que puede ofrecer el precio más bajo. Produce competencia ex ante y su repetición periódica, competencia ex post, y la renta del ganador es menor cuanto más licitadores compiten&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007, 1648</a>)</span>.</p>
+<p>El diseño de la subasta también importa. Laffont y Tirole&nbsp;<span class="citation" data-cites="18_LaffontTirole1987">(<a href="01-tema-a1.html#ref-18_LaffontTirole1987" role="doc-biblioref">1987</a>)</span> unieron la subasta y la regulación por incentivos: si lo que se subasta es un contrato de incentivos, el ganador recibe un contrato lineal cuyo pago fijo depende de la segunda mejor oferta, de modo que la competencia entre licitadores reduce su renta informativa, y la parte de los sobrecostes que soporta es mayor cuanto más eficiente se declara. En las subastas de valor común, además, el ganador tiende a ser quien más infravaloró sus costes, la llamada maldición del ganador, lo que lleva a los licitadores a pujar con prudencia. El diseño de formatos para bienes complejos, como las frecuencias del espectro radioeléctrico, valió el Premio Nobel de Economía a Milgrom y Wilson&nbsp;<span class="citation" data-cites="18_NobelMilgromWilson2020">(<a href="01-tema-a1.html#ref-18_NobelMilgromWilson2020" role="doc-biblioref">The Royal Swedish Academy of Sciences 2020</a>)</span>, este último autor de la teoría de las subastas de valor común.</p>
+<p>Sus limitaciones son conocidas:</p>
+<ul>
+<li><p>Puede haber colusión entre los licitadores.</p></li>
+<li><p>Además, como señaló Williamson&nbsp;<span class="citation" data-cites="18_Williamson1976">(<a href="01-tema-a1.html#ref-18_Williamson1976" role="doc-biblioref">1976</a>)</span>, cuando el servicio exige inversiones específicas de larga duración es muy difícil especificar un contrato completo y valorar y transferir esos activos al renovar la concesión, y el adjudicatario acumula una ventaja informativa que reduce la competencia en la renovación.</p></li>
+<li><p>La duración de la concesión plantea una disyuntiva. Si es corta, el concesionario no tiene incentivos a invertir en activos de larga vida ni a mantenerlos. Si es larga, desaparece la competencia periódica y es más difícil prever en el contrato todas las contingencias.</p></li>
+</ul>
+</section>
+<section id="relaciones-verticales-y-precio-de-acceso" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="relaciones-verticales-y-precio-de-acceso">Relaciones verticales y precio de acceso</h3>
+<p>Cuando la red es un monopolio natural pero los servicios que se prestan sobre ella pueden ser competitivos, como en la electricidad, el gas, el ferrocarril o las telecomunicaciones, el regulador debe decidir cómo acceden los rivales a la red del antiguo monopolista. La regla del precio eficiente de los componentes fija el peaje en el coste de dar acceso más el margen que el incumbente pierde en el mercado final, de modo que solo entran rivales al menos tan eficientes como él, aunque perpetúa ese margen si el precio final es de monopolio&nbsp;<span class="citation" data-cites="18_Willig1979 18_BaumolSidak1994 18_ArmstrongDoyleVickers1996">(<a href="01-tema-a1.html#ref-18_Willig1979" role="doc-biblioref">Willig 1979</a>; <a href="01-tema-a1.html#ref-18_BaumolSidak1994" role="doc-biblioref">Baumol y Sidak 1994</a>; <a href="01-tema-a1.html#ref-18_ArmstrongDoyleVickers1996" role="doc-biblioref">Armstrong et&nbsp;al. 1996</a>)</span>.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a> Armstrong, Doyle y Vickers&nbsp;<span class="citation" data-cites="18_ArmstrongDoyleVickers1996">(<a href="01-tema-a1.html#ref-18_ArmstrongDoyleVickers1996" role="doc-biblioref">1996</a>)</span> mostraron que la regla solo es óptima en condiciones restrictivas y que, en general, el precio de acceso óptimo depende de las elasticidades y tiene una estructura de tipo Ramsey-Boiteux. La alternativa estructural es separar verticalmente la red de los servicios, desde el acceso regulado sin separación hasta la separación de la propiedad, con una disyuntiva entre las economías de integración y el incentivo del propietario de la red a discriminar a sus rivales.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a></p>
+</section>
+<section id="mercados-de-dos-caras" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="mercados-de-dos-caras">Mercados de dos caras</h3>
+<p>Las plataformas digitales son mercados de dos caras&nbsp;<span class="citation" data-cites="18_RochetTirole2003">(<a href="01-tema-a1.html#ref-18_RochetTirole2003" role="doc-biblioref">Rochet y Tirole 2003</a>)</span>, en los que el precio de cada lado depende de los efectos de red cruzados, y puede ser óptimo cobrar un precio nulo a uno de ellos. Por eso el margen de un lado, medido con el índice de Lerner, no basta para diagnosticar el poder de mercado. Además, los efectos de red, los costes hundidos y el control de los datos hacen que estos mercados no sean disputables en el sentido de Baumol, Panzar y Willig&nbsp;<span class="citation" data-cites="18_BaumolPanzarWillig1982">(<a href="01-tema-a1.html#ref-18_BaumolPanzarWillig1982" role="doc-biblioref">1982</a>)</span>, y la regulación tiende a centrarse en las conductas de acceso y no en los precios.</p>
+<section id="balance" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="balance">Balance</h5>
+<p>En definitiva, la regulación óptima no elimina el poder de mercado sin coste, sino que equilibra eficiencia, rentas y credibilidad del regulador. La&nbsp;<a href="#tbl-18-instrumentos-de-regulacion" class="quarto-xref">Tabla&nbsp;<span>18.1</span></a> resume los efectos y limitaciones de los instrumentos estudiados.</p>
+<div id="tbl-18-instrumentos-de-regulacion" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-18-instrumentos-de-regulacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tabla&nbsp;18.1: Efectos y limitaciones de los instrumentos de regulación
+</figcaption>
+<div aria-describedby="tbl-18-instrumentos-de-regulacion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 17%">
+<col style="width: 23%">
+<col style="width: 18%">
+<col style="width: 17%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><strong>Instrumento</strong></th>
+<th style="text-align: left;"><strong>Eficiencia asignativa</strong></th>
+<th style="text-align: left;"><strong>Eficiencia productiva</strong></th>
+<th style="text-align: left;"><strong>Eficiencia dinámica</strong></th>
+<th style="text-align: left;"><strong>Limitación principal</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><span class="math inline">\(P=CMg\)</span> con subvención</td>
+<td style="text-align: left;">Óptima</td>
+<td style="text-align: left;">Débil: las pérdidas se cubren</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Coste de los fondos públicos</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><span class="math inline">\(P=CMe\)</span></td>
+<td style="text-align: left;">Pérdida pequeña</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Sin incentivo a reducir costes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tarifa en dos partes</td>
+<td style="text-align: left;">Óptima en el margen</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Exclusión de usuarios</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ramsey-Boiteux</td>
+<td style="text-align: left;">La mejor sin pérdidas</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Débil</td>
+<td style="text-align: left;">Regresividad e información</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tasa de rendimiento</td>
+<td style="text-align: left;">Precios sin lógica de Ramsey</td>
+<td style="text-align: left;">Sobrecapitalización</td>
+<td style="text-align: left;">Escasa</td>
+<td style="text-align: left;">Efecto Averch-Johnson</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Subasta de Demsetz</td>
+<td style="text-align: left;"><span class="math inline">\(P=CMe\)</span></td>
+<td style="text-align: left;">Alta al pujar</td>
+<td style="text-align: left;">Depende de la duración</td>
+<td style="text-align: left;">Activos específicos al renovar</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Price cap</td>
+<td style="text-align: left;">Precios relativos próximos a Ramsey</td>
+<td style="text-align: left;">Alta</td>
+<td style="text-align: left;">Alta si el periodo es largo</td>
+<td style="text-align: left;">Calidad, trinquete e infrainversión</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Competencia por comparación</td>
+<td style="text-align: left;">Óptima si las empresas son comparables</td>
+<td style="text-align: left;">Alta</td>
+<td style="text-align: left;">Media</td>
+<td style="text-align: left;">Colusión y heterogeneidad</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Menú de Laffont y Tirole</td>
+<td style="text-align: left;">Distorsión en el tipo ineficiente</td>
+<td style="text-align: left;">Alta en el tipo eficiente</td>
+<td style="text-align: left;">Depende del compromiso</td>
+<td style="text-align: left;">Rentas informativas</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</section>
+</section>
+</section>
+<section id="aplicaciones-prácticas" class="level2" data-number="18.5">
+<h2 data-number="18.5" class="anchored" data-anchor-id="aplicaciones-prácticas"><span class="header-section-number">18.5</span> Aplicaciones prácticas <span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="3 minutos">3'</span></h2>
+<p>Los instrumentos estudiados tienen aplicaciones de política económica. Las redes energéticas, las telecomunicaciones y las plataformas digitales se regulan hoy con combinaciones de ellos, y su evolución reciente reproduce la secuencia del tema: de la tasa de rendimiento a los incentivos, y de la regulación de precios a la regulación del acceso.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a></p>
+<section id="redes-eléctricas-y-gasistas-en-españa" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="redes-eléctricas-y-gasistas-en-españa">Redes eléctricas y gasistas en España</h3>
+<p>En España, el transporte y la distribución de electricidad y de gas son actividades reguladas cuya retribución fija la Comisión Nacional de los Mercados y la Competencia (CNMC), creada por la Ley 3/2013 al integrar la autoridad de competencia y los reguladores sectoriales:</p>
+<ul>
+<li><p>Tasa de rendimiento: cada empresa recibe la amortización de sus activos más una tasa de retribución financiera (TRF) aplicada a su valor neto.</p></li>
+<li><p>Cálculo de la TRF: es el coste medio ponderado del capital expresado antes de impuestos, a partir de la tasa libre de riesgo, la prima de riesgo del mercado, la beta del sector, el coste de la deuda y el apalancamiento (Circular 2/2019). Fue del 5,58 % para las redes eléctricas en 2020-2025, y la Circular 9/2025 la elevó al 6,58 % para 2026-2031, tras una propuesta inicial del 6,46 %.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></p></li>
+<li><p>Incentivos: la retribución de la distribución eléctrica premia o penaliza la calidad del suministro, medida por el tiempo y el número de interrupciones (TIEPI y NIEPI), y la reducción de las pérdidas en la red (Circular 6/2019).</p></li>
+<li><p>Enfoque TOTEX: la Circular 8/2025 retribuye la distribución en 2026-2031 comparando la inversión y los gastos de operación de forma conjunta con unos costes de referencia. El periodo se divide en dos semiperiodos, 2026-2028 y 2029-2031, y el incentivo que reparte con el sector los márgenes obtenidos frente a esa referencia solo se aplica en el segundo.</p></li>
+<li><p>Lectura teórica: es un sistema híbrido. La tasa de rendimiento da seguridad a la inversión en redes, mientras que los incentivos de calidad y el TOTEX dan más poder al contrato y reducen el sesgo hacia el capital que predice el modelo de Averch y Johnson. El nivel de la TRF sigue siendo la decisión más disputada, porque fija el reparto entre rentabilidad e inversión.</p></li>
+</ul>
+</section>
+<section id="el-price-cap-en-la-práctica-rpix-riio-y-aena" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="el-price-cap-en-la-práctica-rpix-riio-y-aena">El price cap en la práctica: RPI–X, RIIO y Aena</h3>
+<ul>
+<li><p>Origen: tras la privatización de British Telecom en 1984 se aplicó el tope que había propuesto Littlechild, RPI–3, es decir, el índice de precios minoristas (RPI) menos tres puntos, y la fórmula se extendió al gas, a los aeropuertos, al agua y a la electricidad.</p></li>
+<li><p>Del RPI–X al RIIO: a partir de 2013, el regulador energético, Ofgem, sustituyó el RPI–X de las redes por el modelo RIIO, cuyo nombre resume su fórmula (ingresos iguales a incentivos más innovación más resultados). RIIO fija los ingresos permitidos para periodos de varios años, trata conjuntamente la inversión y los gastos de operación y reparte con los consumidores las desviaciones de gasto mediante una tasa de incentivo. La decisión final de RIIO-3, de diciembre de 2025, cubre de abril de 2026 a marzo de 2031, con una rentabilidad de los fondos propios del 5,70 % para el transporte eléctrico y del 6,12 % para el gas.</p></li>
+<li><p>Tope minorista: desde enero de 2019 Ofgem aplica también un tope a las tarifas por defecto de electricidad y gas de los hogares, en virtud de la Domestic Gas and Electricity (Tariff Cap) Act 2018, un caso de regulación de precios en un mercado minorista formalmente liberalizado.</p></li>
+<li><p>Aena: la Ley 18/2014 fija para cada quinquenio, en el Documento de Regulación Aeroportuaria (DORA), un ingreso máximo anual por pasajero,&nbsp;<span class="math inline">\(IMAP_{t}\)</span>, que se actualiza con un índice de los precios de los insumos que la empresa no controla,&nbsp;<span class="math inline">\(P_{t-1}\)</span>, y con un componente,&nbsp;<span class="math inline">\(X\)</span>: <span class="math display">\[IMAP_{t}=IMAP_{t-1}\cdot\left(1+\dfrac{P_{t-1}+X}{100}\right)\]</span> El DORA 2027-2031, aprobado el 15 de septiembre de 2026, parte de 10,52 euros por pasajero en 2026, fija&nbsp;<span class="math inline">\(X\)</span> en el 0,33 % anual y prevé incentivos y penalizaciones por calidad de hasta un 2 % del ingreso máximo.</p></li>
+<li><p>Lectura teórica: en los dos países el periodo regulatorio de cinco años equilibra el incentivo a reducir costes con el traslado de las ganancias al consumidor, y los incentivos de calidad corrigen la tentación de empeorarla que la teoría atribuye al price cap. En el caso de Aena, el componente&nbsp;<span class="math inline">\(X\)</span> se calcula para que los ingresos del quinquenio cubran sus costes, de modo que actúa más como un ajuste que cuadra ingresos y costes que como un descuento por productividad.</p></li>
+</ul>
+</section>
+<section id="regulación-del-acceso-en-las-telecomunicaciones" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="regulación-del-acceso-en-las-telecomunicaciones">Regulación del acceso en las telecomunicaciones</h3>
+<ul>
+<li><p>Marco: el Código Europeo de las Comunicaciones Electrónicas (Directiva (UE) 2018/1972), traspuesto en España por la Ley 11/2022, General de Telecomunicaciones, ordena una regulación ex ante en tres pasos: definir los mercados relevantes, comprobar que cumplen tres criterios (barreras de entrada importantes y no transitorias, una estructura que no tiende hacia la competencia efectiva e insuficiencia del derecho de la competencia por sí solo) e imponer obligaciones a las empresas con peso significativo en el mercado, como el acceso, la no discriminación o el control de precios orientados a costes.</p></li>
+<li><p>Aplicación en España: la CNMC obligaba a Telefónica a ofrecer acceso mayorista a su red de fibra (los servicios NEBA) con precios sometidos a un test de replicabilidad económica, que comprueba que un operador alternativo eficiente puede igualar sus ofertas minoristas con los precios mayoristas regulados.</p></li>
+<li><p>Retirada gradual: a medida que avanzó la competencia en infraestructuras, en 2021 la CNMC declaró competitiva una zona de 696 municipios, con cerca del 70 % de la población, en la que levantó la mayoría de las obligaciones mayoristas, y en agosto de 2025 eliminó la obligación de ofrecer NEBA en condiciones reguladas, manteniendo solo el acceso a la obra civil (canalizaciones, conductos y postes).</p></li>
+<li><p>Lectura teórica: es el recorrido que predice la teoría del acceso. Se regula mientras existe un cuello de botella, con precios que permitan entrar solo a rivales eficientes, y la regulación se retira cuando la competencia en infraestructuras se hace sostenible.</p></li>
+</ul>
+</section>
+<section id="topes-de-emergencia-y-plataformas-digitales" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="topes-de-emergencia-y-plataformas-digitales">Topes de emergencia y plataformas digitales</h3>
+<section id="excepción-ibérica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="excepción-ibérica">Excepción ibérica</h5>
+<p>La crisis energética de 2022 llevó a una intervención atípica:</p>
+<ul>
+<li><p>Problema: el mercado eléctrico mayorista aplica la regla de precio igual al coste marginal, ya que la central más cara que resulta necesaria, a menudo una de gas, fija el precio que cobran todas. Esta regla es eficiente a corto plazo, pero con el gas muy caro deja grandes rentas a las tecnologías de menor coste.</p></li>
+<li><p>Mecanismo: con la autorización de la Comisión Europea como ayuda de Estado, España y Portugal limitaron el precio del gas utilizado para producir electricidad (Real Decreto-ley 10/2022). El precio de referencia del gas partía de 40 €/MWh y subía 5 €/MWh al mes a partir del séptimo mes, y las centrales recibían un ajuste por la diferencia, financiado con las rentas de congestión y con un cargo a los compradores del mercado.</p></li>
+<li><p>Vigencia: se aplicó desde el 14 de junio de 2022 y el Real Decreto-ley 3/2023 lo prorrogó hasta el 31 de diciembre de 2023.<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a></p></li>
+<li><p>Lectura teórica: no corrige el poder de mercado de una empresa, sino la traslación al conjunto del mercado del coste de la tecnología marginal. Es sobre todo una medida redistributiva, que reduce esas rentas sin corregir una ineficiencia, y al alejarse de la señal del coste marginal tuvo costes de segundo óptimo: al abaratar la electricidad sin abaratar el gas, aumentó la generación con ciclos combinados de gas y las exportaciones de electricidad a Francia crecieron más del 80 %&nbsp;<span class="citation" data-cites="18_HidalgoPerez2024">(<a href="01-tema-a1.html#ref-18_HidalgoPerez2024" role="doc-biblioref">Hidalgo-Pérez et&nbsp;al. 2024</a>)</span>. Su carácter temporal y tasado limita el riesgo de que los inversores lo interpreten como una expropiación de rentas futuras, el mismo problema de compromiso que plantea el efecto trinquete.</p></li>
+</ul>
+</section>
+<section id="digital-markets-act" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="digital-markets-act">Digital Markets Act</h5>
+<p>La Digital Markets Act (Reglamento (UE) 2022/1925, aplicable desde mayo de 2023) traslada la lógica de la regulación ex ante a las grandes plataformas digitales, que son mercados de dos caras no disputables:</p>
+<ul>
+<li><p>Por qué ex ante: la defensa de la competencia actúa ex post y caso a caso, y en mercados que cambian deprisa llega tarde. La DMA traslada a las plataformas la lógica de la regulación del acceso de las industrias de red, pero sobre conductas y no sobre precios.</p></li>
+<li><p>Designación con información limitada: en lugar de definir mercados caso a caso, el Reglamento designa como guardianes de acceso a las plataformas que superan unos umbrales de tamaño y de usuarios, criterios que el regulador puede comprobar sin conocer los costes ni la demanda de cada plataforma.<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a> En septiembre de 2023 la Comisión designó a Alphabet, Amazon, Apple, ByteDance, Meta y Microsoft, y en 2024 a Booking.</p></li>
+<li><p>Obligaciones: les impone obligaciones y prohibiciones directas, como no favorecer sus propios servicios, que es la misma no discriminación que se exige al incumbente integrado de una red, o permitir que los usuarios profesionales dirijan a sus clientes hacia ofertas fuera de la plataforma.</p></li>
+<li><p>Sanciones: las multas pueden alcanzar el 10 % del volumen de negocios mundial, y el 20 % en caso de reincidencia, y las primeras decisiones de incumplimiento llegaron en abril de 2025, con 500 millones de euros para Apple y 200 millones para Meta.</p></li>
+<li><p>Limitaciones: persisten las de toda regulación, porque las plataformas saben más que el regulador sobre sus algoritmos y sus costes, y tienen un fuerte incentivo a influir en cómo se aplican las obligaciones, el riesgo de captura que describe la teoría.</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="18.6">
+<h2 data-number="18.6" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">18.6</span> Conclusiones <span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, este tema responde a una pregunta que no envejece: cómo lograr que una empresa sin competidores sirva al interés general. Su lección de fondo es que la regulación óptima no es una fórmula, sino un equilibrio entre eficiencia, incentivos y credibilidad, que depende tanto de la teoría como de las instituciones que la aplican.</p>
+<p>Esta lección está hoy más viva que nunca:</p>
+<ul>
+<li><p>En la energía, la transición exige grandes inversiones en redes que solo llegarán si la regulación es estable y creíble, y la crisis de 2022 mostró que incluso los mercados liberalizados pueden necesitar intervenciones de emergencia, con sus costes.</p></li>
+<li><p>En la economía digital, los nuevos cuellos de botella ya no son cables ni tuberías, sino datos, plataformas y capacidad de cálculo. Si el acceso a los modelos de inteligencia artificial se convierte en una instalación esencial, ¿bastará con vigilar conductas, como hace la Digital Markets Act, o habrá que regular el acceso como se hizo con las redes?</p></li>
+<li><p>En las instituciones, ¿tendrán los reguladores la independencia y la capacidad técnica que, como defendieron Laffont y Tirole, exigen estos retos?</p></li>
+</ul>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-derivación-de-los-precios-de-ramsey-boiteux" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-derivación-de-los-precios-de-ramsey-boiteux">18.A.1.&nbsp;&nbsp;Derivación de los precios de Ramsey-Boiteux</h3>
+<p>Sea una empresa que produce&nbsp;<span class="math inline">\(n\)</span> bienes con precios&nbsp;<span class="math inline">\(P_{i}\)</span>, demandas&nbsp;<span class="math inline">\(q_{i}\left(P_{1},\ldots,P_{n}\right)\)</span> y costes marginales&nbsp;<span class="math inline">\(CMg_{i}\)</span>. El bienestar es la suma del excedente de los consumidores,&nbsp;<span class="math inline">\(EC\left(P\right)\)</span>, cuya derivada respecto a cada precio es&nbsp;<span class="math inline">\(-q_{i}\)</span>, y del beneficio de la empresa,&nbsp;<span class="math inline">\(\pi\left(P\right)\)</span>. El regulador maximiza el bienestar sujeto a que el beneficio no sea negativo, con un multiplicador&nbsp;<span class="math inline">\(\lambda\geq0\)</span>: <span class="math display">\[\mathcal{L}=EC\left(P\right)+\pi\left(P\right)+\lambda\cdot\pi\left(P\right)=EC\left(P\right)+\left(1+\lambda\right)\cdot\pi\left(P\right)\]</span> Como&nbsp;<span class="math inline">\(\partial\pi/\partial P_{i}=q_{i}+\sum_{j}\left(P_{j}-CMg_{j}\right)\cdot\partial q_{j}/\partial P_{i}\)</span>, la condición de primer orden respecto a&nbsp;<span class="math inline">\(P_{i}\)</span> es: <span class="math display">\[-q_{i}+\left(1+\lambda\right)\cdot\left[q_{i}+\sum_{j}\left(P_{j}-CMg_{j}\right)\cdot\dfrac{\partial q_{j}}{\partial P_{i}}\right]=0\quad\Longrightarrow\quad\sum_{j}\left(P_{j}-CMg_{j}\right)\cdot\dfrac{\partial q_{j}}{\partial P_{i}}=-\dfrac{\lambda}{1+\lambda}\cdot q_{i}\]</span> Si las demandas son independientes, solo queda el término&nbsp;<span class="math inline">\(j=i\)</span>. Dividiendo por&nbsp;<span class="math inline">\(q_{i}\)</span> y usando el valor absoluto de la elasticidad-precio,&nbsp;<span class="math inline">\(\left|\varepsilon_{i}\right|=-\left(\partial q_{i}/\partial P_{i}\right)\cdot P_{i}/q_{i}\)</span>, se obtiene la regla de la elasticidad inversa&nbsp;(<a href="#eq-18-ramsey-boiteux" class="quarto-xref">&nbsp;<span>18.1</span></a>). Ambos lados son adimensionales: un margen relativo frente al cociente entre el número de Ramsey y una elasticidad. Si&nbsp;<span class="math inline">\(\lambda=0\)</span>, el precio es igual al coste marginal, y si&nbsp;<span class="math inline">\(\lambda\rightarrow\infty\)</span>,&nbsp;<span class="math inline">\(\lambda/\left(1+\lambda\right)\rightarrow1\)</span> y se obtiene la regla del monopolista,&nbsp;<span class="math inline">\(IL=1/\left|\varepsilon\right|\)</span>.</p>
+<p>Con dos bienes relacionados, llamando&nbsp;<span class="math inline">\(\varepsilon_{ji}=\left(\partial q_{j}/\partial P_{i}\right)\cdot P_{i}/q_{j}\)</span> a la elasticidad cruzada de la demanda del bien&nbsp;<span class="math inline">\(j\)</span> respecto al precio del bien&nbsp;<span class="math inline">\(i\)</span>, la condición anterior se reescribe: <span class="math display">\[\dfrac{P_{i}-CMg_{i}}{P_{i}}=\dfrac{1}{\left|\varepsilon_{i}\right|}\cdot\left[\dfrac{\lambda}{1+\lambda}+\dfrac{P_{j}-CMg_{j}}{P_{j}}\cdot\varepsilon_{ji}\cdot\dfrac{P_{j}\cdot q_{j}}{P_{i}\cdot q_{i}}\right]\]</span> Si los bienes son sustitutivos (<span class="math inline">\(\varepsilon_{ji}&gt;0\)</span>), subir el precio del bien&nbsp;<span class="math inline">\(i\)</span> desvía demanda hacia el bien&nbsp;<span class="math inline">\(j\)</span>, que también tiene margen, y el precio del bien&nbsp;<span class="math inline">\(i\)</span> es mayor que con demandas independientes. Si son complementarios (<span class="math inline">\(\varepsilon_{ji}&lt;0\)</span>), ocurre lo contrario. Para desviaciones pequeñas respecto a los precios iguales al coste marginal y sin efectos renta, la condición general equivale a que todas las cantidades se reduzcan en la misma proporción respecto a las de tarificación a coste marginal. Es la regla de la reducción equiproporcional que Ramsey&nbsp;<span class="citation" data-cites="18_Ramsey1927">(<a href="01-tema-a1.html#ref-18_Ramsey1927" role="doc-biblioref">1927</a>)</span> obtuvo para la imposición óptima y que Baumol y Bradford&nbsp;<span class="citation" data-cites="18_BaumolBradford1970">(<a href="01-tema-a1.html#ref-18_BaumolBradford1970" role="doc-biblioref">1970</a>)</span> trasladaron a los precios.</p>
+</section>
+<section id="a.2.-precios-pico-valle" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-precios-pico-valle">18.A.2.&nbsp;&nbsp;Precios pico-valle</h3>
+<p>Siguiendo a Steiner&nbsp;<span class="citation" data-cites="18_Steiner1957">(<a href="01-tema-a1.html#ref-18_Steiner1957" role="doc-biblioref">1957</a>)</span>, se divide el ciclo de demanda en un periodo de punta, con demanda&nbsp;<span class="math inline">\(q_{D}\)</span>, y un periodo valle, con demanda&nbsp;<span class="math inline">\(q_{N}\)</span>, y para cualquier precio común la demanda de punta es mayor. La producción no es almacenable y ambas se atienden con una misma capacidad,&nbsp;<span class="math inline">\(K\)</span>, cuyo coste por unidad y ciclo es&nbsp;<span class="math inline">\(C_{K}\)</span>, mientras que producir cada unidad cuesta&nbsp;<span class="math inline">\(C_{E}\)</span>. Si&nbsp;<span class="math inline">\(S_{D}\left(q_{D}\right)\)</span> y&nbsp;<span class="math inline">\(S_{N}\left(q_{N}\right)\)</span> son los valores brutos para los consumidores en cada periodo, con&nbsp;<span class="math inline">\(S^{\prime}_{D}=P_{D}\)</span> y&nbsp;<span class="math inline">\(S^{\prime}_{N}=P_{N}\)</span>, el regulador resuelve: <span class="math display">\[\mathcal{L}=S_{D}\left(q_{D}\right)+S_{N}\left(q_{N}\right)-C_{E}\cdot\left(q_{D}+q_{N}\right)-C_{K}\cdot K+\lambda_{D}\cdot\left(K-q_{D}\right)+\lambda_{N}\cdot\left(K-q_{N}\right)\]</span> donde&nbsp;<span class="math inline">\(\lambda_{D}\)</span> y&nbsp;<span class="math inline">\(\lambda_{N}\)</span> son los precios sombra de la capacidad en cada periodo. Las condiciones de primer orden son: <span class="math display">\[P_{D}=C_{E}+\lambda_{D},\qquad P_{N}=C_{E}+\lambda_{N},\qquad\lambda_{D}+\lambda_{N}=C_{K}\]</span> junto con las de holgura complementaria. En el caso de punta firme, la capacidad solo se agota en la punta, de modo que&nbsp;<span class="math inline">\(\lambda_{N}=0\)</span> y&nbsp;<span class="math inline">\(\lambda_{D}=C_{K}\)</span>: <span class="math display">\[P_{D}=C_{E}+C_{K},\qquad P_{N}=C_{E}\]</span> Los usuarios de la punta pagan toda la capacidad y los del valle solo el coste de producir. Si con esos precios la demanda del valle superase a la de la punta, la punta se desplazaría. En ese caso, la capacidad se agota en ambos periodos y su coste se reparte según las disposiciones a pagar, con&nbsp;<span class="math inline">\(P_{D}+P_{N}=2\cdot C_{E}+C_{K}\)</span> y&nbsp;<span class="math inline">\(P_{D}&gt;P_{N}\)</span>. Ambas reglas cubren exactamente el coste total con precios eficientes en cada periodo.</p>
+</section>
+<section id="a.3.-modelo-de-averch-johnson" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-modelo-de-averch-johnson">18.A.3.&nbsp;&nbsp;Modelo de Averch-Johnson</h3>
+<p>La empresa regulada elige el capital,&nbsp;<span class="math inline">\(K\)</span>, y el trabajo,&nbsp;<span class="math inline">\(L\)</span>, para maximizar su beneficio económico, sujeta a que la rentabilidad de su capital no supere la tasa permitida,&nbsp;<span class="math inline">\(s\)</span>, con&nbsp;<span class="math inline">\(s&gt;r\)</span>: <span class="math display">\[\max_{K,L}\ \pi=IT\left(K,L\right)-w\cdot L-r\cdot K\qquad\text{s.a.}\qquad IT\left(K,L\right)-w\cdot L-s\cdot K\leq0\]</span> Con la restricción activa y su multiplicador,&nbsp;<span class="math inline">\(\mu\)</span>, el lagrangiano es: <span class="math display">\[\mathcal{L}=IT\left(K,L\right)-w\cdot L-r\cdot K-\mu\cdot\left[IT\left(K,L\right)-w\cdot L-s\cdot K\right]\]</span> Llamando&nbsp;<span class="math inline">\(IT_{K}\)</span> e&nbsp;<span class="math inline">\(IT_{L}\)</span> al ingreso del producto marginal de cada factor, las condiciones de primer orden son: <span class="math display">\[\begin{aligned}\dfrac{\partial\mathcal{L}}{\partial L} &amp; =\left(1-\mu\right)\cdot\left(IT_{L}-w\right)=0 &amp; \Longrightarrow\quad &amp; IT_{L}=w\\
+\dfrac{\partial\mathcal{L}}{\partial K} &amp; =\left(1-\mu\right)\cdot IT_{K}-r+\mu\cdot s=0 &amp; \Longrightarrow\quad &amp; IT_{K}=r-\dfrac{\mu}{1-\mu}\cdot\left(s-r\right)
+\end{aligned}\]</span> Averch y Johnson&nbsp;<span class="citation" data-cites="18_AverchJohnson1962">(<a href="01-tema-a1.html#ref-18_AverchJohnson1962" role="doc-biblioref">1962</a>)</span> demostraron que, cuando la restricción es activa,&nbsp;<span class="math inline">\(0&lt;\mu&lt;1\)</span>. Como el cociente entre los ingresos del producto marginal es igual a la relación marginal de sustitución técnica,&nbsp;<span class="math inline">\(RMST=F_{K}/F_{L}\)</span>: <span class="math display">\[RMST=\dfrac{IT_{K}}{IT_{L}}=\dfrac{r}{w}-\dfrac{\mu}{1-\mu}\cdot\dfrac{s-r}{w}&lt;\dfrac{r}{w}\]</span> La minimización de costes exigiría&nbsp;<span class="math inline">\(RMST=r/w\)</span>. La empresa regulada se comporta como si el capital costara&nbsp;<span class="math inline">\(\tilde{r}=r-\mu\cdot\left(s-r\right)/\left(1-\mu\right)&lt;r\)</span>, y por eso emplea más capital por unidad de trabajo del que minimiza los costes, que es la sobrecapitalización de la&nbsp;<a href="#fig-18-efecto-averch-johnson-en-el-plano-k-l" class="quarto-xref">Figura&nbsp;<span>18.3</span></a>. Todos los términos son coherentes en dimensiones:&nbsp;<span class="math inline">\(r\)</span>,&nbsp;<span class="math inline">\(s\)</span> e&nbsp;<span class="math inline">\(IT_{K}\)</span> son rendimientos por unidad de capital y periodo,&nbsp;<span class="math inline">\(w\)</span> e&nbsp;<span class="math inline">\(IT_{L}\)</span> por unidad de trabajo y periodo. Si&nbsp;<span class="math inline">\(s=r\)</span>, la restricción solo permite un beneficio económico nulo y la combinación de factores queda indeterminada.</p>
+</section>
+<section id="a.4.-selección-adversa-con-dos-tipos-baron-y-myerson" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-selección-adversa-con-dos-tipos-baron-y-myerson">18.A.4.&nbsp;&nbsp;Selección adversa con dos tipos: Baron y Myerson</h3>
+<p>Se sigue la versión de Laffont y Martimort&nbsp;<span class="citation" data-cites="18_LaffontMartimort2002">(<a href="01-tema-a1.html#ref-18_LaffontMartimort2002" role="doc-biblioref">2002, 32-43</a>)</span>. La empresa tiene un coste marginal bajo,&nbsp;<span class="math inline">\(\underline{\theta}\)</span>, con probabilidad&nbsp;<span class="math inline">\(\nu\)</span>, o alto,&nbsp;<span class="math inline">\(\overline{\theta}\)</span>, con probabilidad&nbsp;<span class="math inline">\(1-\nu\)</span>, y&nbsp;<span class="math inline">\(\Delta\theta=\overline{\theta}-\underline{\theta}\)</span>. El regulador ofrece un contrato para cada tipo, con una cantidad y una transferencia,&nbsp;<span class="math inline">\(\left(\underline{q},\underline{t}\right)\)</span> y&nbsp;<span class="math inline">\(\left(\overline{q},\overline{t}\right)\)</span>, y llama renta a la diferencia entre la transferencia y el coste,&nbsp;<span class="math inline">\(\underline{U}=\underline{t}-\underline{\theta}\cdot\underline{q}\)</span> y&nbsp;<span class="math inline">\(\overline{U}=\overline{t}-\overline{\theta}\cdot\overline{q}\)</span>. Las restricciones de compatibilidad de incentivos y de participación son: <span class="math display">\[\begin{aligned}\underline{U} &amp; \geq\overline{U}+\Delta\theta\cdot\overline{q} &amp; \quad &amp; \text{(compatibilidad del tipo eficiente)}\\
+\overline{U} &amp; \geq\underline{U}-\Delta\theta\cdot\underline{q} &amp;  &amp; \text{(compatibilidad del tipo ineficiente)}\\
+\underline{U} &amp; \geq0,\quad\overline{U}\geq0 &amp;  &amp; \text{(participaci{ó}n)}
+\end{aligned}\]</span> Sumando las dos primeras se obtiene&nbsp;<span class="math inline">\(\underline{q}\geq\overline{q}\)</span>: la empresa eficiente debe producir al menos tanto como la ineficiente. En el óptimo solo son activas la compatibilidad del tipo eficiente y la participación del ineficiente, así que&nbsp;<span class="math inline">\(\overline{U}=0\)</span> y&nbsp;<span class="math inline">\(\underline{U}=\Delta\theta\cdot\overline{q}\)</span>. Si el regulador maximiza el valor esperado de lo que recibe menos lo que paga, el problema queda: <span class="math display">\[\max_{\underline{q},\overline{q}}\ \nu\cdot\left[S\left(\underline{q}\right)-\underline{\theta}\cdot\underline{q}\right]+\left(1-\nu\right)\cdot\left[S\left(\overline{q}\right)-\overline{\theta}\cdot\overline{q}\right]-\nu\cdot\Delta\theta\cdot\overline{q}\]</span> Las condiciones de primer orden son: <span class="math display">\[S^{\prime}\left(\underline{q}\right)=\underline{\theta},\qquad\left(1-\nu\right)\cdot\left[S^{\prime}\left(\overline{q}\right)-\overline{\theta}\right]=\nu\cdot\Delta\theta\]</span> La segunda es la ecuación&nbsp;(<a href="#eq-18-baron-myerson" class="quarto-xref">&nbsp;<span>18.2</span></a>): aumentar la cantidad del tipo ineficiente gana eficiencia en ese estado, con probabilidad&nbsp;<span class="math inline">\(1-\nu\)</span>, pero aumenta la renta del eficiente en&nbsp;<span class="math inline">\(\Delta\theta\)</span> por unidad, con probabilidad&nbsp;<span class="math inline">\(\nu\)</span>. Las restricciones omitidas se cumplen porque&nbsp;<span class="math inline">\(\underline{q}&gt;\overline{q}\)</span>. Si&nbsp;<span class="math inline">\(\nu\)</span> es muy alto, puede ser óptimo cerrar la empresa de coste alto,&nbsp;<span class="math inline">\(\overline{q}=0\)</span>, para no dejar ninguna renta a la eficiente.</p>
+</section>
+<section id="a.5.-laffont-y-tirole-esfuerzo-renta-y-menú-de-contratos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-laffont-y-tirole-esfuerzo-renta-y-menú-de-contratos">18.A.5.&nbsp;&nbsp;Laffont y Tirole: esfuerzo, renta y menú de contratos</h3>
+<p>En el modelo de Laffont y Tirole&nbsp;<span class="citation" data-cites="18_LaffontTirole1986">(<a href="01-tema-a1.html#ref-18_LaffontTirole1986" role="doc-biblioref">1986</a>)</span>, con un proyecto de tamaño dado, el coste observado es&nbsp;<span class="math inline">\(C=\beta-e\)</span>, el gestor obtiene&nbsp;<span class="math inline">\(U=TR-C-\psi\left(e\right)\)</span>, donde&nbsp;<span class="math inline">\(TR\)</span> es el pago total que recibe la empresa, y cada euro pagado cuesta&nbsp;<span class="math inline">\(1+\lambda\)</span> a la sociedad. El bienestar, para un valor del proyecto&nbsp;<span class="math inline">\(S\)</span>, es: <span class="math display">\[W=S-\left(1+\lambda\right)\cdot\left[C+\psi\left(e\right)\right]-\lambda\cdot U\]</span> Con información completa,&nbsp;<span class="math inline">\(U=0\)</span> y el esfuerzo iguala su coste marginal a su beneficio marginal,&nbsp;<span class="math inline">\(\psi^{\prime}\left(e^{*}\right)=1\)</span>. Con dos tipos,&nbsp;<span class="math inline">\(\underline{\beta}\)</span> con probabilidad&nbsp;<span class="math inline">\(\nu\)</span> y&nbsp;<span class="math inline">\(\overline{\beta}\)</span> con probabilidad&nbsp;<span class="math inline">\(1-\nu\)</span>, y&nbsp;<span class="math inline">\(\Delta\beta=\overline{\beta}-\underline{\beta}\)</span>, la empresa eficiente puede alcanzar el coste de la ineficiente con un esfuerzo menor en&nbsp;<span class="math inline">\(\Delta\beta\)</span>, de modo que su renta es: <span class="math display">\[\underline{U}=\Phi\left(\overline{e}\right)=\psi\left(\overline{e}\right)-\psi\left(\overline{e}-\Delta\beta\right),\qquad\Phi^{\prime}&gt;0\]</span> Maximizando el bienestar esperado se obtiene: <span class="math display">\[\psi^{\prime}\left(\underline{e}\right)=1,\qquad\psi^{\prime}\left(\overline{e}\right)=1-\dfrac{\lambda}{1+\lambda}\cdot\dfrac{\nu}{1-\nu}\cdot\Phi^{\prime}\left(\overline{e}\right)&lt;1\]</span> La empresa eficiente ejerce el esfuerzo de primer óptimo y la ineficiente un esfuerzo menor, porque cada unidad de esfuerzo exigida a esta eleva la renta de aquella. Si&nbsp;<span class="math inline">\(\lambda=0\)</span>, las rentas no tienen coste social y desaparece la distorsión. La asignación se implementa con el menú de contratos lineales del texto,&nbsp;<span class="math inline">\(TR=a\left(C^{a}\right)+b\left(C^{a}\right)\cdot\left(C-C^{a}\right)\)</span>: la empresa eficiente elige el contrato de precio fijo,&nbsp;<span class="math inline">\(b=0\)</span>, con el que se queda con todo el ahorro que logra con su esfuerzo, y la ineficiente uno con reembolso parcial de costes&nbsp;<span class="citation" data-cites="18_LaffontTirole1993">(<a href="01-tema-a1.html#ref-18_LaffontTirole1993" role="doc-biblioref">Laffont y Tirole 1993</a>)</span>.</p>
+<p>En un contexto dinámico, si el regulador no puede comprometerse a no revisar el contrato, la empresa eficiente anticipa que revelar su tipo empeorará el contrato siguiente, y puede ser óptimo un contrato que agrupe a ambos tipos en el primer periodo. Es el efecto trinquete&nbsp;<span class="citation" data-cites="18_FreixasGuesnerieTirole1985">(<a href="01-tema-a1.html#ref-18_FreixasGuesnerieTirole1985" role="doc-biblioref">Freixas et&nbsp;al. 1985</a>)</span>, que hace que la falta de compromiso encarezca la regulación.</p>
+</section>
+<section id="a.6.-precio-de-acceso-a-la-red" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-precio-de-acceso-a-la-red">18.A.6.&nbsp;&nbsp;Precio de acceso a la red</h3>
+<p>Sea un incumbente que vende un servicio final al precio&nbsp;<span class="math inline">\(P_{I}\)</span> y que necesita su propia red para prestarlo, con un coste del acceso por unidad,&nbsp;<span class="math inline">\(c_{a}\)</span>, y un coste propio del resto del servicio,&nbsp;<span class="math inline">\(c_{I}\)</span>. Un entrante con coste propio&nbsp;<span class="math inline">\(c_{E}\)</span> necesita comprar acceso al precio&nbsp;<span class="math inline">\(A\)</span>. La regla del precio eficiente de los componentes&nbsp;<span class="citation" data-cites="18_Willig1979 18_BaumolSidak1994">(<a href="01-tema-a1.html#ref-18_Willig1979" role="doc-biblioref">Willig 1979</a>; <a href="01-tema-a1.html#ref-18_BaumolSidak1994" role="doc-biblioref">Baumol y Sidak 1994</a>)</span> fija el precio de acceso en el coste del acceso más el coste de oportunidad del incumbente, es decir, el margen que deja de ganar por cada unidad que le quita el entrante: <span class="math display">\[A=c_{a}+\left[P_{I}-\left(c_{a}+c_{I}\right)\right]=P_{I}-c_{I}\]</span> En general, el coste de oportunidad se multiplica por el ratio de desplazamiento,&nbsp;<span class="math inline">\(\sigma\)</span>, que mide cuántas ventas pierde el incumbente por cada unidad de acceso que vende,&nbsp;<span class="math inline">\(A=c_{a}+\sigma\cdot\left(P_{I}-c_{I}-c_{a}\right)\)</span>, y la fórmula anterior es el caso&nbsp;<span class="math inline">\(\sigma=1\)</span>&nbsp;<span class="citation" data-cites="18_ArmstrongSappington2007">(<a href="01-tema-a1.html#ref-18_ArmstrongSappington2007" role="doc-biblioref">Armstrong y Sappington 2007, 1674</a>)</span>. El entrante solo es rentable si&nbsp;<span class="math inline">\(A+c_{E}\leq P_{I}\)</span>, es decir, si&nbsp;<span class="math inline">\(c_{E}\leq c_{I}\)</span>. Así solo entran rivales al menos tan eficientes como el incumbente y se evita el descremado ineficiente del mercado. Su limitación es que toma el precio final como dado, por lo que, si este es de monopolio, el margen se traslada al precio de acceso. Armstrong, Doyle y Vickers&nbsp;<span class="citation" data-cites="18_ArmstrongDoyleVickers1996">(<a href="01-tema-a1.html#ref-18_ArmstrongDoyleVickers1996" role="doc-biblioref">1996</a>)</span> mostraron que la regla solo es óptima en condiciones restrictivas, como productos homogéneos, imposibilidad de sortear la red y un precio final regulado, y que en general el precio de acceso óptimo depende de las elasticidades y, si la empresa debe cubrir costes, tiene una estructura de tipo Ramsey-Boiteux.</p>
+</section>
+<section id="a.7.-formas-de-separación-vertical-en-las-industrias-de-red" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-formas-de-separación-vertical-en-las-industrias-de-red">18.A.7.&nbsp;&nbsp;Formas de separación vertical en las industrias de red</h3>
+<p>Una industria de red combina un componente con rasgos de monopolio natural, la red, con actividades potencialmente competitivas. Para que la competencia en estas últimas no se vea frenada por el dueño de la red, existen varias soluciones:</p>
+<ul>
+<li><p>Acceso regulado sin separación: el incumbente conserva la red y debe dar acceso a sus rivales en condiciones reguladas, como en la red fija de telecomunicaciones. Mantiene las economías de integración, pero conserva el incentivo a discriminar a los rivales.</p></li>
+<li><p>Separación de la propiedad: la red pertenece a una empresa que no compite en los servicios, como la gestión de la infraestructura ferroviaria por Adif, separada de la operación de los trenes, que ha permitido la entrada de operadores distintos de Renfe en la alta velocidad. Elimina el incentivo a discriminar, pero pierde las economías de integración.</p></li>
+<li><p>Propiedad compartida: la red pertenece conjuntamente a los operadores que la usan. Reduce la discriminación entre ellos, pero facilita la colusión frente a los nuevos entrantes.</p></li>
+<li><p>Separación operativa: la propiedad se mantiene, pero la gestión de la red se encomienda a un operador independiente. Evita la discriminación, aunque debilita los incentivos a invertir.</p></li>
+<li><p>Redes recíprocas: cuando el poder procede de los efectos de red, como en la telefonía móvil, cada operador necesita acceder a las redes de los demás, y la regulación se limita a los precios de interconexión.</p></li>
+</ul>
+</section>
+<section id="a.8.-marco-normativo-de-referencia" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.8.-marco-normativo-de-referencia">18.A.8.&nbsp;&nbsp;Marco normativo de referencia</h3>
+<ul>
+<li><p>Ley 3/2013, de 4 de junio, de creación de la Comisión Nacional de los Mercados y la Competencia.</p></li>
+<li><p>Circular 2/2019 de la CNMC, de 12 de noviembre, metodología de la tasa de retribución financiera, modificada por la Circular 9/2025, de 22 de diciembre (6,58 % para 2026-2031).</p></li>
+<li><p>Circulares 5/2019 y 6/2019 de la CNMC, de 5 de diciembre, metodologías de retribución del transporte y de la distribución de electricidad, la segunda sustituida desde 2026 por la Circular 8/2025, de 22 de diciembre (enfoque TOTEX), y la primera modificada por la Circular 7/2025, de 16 de diciembre.</p></li>
+<li><p>Circular 3/2020 de la CNMC, de 15 de enero, metodología de los peajes de transporte y distribución de electricidad.</p></li>
+<li><p>Circulares 9/2019 y 4/2020 de la CNMC, retribución del transporte y la regasificación y de la distribución de gas, sustituidas por las Circulares 4/2026 y 6/2026, de 8 de septiembre.</p></li>
+<li><p>Circular 5/2026 de la CNMC, de 8 de septiembre, tasa de retribución financiera del gas.</p></li>
+<li><p>Circular 6/2020 de la CNMC, de 22 de julio, metodología de los peajes gasistas.</p></li>
+<li><p>Directiva (UE) 2018/1972, Código Europeo de las Comunicaciones Electrónicas, y Ley 11/2022, de 28 de junio, General de Telecomunicaciones.</p></li>
+<li><p>Real Decreto-ley 10/2022, de 13 de mayo, mecanismo temporal de ajuste de costes de producción (excepción ibérica), prorrogado por el Real Decreto-ley 3/2023, de 28 de marzo.</p></li>
+<li><p>Reglamento (UE) 2022/1925, de 14 de septiembre de 2022, sobre mercados disputables y equitativos en el sector digital.</p></li>
+<li><p>Ley 18/2014, de 15 de octubre, y Documento de Regulación Aeroportuaria 2027-2031, aprobado por Acuerdo del Consejo de Ministros de 15 de septiembre de 2026.</p></li>
+<li><p>Domestic Gas and Electricity (Tariff Cap) Act 2018, del Reino Unido.</p></li>
+</ul>
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-18_ArmstrongDoyleVickers1996" class="csl-entry" role="listitem">
+Armstrong, Mark, Chris Doyle, y John Vickers. 1996. <span>«<span>The Access Pricing Problem: A Synthesis</span>»</span>. <em>The Journal of Industrial Economics</em> 44 (2): 131-50.
+</div>
+<div id="ref-18_ArmstrongSappington2007" class="csl-entry" role="listitem">
+Armstrong, Mark, y David E. M. Sappington. 2007. <span>«<span>Recent Developments in the Theory of Regulation</span>»</span>. Chap. 27 en <em>Handbook of Industrial Organization</em>, editado por Mark Armstrong y Robert H. Porter, vol. 3. North-Holland.
+</div>
+<div id="ref-18_AverchJohnson1962" class="csl-entry" role="listitem">
+Averch, Harvey, y Leland L. Johnson. 1962. <span>«<span>Behavior of the Firm Under Regulatory Constraint</span>»</span>. <em>The American Economic Review</em> 52 (5): 1052-69.
+</div>
+<div id="ref-18_Baron1989" class="csl-entry" role="listitem">
+Baron, David P. 1989. <span>«<span>Design of Regulatory Mechanisms and Institutions</span>»</span>. Chap. 24 en <em>Handbook of Industrial Organization</em>, editado por Richard Schmalensee y Robert D. Willig, vol. 2. North-Holland.
+</div>
+<div id="ref-18_BaronMyerson1982" class="csl-entry" role="listitem">
+Baron, David P., y Roger B. Myerson. 1982. <span>«<span>Regulating a Monopolist with Unknown Costs</span>»</span>. <em>Econometrica</em> 50 (4): 911-30.
+</div>
+<div id="ref-18_Baumol1977" class="csl-entry" role="listitem">
+Baumol, William J. 1977. <span>«<span>On the Proper Cost Tests for Natural Monopoly in a Multiproduct Industry</span>»</span>. <em>The American Economic Review</em> 67 (5): 809-22.
+</div>
+<div id="ref-18_BaumolBradford1970" class="csl-entry" role="listitem">
+Baumol, William J., y David F. Bradford. 1970. <span>«<span>Optimal Departures from Marginal Cost Pricing</span>»</span>. <em>The American Economic Review</em> 60 (3): 265-83.
+</div>
+<div id="ref-18_BaumolPanzarWillig1982" class="csl-entry" role="listitem">
+Baumol, William J., John C. Panzar, y Robert D. Willig. 1982. <em><span>Contestable Markets and the Theory of Industry Structure</span></em>. Harcourt Brace Jovanovich.
+</div>
+<div id="ref-18_BaumolSidak1994" class="csl-entry" role="listitem">
+Baumol, William J., y J. Gregory Sidak. 1994. <span>«<span>The Pricing of Inputs Sold to Competitors</span>»</span>. <em>Yale Journal on Regulation</em> 11 (1): 171-202.
+</div>
+<div id="ref-18_Becker1983" class="csl-entry" role="listitem">
+Becker, Gary S. 1983. <span>«<span>A Theory of Competition Among Pressure Groups for Political Influence</span>»</span>. <em>The Quarterly Journal of Economics</em> 98 (3): 371-400.
+</div>
+<div id="ref-18_Boiteux1956" class="csl-entry" role="listitem">
+Boiteux, Marcel. 1956. <span>«<span>Sur la gestion des monopoles publics astreints <span>à</span> l’<span>é</span>quilibre budg<span>é</span>taire</span>»</span>. <em>Econometrica</em> 24 (1): 22-40.
+</div>
+<div id="ref-18_Braeutigam1989" class="csl-entry" role="listitem">
+Braeutigam, Ronald R. 1989. <span>«<span>Optimal Policies for Natural Monopolies</span>»</span>. Chap. 23 en <em>Handbook of Industrial Organization</em>, editado por Richard Schmalensee y Robert D. Willig, vol. 2. North-Holland.
+</div>
+<div id="ref-18_Cabral2000" class="csl-entry" role="listitem">
+Cabral, Luís M. B. 2000. <em><span>Introduction to Industrial Organization</span></em>. MIT Press.
+</div>
+<div id="ref-18_Coase1946" class="csl-entry" role="listitem">
+Coase, Ronald H. 1946. <span>«<span>The Marginal Cost Controversy</span>»</span>. <em>Economica</em> 13 (51): 169-82.
+</div>
+<div id="ref-18_Demsetz1968" class="csl-entry" role="listitem">
+Demsetz, Harold. 1968. <span>«<span>Why Regulate Utilities?</span>»</span> <em>The Journal of Law and Economics</em> 11 (1): 55-65.
+</div>
+<div id="ref-18_Dupuit1844" class="csl-entry" role="listitem">
+Dupuit, Jules. 1844. <span>«<span>De la mesure de l’utilit<span>é</span> des travaux publics</span>»</span>. <em>Annales des Ponts et Chauss<span class="nocase">é</span>es</em> 8: 332-75.
+</div>
+<div id="ref-18_FreixasGuesnerieTirole1985" class="csl-entry" role="listitem">
+Freixas, Xavier, Roger Guesnerie, y Jean Tirole. 1985. <span>«<span>Planning under Incomplete Information and the Ratchet Effect</span>»</span>. <em>The Review of Economic Studies</em> 52 (2): 173-91.
+</div>
+<div id="ref-18_Harberger1954" class="csl-entry" role="listitem">
+Harberger, Arnold C. 1954. <span>«<span>Monopoly and Resource Allocation</span>»</span>. <em>The American Economic Review</em> 44 (2): 77-87.
+</div>
+<div id="ref-18_HidalgoPerez2024" class="csl-entry" role="listitem">
+Hidalgo-Pérez, Manuel, Natalia Collado, Jorge Galindo, y Ramón Mateo. 2024. <span>«<span>The Iberian Exception: Estimating the Impact of a Cap on Gas Prices for Electricity Generation on Consumer Prices and Market Dynamics</span>»</span>. <em>Energy Policy</em> 188: 114092. <a href="https://doi.org/10.1016/j.enpol.2024.114092">https://doi.org/10.1016/j.enpol.2024.114092</a>.
+</div>
+<div id="ref-18_Hotelling1938" class="csl-entry" role="listitem">
+Hotelling, Harold. 1938. <span>«<span>The General Welfare in Relation to Problems of Taxation and of Railway and Utility Rates</span>»</span>. <em>Econometrica</em> 6 (3): 242-69.
+</div>
+<div id="ref-18_KydlandPrescott1977" class="csl-entry" role="listitem">
+Kydland, Finn E., y Edward C. Prescott. 1977. <span>«<span>Rules Rather than Discretion: The Inconsistency of Optimal Plans</span>»</span>. <em>Journal of Political Economy</em> 85 (3): 473-91.
+</div>
+<div id="ref-18_LaffontMartimort2002" class="csl-entry" role="listitem">
+Laffont, Jean-Jacques, y David Martimort. 2002. <em><span>The Theory of Incentives: The Principal-Agent Model</span></em>. Princeton University Press.
+</div>
+<div id="ref-18_LaffontTirole1986" class="csl-entry" role="listitem">
+Laffont, Jean-Jacques, y Jean Tirole. 1986. <span>«<span>Using Cost Observation to Regulate Firms</span>»</span>. <em>Journal of Political Economy</em> 94 (3): 614-41.
+</div>
+<div id="ref-18_LaffontTirole1987" class="csl-entry" role="listitem">
+Laffont, Jean-Jacques, y Jean Tirole. 1987. <span>«<span>Auctioning Incentive Contracts</span>»</span>. <em>Journal of Political Economy</em> 95 (5): 921-37.
+</div>
+<div id="ref-18_LaffontTirole1991" class="csl-entry" role="listitem">
+Laffont, Jean-Jacques, y Jean Tirole. 1991. <span>«<span>The Politics of Government Decision-Making: A Theory of Regulatory Capture</span>»</span>. <em>The Quarterly Journal of Economics</em> 106 (4): 1089-127.
+</div>
+<div id="ref-18_LaffontTirole1993" class="csl-entry" role="listitem">
+Laffont, Jean-Jacques, y Jean Tirole. 1993. <em><span>A Theory of Incentives in Procurement and Regulation</span></em>. MIT Press.
+</div>
+<div id="ref-18_Leibenstein1966" class="csl-entry" role="listitem">
+Leibenstein, Harvey. 1966. <span>«<span>Allocative Efficiency vs. <span>“X-Efficiency”</span></span>»</span>. <em>The American Economic Review</em> 56 (3): 392-415.
+</div>
+<div id="ref-18_Lerner1934" class="csl-entry" role="listitem">
+Lerner, Abba P. 1934. <span>«<span>The Concept of Monopoly and the Measurement of Monopoly Power</span>»</span>. <em>The Review of Economic Studies</em> 1 (3): 157-75.
+</div>
+<div id="ref-18_LipseyLancaster1956" class="csl-entry" role="listitem">
+Lipsey, Richard G., y Kelvin Lancaster. 1956. <span>«<span>The General Theory of Second Best</span>»</span>. <em>The Review of Economic Studies</em> 24 (1): 11-32.
+</div>
+<div id="ref-18_Littlechild1983" class="csl-entry" role="listitem">
+Littlechild, Stephen C. 1983. <em><span>Regulation of British Telecommunications’ Profitability: Report to the Secretary of State</span></em>. Department of Industry.
+</div>
+<div id="ref-18_LoebMagat1979" class="csl-entry" role="listitem">
+Loeb, Martin, y Wesley A. Magat. 1979. <span>«<span>A Decentralized Method for Utility Regulation</span>»</span>. <em>The Journal of Law and Economics</em> 22 (2): 399-404.
+</div>
+<div id="ref-18_Oi1971" class="csl-entry" role="listitem">
+Oi, Walter Y. 1971. <span>«<span>A Disneyland Dilemma: Two-Part Tariffs for a Mickey Mouse Monopoly</span>»</span>. <em>The Quarterly Journal of Economics</em> 85 (1): 77-96.
+</div>
+<div id="ref-18_Olson1965" class="csl-entry" role="listitem">
+Olson, Mancur. 1965. <em><span>The Logic of Collective Action: Public Goods and the Theory of Groups</span></em>. Harvard University Press.
+</div>
+<div id="ref-18_Peltzman1976" class="csl-entry" role="listitem">
+Peltzman, Sam. 1976. <span>«<span>Toward a More General Theory of Regulation</span>»</span>. <em>The Journal of Law and Economics</em> 19 (2): 211-40.
+</div>
+<div id="ref-18_Ramsey1927" class="csl-entry" role="listitem">
+Ramsey, Frank P. 1927. <span>«<span>A Contribution to the Theory of Taxation</span>»</span>. <em>The Economic Journal</em> 37 (145): 47-61.
+</div>
+<div id="ref-18_RochetTirole2003" class="csl-entry" role="listitem">
+Rochet, Jean-Charles, y Jean Tirole. 2003. <span>«<span>Platform Competition in Two-Sided Markets</span>»</span>. <em>Journal of the European Economic Association</em> 1 (4): 990-1029.
+</div>
+<div id="ref-18_Shleifer1985" class="csl-entry" role="listitem">
+Shleifer, Andrei. 1985. <span>«<span>A Theory of Yardstick Competition</span>»</span>. <em>The RAND Journal of Economics</em> 16 (3): 319-27.
+</div>
+<div id="ref-18_Steiner1957" class="csl-entry" role="listitem">
+Steiner, Peter O. 1957. <span>«<span>Peak Loads and Efficient Pricing</span>»</span>. <em>The Quarterly Journal of Economics</em> 71 (4): 585-610.
+</div>
+<div id="ref-18_Stigler1971" class="csl-entry" role="listitem">
+Stigler, George J. 1971. <span>«<span>The Theory of Economic Regulation</span>»</span>. <em>The Bell Journal of Economics and Management Science</em> 2 (1): 3-21.
+</div>
+<div id="ref-18_NobelTirole2014" class="csl-entry" role="listitem">
+The Royal Swedish Academy of Sciences. 2014. <em><span>The Prize in Economic Sciences 2014: Press Release</span></em>. Nota de prensa, 13 de octubre de 2014. <a href="https://www.nobelprize.org/prizes/economic-sciences/2014/press-release/">https://www.nobelprize.org/prizes/economic-sciences/2014/press-release/</a>.
+</div>
+<div id="ref-18_NobelMilgromWilson2020" class="csl-entry" role="listitem">
+The Royal Swedish Academy of Sciences. 2020. <em><span>The Prize in Economic Sciences 2020: Press Release</span></em>. Nota de prensa, 12 de octubre de 2020. <a href="https://www.nobelprize.org/prizes/economic-sciences/2020/press-release/">https://www.nobelprize.org/prizes/economic-sciences/2020/press-release/</a>.
+</div>
+<div id="ref-18_DOJ1982" class="csl-entry" role="listitem">
+U.S. Department of Justice. 1982. <em><span>Merger Guidelines</span></em>.
+</div>
+<div id="ref-18_Weitzman1980" class="csl-entry" role="listitem">
+Weitzman, Martin L. 1980. <span>«<span>The <span>“Ratchet Principle”</span> and Performance Incentives</span>»</span>. <em>The Bell Journal of Economics</em> 11 (1): 302-8.
+</div>
+<div id="ref-18_Williamson1976" class="csl-entry" role="listitem">
+Williamson, Oliver E. 1976. <span>«<span>Franchise Bidding for Natural Monopolies—in General and with Respect to CATV</span>»</span>. <em>The Bell Journal of Economics</em> 7 (1): 73-104.
+</div>
+<div id="ref-18_Willig1978" class="csl-entry" role="listitem">
+Willig, Robert D. 1978. <span>«<span>Pareto-Superior Nonlinear Outlay Schedules</span>»</span>. <em>The Bell Journal of Economics</em> 9 (1): 56-69.
+</div>
+<div id="ref-18_Willig1979" class="csl-entry" role="listitem">
+Willig, Robert D. 1979. <span>«<span>The Theory of Network Access Pricing</span>»</span>. En <em>Issues in Public Utility Regulation</em>, editado por Harry M. Trebing. Michigan State University Press.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>La intuición es que solo tiene sentido hablar de poder de mercado frente a lo que los clientes ven como alternativas reales: si pueden cambiar fácilmente a otro producto o comprar en otra zona, la empresa no puede subir el precio aunque sea la única que vende el suyo.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>El test falla si se parte de un precio que ya es de monopolio, porque entonces una subida adicional puede ahuyentar a los clientes hacia sustitutos lejanos y el mercado parece más amplio de lo que es: es la falacia del celofán. Para servicios de precio nulo, como muchas plataformas digitales, la Comunicación de la Comisión de 2024 sobre la definición del mercado de referencia admite sustituir la subida de precio por una disminución pequeña pero significativa y no transitoria de la calidad.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>La intuición es que una empresa con poder de mercado puede subir su precio sin perder a todos sus clientes, porque estos no encuentran sustitutos cercanos. En competencia perfecta, en cambio, cualquier subida de precio desplaza toda la demanda hacia los rivales.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>La intuición es que la mayor parte del coste es una infraestructura que sirve igual a pocos que a muchos usuarios, como una red de tuberías o de cables, y duplicarla solo añade coste.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>En el caso multiproducto ni siquiera son suficientes: la subaditividad depende también de las complementariedades de costes entre los productos y de las economías de alcance&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">Braeutigam 1989, 1295-96</a>)</span>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>La intuición es que el regulador busca el mejor resultado posible dentro de dos límites: la empresa no puede tener pérdidas permanentes, porque dejaría de prestar el servicio, y el regulador solo puede condicionar sus reglas a lo que es capaz de comprobar.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>Willig&nbsp;<span class="citation" data-cites="18_Willig1978">(<a href="01-tema-a1.html#ref-18_Willig1978" role="doc-biblioref">1978</a>)</span> demostró que cualquier precio uniforme distinto del coste marginal puede mejorarse en sentido de Pareto con una tarifa no lineal ofrecida como opción adicional&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">Braeutigam 1989, 1329</a>)</span>.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>El desarrollo formal, incluido el caso en que la punta se desplaza al otro periodo, figura en el Apéndice 18.A.2. El principio de cargar toda la capacidad sobre la punta depende de la tecnología: con tecnologías de proporciones variables o periodos de distinta duración, los usuarios del valle también contribuyen a pagar la capacidad&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">Braeutigam 1989, 1316-20</a>)</span>.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>La intuición es que cubrir el coste fijo exige alejar los precios del coste marginal, y la pérdida de eficiencia es menor si el margen se carga donde los consumidores apenas reducen su consumo cuando sube el precio. Braeutigam&nbsp;<span class="citation" data-cites="18_Braeutigam1989">(<a href="01-tema-a1.html#ref-18_Braeutigam1989" role="doc-biblioref">1989, 1323</a>)</span> reserva el nombre de número de Ramsey para el producto del margen relativo por la elasticidad-precio con su signo, cuyo valor es&nbsp;<span class="math inline">\(-\lambda/\left(1+\lambda\right)\)</span>, y el cociente del texto es su valor absoluto.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>La intuición es que&nbsp;<span class="math inline">\(\lambda\)</span> mide cuánto bienestar cuesta exigir a la empresa un euro más de beneficio. Si el coste fijo que hay que cubrir es pequeño, basta con subir un poco los precios sobre el coste marginal, y ese euro apenas cuesta bienestar, por lo que&nbsp;<span class="math inline">\(\lambda\)</span> es casi nulo. Si es grande, hay que subir mucho los precios, incluso en los mercados de demanda elástica. En el límite, solo los precios de monopolio, que maximizan el beneficio, consiguen cubrir los costes, y el número de Ramsey se acerca a uno.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>La derivación, también con demandas relacionadas, figura en el Apéndice 18.A.1.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>Laffont y Martimort&nbsp;<span class="citation" data-cites="18_LaffontMartimort2002">(<a href="01-tema-a1.html#ref-18_LaffontMartimort2002" role="doc-biblioref">2002, 18</a>)</span> consideran que la importancia de este resultado se sobrevaloró.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>La intuición es que, si el beneficio permitido es un porcentaje del capital, invertir de más no es un despilfarro para la empresa, sino una forma de ampliar la base sobre la que puede ganar dinero. La derivación con el lagrangiano figura en el Apéndice 18.A.3.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>Baron&nbsp;<span class="citation" data-cites="18_Baron1989">(<a href="01-tema-a1.html#ref-18_Baron1989" role="doc-biblioref">1989, 1352</a>)</span> reinterpreta el modelo de Averch y Johnson como un mecanismo de regulación basado en los dos únicos datos que observa el regulador, el beneficio contable y el capital.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>La intuición es que un pequeño grupo que gana mucho con una norma tiene más motivos para presionar que millones de consumidores que pierden poco cada uno, como ya había señalado Olson&nbsp;<span class="citation" data-cites="18_Olson1965">(<a href="01-tema-a1.html#ref-18_Olson1965" role="doc-biblioref">1965</a>)</span> con la lógica de la acción colectiva.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>La intuición es que una empresa de costes bajos siempre puede declarar costes altos y quedarse con la diferencia, de modo que el regulador solo consigue que diga la verdad si le paga, al menos, lo que ganaría mintiendo.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>Es una aplicación a la regulación de los mecanismos de Groves, en los que decir la verdad es una estrategia dominante&nbsp;<span class="citation" data-cites="18_LaffontMartimort2002">(<a href="01-tema-a1.html#ref-18_LaffontMartimort2002" role="doc-biblioref">Laffont y Martimort 2002, 18</a>)</span>.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>La derivación completa, incluida la comprobación de que las restricciones omitidas se cumplen, figura en el Apéndice 18.A.4.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>El desarrollo figura en el Apéndice 18.A.5.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p>Un esquema de alto poder traslada además a la empresa más riesgo que la regulación de la tasa de rendimiento, lo que puede elevar su coste de capital&nbsp;<span class="citation" data-cites="18_Cabral2000">(<a href="01-tema-a1.html#ref-18_Cabral2000" role="doc-biblioref">Cabral 2000, 77-78</a>)</span>.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>La intuición es que la competencia entre los aspirantes antes de la adjudicación sustituye a la competencia que no puede existir después, porque cada uno ofrece el precio más bajo con el que todavía cubre sus costes.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>Por ejemplo, si el incumbente vende el servicio a 10 euros, dar acceso le cuesta 5 y el resto del servicio 2, la regla fija un peaje de 5 + (10 <span class="math inline">\(-\)</span> 5 <span class="math inline">\(-\)</span> 2) = 8 euros, el coste del acceso más el margen que pierde el incumbente, y un entrante solo cubre costes si su coste propio no supera 2 euros, es decir, si es al menos tan eficiente como el incumbente. El desarrollo de la regla y de su alternativa, los precios de acceso óptimos de tipo Ramsey-Boiteux, figura en el Apéndice 18.A.6.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>Las distintas formas de separación vertical se describen en el Apéndice 18.A.7.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>El marco normativo de referencia de estas aplicaciones figura en el Apéndice 18.A.8.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>Para el transporte y la regasificación de gas, la Circular 2/2019 fijó una TRF del 5,44 % para 2021-2026, y la Circular 5/2026 la elevó al 6,46 % para el periodo regulatorio 2027-2032, cuyo primer año de gas comienza el 1 de octubre de 2026. La Circular 9/2025 ha sido recurrida ante la Audiencia Nacional.<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Según el preámbulo del Real Decreto-ley 3/2023, el precio medio del mercado diario español desde la entrada en vigor del mecanismo hasta febrero de 2023 fue de 127,89 €/MWh, frente a 273,23 €/MWh en Francia, 240,48 €/MWh en Alemania y 306,18 €/MWh en Italia.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>Se presume que una empresa es guardián de acceso si su volumen de negocios en la Unión es de al menos 7.500 millones de euros en cada uno de los tres últimos ejercicios, o su capitalización media de al menos 75.000 millones, opera en al menos tres Estados miembros y tiene al menos 45 millones de usuarios finales activos al mes y 10.000 usuarios profesionales activos al año (artículo 3.2 del Reglamento).<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./17-tema-a17.html" class="pagination-link" aria-label="Sector Público. Crecimiento del gasto público">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./19-tema-a19.html" class="pagination-link" aria-label="Estado del Bienestar, redistribución y protección social.">
+        <span class="nav-page-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<div class="pie-sitio">
+<a class="pie-nombre" href="../index.html">Manuel Cabado García</a>
+<p class="pie-enlaces">
+<a href="../index.html">Inicio</a><span class="pie-sep">·</span><a href="../temario.html">Temario</a><span class="pie-sep">·</span><a href="../recursos.html">Recursos</a><span class="pie-sep">·</span><a href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">Sobre mí</a>
+</p>
+<p class="pie-creditos">
+© 2026<span class="pie-sep">·</span>Diplomado Comercial del Estado<span class="pie-sep">·</span>Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a>
+</p>
+</div>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
