@@ -140,7 +140,7 @@ h1.title {
 h1.title .chapter-number {
   font-size: 0.85rem;
   letter-spacing: 0.18em;
-  color: var(--indigo);
+  color: var(--purpura-texto);
   margin-bottom: 0.6rem;
 }
 
