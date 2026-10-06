@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { font-size: 2rem; color: #7a1f4b; letter-spacing: .4em; text-shadow: 0 0 6px #f7f4ec, 0 0 12px #f7f4ec; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2748.00%27 height=%2724%27 viewBox=%270 0 48 24%27%3E%3Cdefs%3E%3Cfilter id=%27h%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeGaussianBlur in=%27SourceGraphic%27 stdDeviation=%270.90%27 result=%27b%27/%3E%3CfeColorMatrix in=%27b%27 type=%27luminanceToAlpha%27 result=%27a%27/%3E%3CfeFlood flood-color=%27%233EE6A8%27 flood-opacity=%271%27 result=%27c%27/%3E%3CfeComposite in=%27c%27 in2=%27a%27 operator=%27in%27 result=%27g%27/%3E%3CfeMerge%3E%3CfeMergeNode in=%27SourceGraphic%27/%3E%3CfeMergeNode in=%27g%27/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%27url%28%23h%29%27%3E%3Cg fill=%27%231E1D1B%27 stroke=%27%23A6F7D2%27 stroke-opacity=%270.6%27 stroke-width=%271.00%27%3E%3Cg id=%27o%27%3E%3Ccircle r=%2723%27/%3E%3Ccircle r=%2717%27/%3E%3Ccircle r=%2711%27/%3E%3Ccircle r=%275%27/%3E%3C/g%3E%3Cuse href=%27%23o%27 x=%2724%27 y=%2712%27/%3E%3Cuse href=%27%23o%27 x=%270%27 y=%2724%27/%3E%3Cuse href=%27%23o%27 x=%2748%27 y=%2724%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.6), 0 0 4px #1e1d1b; }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  // SHA-256 propio (texto ASCII): crypto.subtle solo existe en paginas https, y la
+  // cortina tiene que funcionar tambien por http (p. ej. antes de tener el certificado)
+  function huella(ascii) {
+    function rot(v, n) { return (v >>> n) | (v << (32 - n)); }
+    var max = Math.pow(2, 32), res = '', palabras = [], bits = ascii.length * 8;
+    var h = [], k = [], n = 0, compuesto = {}, i, j;
+    for (var c = 2; n < 64; c++) {
+      if (!compuesto[c]) {
+        for (i = 0; i < 313; i += c) { compuesto[i] = c; }
+        h[n] = (Math.pow(c, 0.5) * max) | 0;
+        k[n++] = (Math.pow(c, 1 / 3) * max) | 0;
+      }
+    }
+    ascii += String.fromCharCode(128);
+    while (ascii.length % 64 - 56) { ascii += String.fromCharCode(0); }
+    for (i = 0; i < ascii.length; i++) { palabras[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8; }
+    palabras[palabras.length] = (bits / max) | 0;
+    palabras[palabras.length] = bits;
+    for (j = 0; j < palabras.length;) {
+      var w = palabras.slice(j, j += 16), viejo = h;
+      h = h.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2], a = h[0], e = h[4];
+        var t1 = h[7] + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & h[5]) ^ ((~e) & h[6])) + k[i] +
+          (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+            (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & h[1]) ^ (a & h[2]) ^ (h[1] & h[2]));
+        h = [(t1 + t2) | 0].concat(h);
+        h[4] = (h[4] + t1) | 0;
+      }
+      for (i = 0; i < 8; i++) { h[i] = (h[i] + viejo[i]) | 0; }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) { var b = (h[i] >> (j * 8)) & 255; res += (b < 16 ? '0' : '') + b.toString(16); }
+    }
+    return res;
+  }
+  var tituloReal = '';
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    if (tituloReal) { document.title = tituloReal; }
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (huella(texto) === esperada) { abrir(); }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
+    // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
+    c.innerHTML = '<div class="c-cuerpo"><div class="c-pista" aria-hidden="true"></div></div>';
+    tituloReal = document.title;
+    document.title = 'Próximamente';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="La curva de Beveridge, los modelos de búsqueda y emparejamiento y los costes de ajuste, con referencia a la negociación, los salarios de eficiencia y los contratos implícitos.">
+
+<title>Tema A12. Teorías microeconómicas del mercado de trabajo (II) | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./13-tema-a13.html" rel="next">
+<link href="./11-tema-a11.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-c1d80b9ac164d34e0414474d7283ed92.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-a881fbc373f319577a40cb4d60d3f311.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-c1d80b9ac164d34e0414474d7283ed92.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<!-- Letra Latin Modern: se pide lo primero de todo para que el nombre y las
+     pestanas no salgan un instante con otra letra al cambiar de pagina -->
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-regular.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Tema A12. Teorías microeconómicas del mercado de trabajo (II) | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="La curva de Beveridge, los modelos de búsqueda y emparejamiento y los costes de ajuste, con referencia a la negociación, los salarios de eficiencia y los contratos implícitos.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta property="og:site_name" content="Microeconomía y Economía del Sector Público">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Tema A12. Teorías microeconómicas del mercado de trabajo (II) | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="La curva de Beveridge, los modelos de búsqueda y emparejamiento y los costes de ajuste, con referencia a la negociación, los salarios de eficiencia y los contratos implícitos.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/microeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+<script type="application/ld+json" id="datos-estructurados">
+{
+ "@context": "https://schema.org",
+ "@type": "LearningResource",
+ "name": "Tema A12. Teorías microeconómicas del mercado de trabajo (II). La curva de Beveridge, el modelo de búsqueda y emparejamiento y costes de ajuste. Mención a los modelos de negociación, salarios de eficiencia y contratos implícitos.",
+ "alternateName": "Teorías microeconómicas del mercado de trabajo (II)",
+ "description": "La curva de Beveridge, los modelos de búsqueda y emparejamiento y los costes de ajuste, con referencia a la negociación, los salarios de eficiencia y los contratos implícitos.",
+ "learningResourceType": "Apuntes",
+ "educationalUse": "Preparación del Tercer Ejercicio de la oposición al Cuerpo de Diplomados Comerciales del Estado",
+ "inLanguage": "es",
+ "isAccessibleForFree": true,
+ "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es",
+ "author": {
+  "@type": "Person",
+  "@id": "https://manuelcabadogarcia.es/#manuel",
+  "name": "Manuel Cabado García"
+ },
+ "isPartOf": {
+  "@type": "Book",
+  "name": "Parte A) Microeconomía y Economía del Sector Público",
+  "url": "https://manuelcabadogarcia.es/microeconomia/"
+ },
+ "url": "https://manuelcabadogarcia.es/microeconomia/12-tema-a12.html"
+}
+</script>
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Microeconomía y Economía del Sector Público</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./12-tema-a12.html"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-a1.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Pensamiento económico: clásicos y neoclásicos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-a2.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Del pensamiento económico de Keynes a la actualidad</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-a3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teoría de la demanda del consumidor</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-a4.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Dualidad y elección en situaciones de riesgo</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-a5.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teoría de la producción</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-a6.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Teoría de los costes</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-a7.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">El modelo de competencia perfecta</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-a8.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Teoría del monopolio y su regulación</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-a9.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Teoría del oligopolio. Análisis mediante la teoría de juegos</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-a10.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Teoría de la competencia monopolística</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-a11.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-a12.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-a13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-a14.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Óptimo, equilibrio competitivo y “second best”</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-a15.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Fallos del mercado y del sector público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-a16.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Teoría de la elección colectiva</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-a17.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Sector Público. Crecimiento del gasto público</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-a18.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Poder de mercado y regulación óptima</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-a19.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Estado del Bienestar, redistribución y protección social.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-a20.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Teoría de la imposición</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-a21.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">Imposición y oferta.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-a22.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Federalismo fiscal</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">En esta página</h2>
+   
+  <ul>
+  <li><a href="#introducción" id="toc-introducción" class="nav-link active" data-scroll-target="#introducción"><span class="header-section-number">12.1</span> Introducción&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="1 minuto">1'</span></a></li>
+  <li><a href="#desempleo-friccional-la-curva-de-beveridge-y-el-modelo-de-búsqueda-y-emparejamiento" id="toc-desempleo-friccional-la-curva-de-beveridge-y-el-modelo-de-búsqueda-y-emparejamiento" class="nav-link" data-scroll-target="#desempleo-friccional-la-curva-de-beveridge-y-el-modelo-de-búsqueda-y-emparejamiento"><span class="header-section-number">12.2</span> Desempleo friccional: la curva de Beveridge y el modelo de búsqueda y emparejamiento&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="9 minutos 30 segundos">9'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#la-curva-de-beveridge" id="toc-la-curva-de-beveridge" class="nav-link" data-scroll-target="#la-curva-de-beveridge">La curva de Beveridge</a></li>
+  <li><a href="#los-modelos-de-búsqueda" id="toc-los-modelos-de-búsqueda" class="nav-link" data-scroll-target="#los-modelos-de-búsqueda">Los modelos de búsqueda</a></li>
+  <li><a href="#el-modelo-de-búsqueda-y-emparejamiento-de-diamond-mortensen-y-pissarides" id="toc-el-modelo-de-búsqueda-y-emparejamiento-de-diamond-mortensen-y-pissarides" class="nav-link" data-scroll-target="#el-modelo-de-búsqueda-y-emparejamiento-de-diamond-mortensen-y-pissarides">El modelo de búsqueda y emparejamiento de Diamond, Mortensen y Pissarides</a></li>
+  </ul></li>
+  <li><a href="#costes-de-ajuste-y-dinámica-de-la-demanda-de-trabajo" id="toc-costes-de-ajuste-y-dinámica-de-la-demanda-de-trabajo" class="nav-link" data-scroll-target="#costes-de-ajuste-y-dinámica-de-la-demanda-de-trabajo"><span class="header-section-number">12.3</span> Costes de ajuste y dinámica de la demanda de trabajo&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos">4'</span></a></li>
+  <li><a href="#mención-a-las-teorías-de-la-rigidez-salarial" id="toc-mención-a-las-teorías-de-la-rigidez-salarial" class="nav-link" data-scroll-target="#mención-a-las-teorías-de-la-rigidez-salarial"><span class="header-section-number">12.4</span> Mención a las teorías de la rigidez salarial&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></a>
+  <ul class="collapse">
+  <li><a href="#modelos-de-negociación" id="toc-modelos-de-negociación" class="nav-link" data-scroll-target="#modelos-de-negociación">Modelos de negociación</a></li>
+  <li><a href="#salarios-de-eficiencia" id="toc-salarios-de-eficiencia" class="nav-link" data-scroll-target="#salarios-de-eficiencia">Salarios de eficiencia</a></li>
+  <li><a href="#contratos-implícitos" id="toc-contratos-implícitos" class="nav-link" data-scroll-target="#contratos-implícitos">Contratos implícitos</a></li>
+  </ul></li>
+  <li><a href="#conclusiones" id="toc-conclusiones" class="nav-link" data-scroll-target="#conclusiones"><span class="header-section-number">12.5</span> Conclusiones&nbsp;<span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="30 segundos">30"</span></a></li>
+  <li><a href="#apéndice" id="toc-apéndice" class="nav-link" data-scroll-target="#apéndice">Apéndice</a>
+  <ul class="collapse">
+  <li><a href="#a.1.-el-salario-de-reserva-en-el-modelo-de-búsqueda-secuencial" id="toc-a.1.-el-salario-de-reserva-en-el-modelo-de-búsqueda-secuencial" class="nav-link" data-scroll-target="#a.1.-el-salario-de-reserva-en-el-modelo-de-búsqueda-secuencial">12.A.1.&nbsp;&nbsp;El salario de reserva en el modelo de búsqueda secuencial</a></li>
+  <li><a href="#a.2.-el-equilibrio-del-modelo-de-diamond-mortensen-y-pissarides" id="toc-a.2.-el-equilibrio-del-modelo-de-diamond-mortensen-y-pissarides" class="nav-link" data-scroll-target="#a.2.-el-equilibrio-del-modelo-de-diamond-mortensen-y-pissarides">12.A.2.&nbsp;&nbsp;El equilibrio del modelo de Diamond, Mortensen y Pissarides</a></li>
+  <li><a href="#a.3.-la-demanda-de-trabajo-con-costes-de-ajuste" id="toc-a.3.-la-demanda-de-trabajo-con-costes-de-ajuste" class="nav-link" data-scroll-target="#a.3.-la-demanda-de-trabajo-con-costes-de-ajuste">12.A.3.&nbsp;&nbsp;La demanda de trabajo con costes de ajuste</a></li>
+  <li><a href="#a.4.-los-costes-de-ajuste-con-incertidumbre" id="toc-a.4.-los-costes-de-ajuste-con-incertidumbre" class="nav-link" data-scroll-target="#a.4.-los-costes-de-ajuste-con-incertidumbre">12.A.4.&nbsp;&nbsp;Los costes de ajuste con incertidumbre</a></li>
+  <li><a href="#a.5.-la-condición-de-hosios" id="toc-a.5.-la-condición-de-hosios" class="nav-link" data-scroll-target="#a.5.-la-condición-de-hosios">12.A.5.&nbsp;&nbsp;La condición de Hosios</a></li>
+  <li><a href="#a.6.-la-solución-de-nash-en-la-negociación-colectiva" id="toc-a.6.-la-solución-de-nash-en-la-negociación-colectiva" class="nav-link" data-scroll-target="#a.6.-la-solución-de-nash-en-la-negociación-colectiva">12.A.6.&nbsp;&nbsp;La solución de Nash en la negociación colectiva</a></li>
+  <li><a href="#a.7.-el-paro-de-equilibrio-con-salarios-de-eficiencia" id="toc-a.7.-el-paro-de-equilibrio-con-salarios-de-eficiencia" class="nav-link" data-scroll-target="#a.7.-el-paro-de-equilibrio-con-salarios-de-eficiencia">12.A.7.&nbsp;&nbsp;El paro de equilibrio con salarios de eficiencia</a></li>
+  <li><a href="#a.8.-la-condición-de-no-escaqueo-de-shapiro-y-stiglitz" id="toc-a.8.-la-condición-de-no-escaqueo-de-shapiro-y-stiglitz" class="nav-link" data-scroll-target="#a.8.-la-condición-de-no-escaqueo-de-shapiro-y-stiglitz">12.A.8.&nbsp;&nbsp;La condición de no escaqueo de Shapiro y Stiglitz</a></li>
+  <li><a href="#a.9.-el-contrato-implícito-óptimo" id="toc-a.9.-el-contrato-implícito-óptimo" class="nav-link" data-scroll-target="#a.9.-el-contrato-implícito-óptimo">12.A.9.&nbsp;&nbsp;El contrato implícito óptimo</a></li>
+  </ul></li>
+  <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  // El modo lectura de Quarto se quito (2026-10-04), pero los navegadores que lo
+
+  // activaron guardan "quarto-reader-mode" y Quarto lo seguiria aplicando (indices
+
+  // escondidos y recuadros flotantes encima de la cabecera). Se borra antes de que
+
+  // Quarto lo lea (su quarto.js es un modulo diferido, va despues de esto).
+
+  try { localStorage.removeItem('quarto-reader-mode'); } catch (e) {}
+
+
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      // .transicion-lenta: el dia/noche dura 1,8 s (la navegacion entre paginas, 0,3 s)
+
+      var raiz = document.documentElement;
+
+      raiz.classList.add('transicion-lenta');
+
+      var t = document.startViewTransition(function () { cambiar(); });
+
+      t.finished.finally(function () { raiz.classList.remove('transicion-lenta'); });
+
+    };
+
+  });
+
+
+
+  // Reloj de arena + tiempo (1', 7'...) siempre juntos: sin esto el navegador puede
+
+  // partir la linea entre la imagen y el texto y el tiempo queda colgando solo
+
+  // (pasaba en el indice "En esta pagina")
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.tiempo').forEach(function (t) {
+
+      var reloj = t.previousElementSibling;
+
+      if (!reloj || !reloj.querySelector('img[src*="emojis"]') || t.parentNode.classList.contains('reloj-tiempo')) { return; }
+
+      var junto = document.createElement('span');
+
+      junto.className = 'reloj-tiempo';
+
+      t.parentNode.insertBefore(junto, reloj);
+
+      junto.appendChild(reloj);
+
+      junto.appendChild(t);
+
+    });
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (II). La curva de Beveridge, el modelo de búsqueda y emparejamiento y costes de ajuste. Mención a los modelos de negociación, salarios de eficiencia y contratos implícitos.</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introducción" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="introducción"><span class="header-section-number">12.1</span> Introducción&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="1 minuto">1'</span></h2>
+<p>En el primer trimestre de 2026, la tasa de paro en España era del 10,2 %, y sin embargo había unas 158.000 vacantes, 0,63 por cada cien activos, que las empresas no conseguían cubrir.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> Esa coexistencia, que se repite en todas las economías, es imposible en el modelo neoclásico, en el que el salario se ajusta hasta vaciar el mercado y el único desempleo es voluntario.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<p>Las teorías microeconómicas que se estudiarán nacen de abandonar tres supuestos de ese modelo: la información perfecta, el ajuste de la plantilla sin coste y el salario como mecanismo de vaciado del mercado.</p>
+<p>Por consiguiente, el objetivo de la presente exposición es analizar por qué el mercado laboral no se ajusta a las predicciones del modelo competitivo a través del siguiente esquema:</p>
+<ol type="1">
+<li><p>La curva de Beveridge y el modelo de búsqueda y emparejamiento, que explican el desempleo friccional.</p></li>
+<li><p>Los costes de ajuste, que convierten la demanda de trabajo en un problema dinámico.</p></li>
+<li><p>Una mención a las teorías de la rigidez salarial: modelos de negociación, salarios de eficiencia y contratos implícitos.</p></li>
+</ol>
+</section>
+<section id="desempleo-friccional-la-curva-de-beveridge-y-el-modelo-de-búsqueda-y-emparejamiento" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="desempleo-friccional-la-curva-de-beveridge-y-el-modelo-de-búsqueda-y-emparejamiento"><span class="header-section-number">12.2</span> Desempleo friccional: la curva de Beveridge y el modelo de búsqueda y emparejamiento&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="9 minutos 30 segundos">9'30"</span></h2>
+<p>Si la información fuera perfecta y los intercambios instantáneos, ningún puesto quedaría vacante mientras hubiera un parado dispuesto a ocuparlo. Al abandonar ese supuesto aparece el desempleo friccional.</p>
+<section id="desempleo-friccional" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="desempleo-friccional">Desempleo friccional</h5>
+<p>El desempleo friccional es el que se debe al tiempo que tardan trabajadores y empresas en encontrarse y en formalizar una relación laboral, aunque haya puestos disponibles para todos ellos.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></p>
+</section>
+<section id="la-curva-de-beveridge" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="la-curva-de-beveridge">La curva de Beveridge</h3>
+<p>La relación entre paro y vacantes lleva el nombre de William Beveridge, que ya en 1944 advertía que el pleno empleo no podía significar un paro nulo, porque siempre habría personas cambiando de un trabajo a otro, y lo definía como la situación en la que hay “más empleos vacantes que hombres parados, y no un poco menos” <span class="citation" data-cites="12_Beveridge1944">(<a href="01-tema-a1.html#ref-12_Beveridge1944" role="doc-biblioref">Beveridge 1944, 18</a>)</span>. Sin embargo, quien primero la representó no fue él, sino Dow y Dicks-Mireaux <span class="citation" data-cites="12_DowDicksMireaux1958">(<a href="01-tema-a1.html#ref-12_DowDicksMireaux1958" role="doc-biblioref">1958</a>)</span>, con datos británicos de 1946 a 1956 <span class="citation" data-cites="12_ElsbyEtAl2015">(<a href="01-tema-a1.html#ref-12_ElsbyEtAl2015" role="doc-biblioref">Elsby et&nbsp;al. 2015, 571</a>)</span>.</p>
+<section id="curva-de-beveridge" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-beveridge">Curva de Beveridge</h5>
+<p>La curva de Beveridge es la relación decreciente y convexa que se observa a lo largo del ciclo entre la tasa de paro, <span class="math inline">\(u\)</span>, y la tasa de vacantes, <span class="math inline">\(v\)</span>, ambas medidas en proporción a la población activa.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> El cociente entre ambas, la tensión del mercado de trabajo, <span class="math inline">\(\theta=v/u\)</span>, indica cuántas vacantes hay por cada parado.</p>
+<p>Gráficamente, en un plano de tasa de paro, <span class="math inline">\(u\)</span>, y tasa de vacantes, <span class="math inline">\(v\)</span>, como el de la <a href="#fig-12-curva-de-beveridge" class="quarto-xref">Figura&nbsp;<span>12.1</span></a>, se representan dos curvas de Beveridge, <span class="math inline">\(BC_{0}\)</span> y <span class="math inline">\(BC_{1}\)</span>, y la bisectriz, <span class="math inline">\(u=v\)</span>. Así:</p>
+<ul>
+<li><p>Los cambios en la actividad desplazan la economía a lo largo de una misma curva: en las recesiones las empresas abren pocas vacantes y el paro es alto, como en el punto <span class="math inline">\(A\)</span>, y en las expansiones ocurre lo contrario, como en el punto <span class="math inline">\(B\)</span>.</p></li>
+<li><p>Los desplazamientos de la curva reflejan cambios en la eficiencia con la que se emparejan parados y vacantes o en el ritmo al que se destruyen empleos. Cuanto más alejada del origen está, como <span class="math inline">\(BC_{1}\)</span> frente a <span class="math inline">\(BC_{0}\)</span>, más paro coexiste con cada nivel de vacantes, lo que suele interpretarse como un deterioro estructural del emparejamiento por desajustes de cualificación, sectoriales o geográficos <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 574-76</a>)</span>.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a></p></li>
+<li><p>Dow y Dicks-Mireaux leían la curva en términos de exceso de demanda de trabajo, y en esa lectura su corte con la bisectriz se toma a menudo como aproximación al paro friccional, porque en él hay una vacante por cada parado. El pleno empleo de Beveridge exigía situarse por encima de ella.</p></li>
+</ul>
+<div id="fig-12-curva-de-beveridge" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Curva de Beveridge">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-curva-de-beveridge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.1: Curva de Beveridge
+</figcaption>
+<div aria-describedby="fig-12-curva-de-beveridge-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-curva-de-beveridge.svg" class="img-fluid figure-img" alt="Curva de Beveridge">
+</div>
+</figure>
+</div>
+</section>
+<section id="implicaciones-de-política-económica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica">Implicaciones de política económica</h5>
+<p>La distinción tiene una implicación de política directa. Si la economía se mueve a lo largo de la curva, el paro es cíclico y responde a las políticas de demanda. Si la curva se desplaza hacia fuera, el problema está en el emparejamiento y lo que procede son políticas activas de empleo, como la intermediación de los servicios públicos de empleo, la formación de los parados o el fomento de la movilidad geográfica.</p>
+</section>
+<section id="evidencia-empírica-española" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="evidencia-empírica-española">Evidencia empírica española</h5>
+<p>La experiencia española ilustra ambos movimientos. Con una serie homogénea de vacantes desde 1980, <span class="citation" data-cites="12_BoscaEtAl2017">Boscá et&nbsp;al. (<a href="01-tema-a1.html#ref-12_BoscaEtAl2017" role="doc-biblioref">2017</a>)</span> muestran que la curva se desplazó hacia fuera en 2008 y 2009 por una pérdida de eficiencia del emparejamiento, y que desde 2014 ha ido recuperando gradualmente su posición anterior a la crisis. Aun así, el mercado español sigue lejos del pleno empleo de Beveridge. Desde mediados de 2022 la tasa de vacantes oscila en torno a 0,6 por cada cien activos con una tasa de paro superior al 10 %, es decir, unos dieciséis parados por cada vacante, y los parados de larga duración, que son los que peor se emparejan, siguen siendo 900.000, el 38 % del total, aunque su número casi se ha reducido a la mitad desde 2021 <span class="citation" data-cites="12_FelguerosoDomenech2026">(<a href="01-tema-a1.html#ref-12_FelguerosoDomenech2026" role="doc-biblioref">Felgueroso et&nbsp;al. 2026, 3-4</a>)</span>.</p>
+<p>Ahora bien, la curva solo describe la relación entre paro y vacantes, no la explica. ¿Por qué un parado no acepta la primera vacante que encuentra? La respuesta está en los modelos de búsqueda.</p>
+</section>
+</section>
+<section id="los-modelos-de-búsqueda" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="los-modelos-de-búsqueda">Los modelos de búsqueda</h3>
+<p>La respuesta empezó a construirse con George Stigler, que denunció que la teoría económica apenas prestaba atención a la información <span class="citation" data-cites="12_Stigler1961">(<a href="01-tema-a1.html#ref-12_Stigler1961" role="doc-biblioref">Stigler 1961, 213</a>)</span>. Su punto de partida es una observación sencilla: un mismo trabajo se paga de forma distinta en empresas distintas, porque nadie conoce todas las ofertas, y encontrar la mejor exige buscar, lo que cuesta tiempo y dinero. En el mercado de trabajo, el parado decide de antemano cuántas ofertas examinar, tantas como sea necesario para que lo que espera ganar con una oferta más iguale lo que le cuesta conseguirla <span class="citation" data-cites="12_Stigler1962">(<a href="01-tema-a1.html#ref-12_Stigler1962" role="doc-biblioref">Stigler 1962</a>)</span>.<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a></p>
+<p>Una década después, McCall <span class="citation" data-cites="12_McCall1970">(<a href="01-tema-a1.html#ref-12_McCall1970" role="doc-biblioref">1970</a>)</span> y Mortensen <span class="citation" data-cites="12_Mortensen1970">(<a href="01-tema-a1.html#ref-12_Mortensen1970" role="doc-biblioref">1970</a>)</span> sustituyeron esa regla por otra más realista, la búsqueda secuencial. El parado recibe ofertas de una en una, a una tasa <span class="math inline">\(a\)</span>, con salarios, <span class="math inline">\(w\)</span>, extraídos de una distribución conocida, <span class="math inline">\(H(w)\)</span>, y ante cada oferta decide si la acepta o sigue buscando. La estrategia óptima consiste en aceptar cualquier oferta que supere un umbral, el salario de reserva, y rechazar el resto <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 262</a>)</span>.</p>
+<section id="salario-de-reserva" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="salario-de-reserva">Salario de reserva</h5>
+<p>El salario de reserva, <span class="math inline">\(w_{R}\)</span>, es el salario mínimo con el que a un parado le compensa aceptar un empleo en lugar de seguir buscando.<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> Si se llama <span class="math inline">\(z\)</span> a la renta neta del parado, que incluye la prestación y descuenta los costes de buscar, <span class="math inline">\(r\)</span> al tipo de interés y <span class="math inline">\(\lambda\)</span> a la tasa a la que se destruyen los empleos, el salario de reserva cumple <span id="eq-12-salario-de-reserva"><span class="math display">\[w_{R}=z+\dfrac{a}{r+\lambda}\cdot\int^{\infty}_{w_{R}}\left(w-w_{R}\right)dH(w) \tag{12.1}\]</span></span> donde el último término es el valor esperado y descontado de lo que una nueva búsqueda puede aportar por encima del salario de reserva <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 264</a>)</span>. Como el parado sale del paro cuando recibe una oferta y esta supera su umbral, la duración media del paro, <span class="math inline">\(T_{u}=1/\left\{ a\cdot\left[1-H\left(w_{R}\right)\right]\right\}\)</span>, es mayor cuanto más alto es el salario de reserva.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
+</section>
+<section id="implicaciones-de-política-económica-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-1">Implicaciones de política económica</h5>
+<p>Una prestación más generosa eleva <span class="math inline">\(z\)</span> y, con él, el salario de reserva y la duración del paro, de modo que el seguro de desempleo genera un problema de riesgo moral.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> Por eso su diseño combina la protección de la renta con incentivos a aceptar empleo, como una cuantía decreciente con la duración o la exigencia de búsqueda activa. En España, la prestación contributiva se paga al 70 % de la base reguladora durante los primeros 180 días y al 60 % a partir del día 181.<a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></p>
+</section>
+<section id="paradoja-de-diamond" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="paradoja-de-diamond">Paradoja de Diamond</h5>
+<p>La paradoja de Diamond es el resultado según el cual, si las empresas fijan los salarios y los trabajadores tienen costes de búsqueda, todas las empresas pagan el salario de reserva y desaparece la dispersión salarial que justificaba buscar <span class="citation" data-cites="12_Diamond1971">(<a href="01-tema-a1.html#ref-12_Diamond1971" role="doc-biblioref">Diamond 1971</a>)</span>.<a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a> El problema de fondo es que la distribución de salarios, <span class="math inline">\(H(w)\)</span>, se toma como dada, y deja de ser coherente en cuanto se modeliza el comportamiento de las empresas <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 304-6</a>)</span>.</p>
+<p>Las respuestas siguieron dos caminos: introducir heterogeneidad o búsqueda desde el empleo <span class="citation" data-cites="12_BurdettMortensen1998">(<a href="01-tema-a1.html#ref-12_BurdettMortensen1998" role="doc-biblioref">Burdett y Mortensen 1998</a>)</span> en los modelos en los que la empresa anuncia el salario, o suponer que el salario se negocia una vez que trabajador y empresa se han encontrado.<a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a> Este segundo camino, en el que las empresas también buscan y el salario se negocia, es el de los modelos de emparejamiento, que culminan en el modelo DMP.</p>
+</section>
+</section>
+<section id="el-modelo-de-búsqueda-y-emparejamiento-de-diamond-mortensen-y-pissarides" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="el-modelo-de-búsqueda-y-emparejamiento-de-diamond-mortensen-y-pissarides">El modelo de búsqueda y emparejamiento de Diamond, Mortensen y Pissarides</h3>
+<p>Diamond, Mortensen y Pissarides, que recibieron el Premio Nobel de Economía de 2010 por su análisis de los mercados con fricciones de búsqueda, llevaron la búsqueda al equilibrio del mercado de trabajo: buscan a la vez los parados y las empresas con vacantes, y el salario se negocia una vez que se encuentran <span class="citation" data-cites="12_Diamond1982b 12_Pissarides1985">(<a href="01-tema-a1.html#ref-12_Diamond1982b" role="doc-biblioref">Diamond 1982</a>; <a href="01-tema-a1.html#ref-12_Pissarides1985" role="doc-biblioref">Pissarides 1985</a>)</span>. En la versión básica de Pissarides <span class="citation" data-cites="12_Pissarides2000">(<a href="01-tema-a1.html#ref-12_Pissarides2000" role="doc-biblioref">2000, cap. 1</a>)</span>, trabajadores y empresas son idénticos, cada empresa tiene un solo puesto, que produce <span class="math inline">\(p\)</span> cuando está ocupado y cuesta <span class="math inline">\(p\cdot c\)</span> por unidad de tiempo mientras está vacante, y los empleos se destruyen a una tasa exógena, <span class="math inline">\(\lambda\)</span>.<a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></p>
+<section id="función-de-emparejamiento" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="función-de-emparejamiento">Función de emparejamiento</h5>
+<p>La función de emparejamiento es la relación que da el número de contratos que se firman por unidad de tiempo en función del número de parados y de vacantes, <span class="math inline">\(m=m(u,v)\)</span>.<a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a> Se supone creciente en ambos argumentos, cóncava y con rendimientos constantes a escala, y la evidencia la respalda: Petrongolo y Pissarides <span class="citation" data-cites="12_PetrongoloPissarides2001">(<a href="01-tema-a1.html#ref-12_PetrongoloPissarides2001" role="doc-biblioref">2001, 393</a>)</span> sitúan su elasticidad respecto al paro, <span class="math inline">\(\eta\)</span>, entre 0,5 y 0,7. Con rendimientos constantes, todo depende de la tensión, <span class="math inline">\(\theta\)</span>. Una vacante se cubre a la tasa <span class="math inline">\(q(\theta)=m/v\)</span>, decreciente en <span class="math inline">\(\theta\)</span>, y un parado encuentra empleo a la tasa <span class="math inline">\(\theta\cdot q(\theta)=m/u\)</span>, creciente en <span class="math inline">\(\theta\)</span>. Cada nueva vacante facilita así que los parados encuentren empleo, pero dificulta que se cubran las demás vacantes. Son las externalidades de congestión del modelo.</p>
+<p>El equilibrio queda determinado por tres relaciones.</p>
+</section>
+<section id="curva-de-beveridge-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-beveridge-1">Curva de Beveridge</h5>
+<p>En estado estacionario, los empleos que se destruyen, <span class="math inline">\(\lambda\cdot(1-u)\)</span>, igualan a los parados que encuentran empleo, <span class="math inline">\(\theta\cdot q(\theta)\cdot u\)</span>, de donde <span id="eq-12-curva-de-beveridge"><span class="math display">\[u=\dfrac{\lambda}{\lambda+\theta\cdot q(\theta)} \tag{12.2}\]</span></span> que es la curva del apartado anterior, ahora derivada de los flujos: el paro es mayor cuanto más alta es la tasa de destrucción y cuanto menos eficiente es el emparejamiento.</p>
+</section>
+<section id="curva-de-creación-de-empleo" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-de-creación-de-empleo">Curva de creación de empleo</h5>
+<p>Las empresas abren vacantes mientras les resulte rentable, y con libre entrada el valor de una vacante se anula. Entonces, el coste esperado de cubrir un puesto, <span class="math inline">\(p\cdot c/q(\theta)\)</span>, que es el coste de la vacante por su duración media, debe igualar el valor de un puesto ocupado, que es el beneficio, <span class="math inline">\(p-w\)</span>, descontado al tipo de interés más la tasa de destrucción: <span id="eq-12-creacion-de-empleo"><span class="math display">\[\dfrac{p\cdot c}{q(\theta)}=\dfrac{p-w}{r+\lambda} \tag{12.3}\]</span></span> La relación entre salario y tensión es decreciente, porque un salario más alto hace menos rentable cada empleo y se abren menos vacantes. Desempeña el papel de la demanda de trabajo.</p>
+</section>
+<section id="curva-salarial" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="curva-salarial">Curva salarial</h5>
+<p>Empresa y trabajador se reparten el excedente que genera el emparejamiento mediante la solución de Nash, en la que el poder de negociación del trabajador es <span class="math inline">\(\beta\)</span>, y el resultado es <span id="eq-12-curva-salarial"><span class="math display">\[w=(1-\beta)\cdot z+\beta\cdot p\cdot(1+c\cdot\theta) \tag{12.4}\]</span></span> El salario crece con la tensión porque, cuanto más fácil es encontrar otro empleo, mejor es la posición negociadora del trabajador.<a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a> Con un poder de negociación nulo, el salario se iguala a la renta del parado, <span class="math inline">\(z\)</span>, como en la paradoja de Diamond.<a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></p>
+<p>Gráficamente, en dos planos, uno de tensión, <span class="math inline">\(\theta\)</span>, y salario, <span class="math inline">\(w\)</span>, y otro de tasa de paro, <span class="math inline">\(u\)</span>, y tasa de vacantes, <span class="math inline">\(v\)</span>, como los de la <a href="#fig-12-equilibrio-del-modelo-dmp" class="quarto-xref">Figura&nbsp;<span>12.2</span></a>, se representan la curva de creación de empleo, <span class="math inline">\(CCE\)</span>, y la curva salarial, <span class="math inline">\(CS\)</span>, en el primero, y la curva de Beveridge, <span class="math inline">\(BC\)</span>, y el rayo <span class="math inline">\(v=\theta^{*}\cdot u\)</span> en el segundo. Así:</p>
+<ul>
+<li><p>El corte de la curva de creación de empleo con la curva salarial determina la tensión, <span class="math inline">\(\theta^{*}\)</span>, y el salario, <span class="math inline">\(w^{*}\)</span>, de equilibrio.</p></li>
+<li><p>El rayo <span class="math inline">\(v=\theta^{*}\cdot u\)</span> corta la curva de Beveridge en las tasas de paro y de vacantes de equilibrio, <span class="math inline">\(u^{*}\)</span> y <span class="math inline">\(v^{*}\)</span>.</p></li>
+<li><p>El paro de equilibrio es positivo aunque el salario sea plenamente flexible, porque es desempleo friccional en sentido estricto.<a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></p></li>
+</ul>
+<div id="fig-12-equilibrio-del-modelo-dmp" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Equilibrio del modelo DMP">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-equilibrio-del-modelo-dmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.2: Equilibrio del modelo DMP
+</figcaption>
+<div aria-describedby="fig-12-equilibrio-del-modelo-dmp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-equilibrio-dmp.svg" class="img-fluid figure-img" alt="Equilibrio del modelo DMP">
+</div>
+</figure>
+</div>
+</section>
+<section id="implicaciones-de-política-económica-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-2">Implicaciones de política económica</h5>
+<p>Una prestación más generosa, que eleva <span class="math inline">\(z\)</span>, desplaza hacia arriba la curva salarial, reduce la tensión y aumenta el paro, y lo mismo ocurre si aumenta el poder de negociación de los trabajadores <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 597-99</a>)</span>. Un aumento de la productividad eleva el salario, pero eleva más la rentabilidad de crear empleo, y el paro baja.<a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a> Un emparejamiento menos eficiente o una destrucción de empleo más rápida alejan la curva de Beveridge del origen y elevan el paro, que es lo que tratan de evitar las políticas activas de empleo.</p>
+</section>
+<section id="condición-de-hosios" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="condición-de-hosios">Condición de Hosios</h5>
+<p>La condición de Hosios es la que hace eficiente el equilibrio del modelo: el poder de negociación de los trabajadores debe coincidir con la elasticidad de la función de emparejamiento respecto al paro, <span class="math inline">\(\beta=\eta\)</span> <span class="citation" data-cites="12_Hosios1990">(<a href="01-tema-a1.html#ref-12_Hosios1990" role="doc-biblioref">Hosios 1990</a>)</span>.<a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a> Si los trabajadores tienen más poder del que indica esa elasticidad, las empresas abren pocas vacantes y el paro es mayor que el socialmente óptimo, y si tienen menos, ocurre lo contrario <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 602</a>)</span>. Nada garantiza, por tanto, que el paro de equilibrio sea el eficiente, lo que abre la puerta a la intervención pública.<a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></p>
+</section>
+<section id="evidencia-empírica" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="evidencia-empírica">Evidencia empírica</h5>
+<p>El modelo DMP es hoy el marco de referencia del análisis del mercado de trabajo, y su contraste empírico más conocido es también su crítica más seria. Shimer <span class="citation" data-cites="12_Shimer2005">(<a href="01-tema-a1.html#ref-12_Shimer2005" role="doc-biblioref">2005</a>)</span> mostró que en Estados Unidos la desviación típica de la tensión, <span class="math inline">\(v/u\)</span>, es casi veinte veces la de la productividad, mientras que el modelo con salarios negociados predice volatilidades parecidas.<a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a> Es el puzle de la volatilidad del paro, y una de las respuestas más extendidas, desde Hall <span class="citation" data-cites="12_Hall2005">(<a href="01-tema-a1.html#ref-12_Hall2005" role="doc-biblioref">2005</a>)</span>, ha sido introducir rigidez salarial en el modelo <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 613-16</a>)</span>. En España, el modelo ayuda a entender el peso de la tasa de destrucción, <span class="math inline">\(\lambda\)</span>: las finalizaciones de contrato explican dos tercios de las salidas del empleo hacia el paro o la inactividad, y junto con los despidos, en torno al 90 % <span class="citation" data-cites="12_FelguerosoDomenech2026">(<a href="01-tema-a1.html#ref-12_FelguerosoDomenech2026" role="doc-biblioref">Felgueroso et&nbsp;al. 2026, 4</a>)</span>.</p>
+<p>Ahora bien, el modelo supone que, una vez encontrado el trabajador, el empleo se crea o se destruye al instante y sin coste. En la realidad, contratar y despedir cuesta, y esos costes cambian por completo la forma en que se ajusta el empleo.</p>
+</section>
+</section>
+</section>
+<section id="costes-de-ajuste-y-dinámica-de-la-demanda-de-trabajo" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="costes-de-ajuste-y-dinámica-de-la-demanda-de-trabajo"><span class="header-section-number">12.3</span> Costes de ajuste y dinámica de la demanda de trabajo&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos">4'</span></h2>
+<p>El modelo neoclásico supone que la empresa ajusta su plantilla de forma instantánea, de modo que el empleo responde de inmediato a cualquier cambio del salario o de la productividad. Con costes de ajuste, la demanda de trabajo se convierte en un problema dinámico: la empresa no solo decide cuánto empleo quiere, sino a qué ritmo llegar a él.</p>
+<section id="costes-de-ajuste" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="costes-de-ajuste">Costes de ajuste</h5>
+<p>Los costes de ajuste son los costes en que incurre la empresa al variar su plantilla, como los de selección, contratación y formación de los nuevos trabajadores o las indemnizaciones por despido.<a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a> Se distinguen los costes internos, que son pérdidas de eficiencia mientras la empresa se reorganiza, de los externos, como los honorarios de una agencia o las indemnizaciones, y los costes brutos, ligados a cada entrada y salida de trabajadores, de los netos, ligados a la variación neta del empleo <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 119-20</a>)</span>.<a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a></p>
+<p>La idea se remonta a Oi <span class="citation" data-cites="12_Oi1962">(<a href="01-tema-a1.html#ref-12_Oi1962" role="doc-biblioref">1962</a>)</span>, que trató el trabajo como un factor cuasifijo. Si contratar y formar a un trabajador exige un coste fijo, la empresa lo amortiza a lo largo de la relación laboral y mantiene al trabajador mientras su productividad marginal cubra el salario, aunque no cubra el coste total. Los trabajadores más cualificados, en cuya formación la empresa ha invertido más, sufren por eso menos despidos en las recesiones.</p>
+<p>Formalmente, la empresa elige la senda del empleo, <span class="math inline">\(L_{t}\)</span>, que maximiza el valor descontado de sus beneficios, que son la producción, <span class="math inline">\(F(L_{t})\)</span>, menos los salarios, <span class="math inline">\(w\cdot L_{t}\)</span>, y menos el coste de ajuste, <span class="math inline">\(C(\dot{L}_{t})\)</span>, que depende de la variación del empleo, <span class="math inline">\(\dot{L}_{t}\)</span>: <span class="math display">\[\max_{\{L_{t}\}}\int^{\infty}_{0}e^{-rt}\cdot\left[F(L_{t})-w\cdot L_{t}-C(\dot{L}_{t})\right]dt\]</span> La dinámica del empleo depende de la forma de <span class="math inline">\(C\)</span>. Con costes cuadráticos, la forma que introdujeron <span class="citation" data-cites="12_HoltEtAl1960">Holt et&nbsp;al. (<a href="01-tema-a1.html#ref-12_HoltEtAl1960" role="doc-biblioref">1960</a>)</span> y que suele usarse en su versión simétrica, <span class="math inline">\(C=(b/2)\cdot\dot{L}^{2}_{t}\)</span>, donde <span class="math inline">\(b\)</span> mide la intensidad del coste <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 121</a>)</span>, ajustar deprisa es más caro que ajustar poco a poco, y la empresa reparte el ajuste en el tiempo: el empleo converge gradualmente a su nivel óptimo. Este caso explica que el empleo reaccione con retraso a la producción y que la productividad aparente del trabajo sea procíclica, porque en las recesiones las empresas retienen mano de obra que no necesitan.</p>
+<p>Los costes cuadráticos implican, sin embargo, ajustes pequeños y continuos, mientras que los datos muestran ajustes bruscos alternados con periodos sin cambios. Por eso la literatura posterior prefiere costes lineales y asimétricos, con un coste por cada contratación, <span class="math inline">\(c_{h}\)</span>, y otro por cada despido, <span class="math inline">\(c_{f}\)</span> <span class="citation" data-cites="12_Nickell1986">(<a href="01-tema-a1.html#ref-12_Nickell1986" role="doc-biblioref">Nickell 1986</a>)</span>. La empresa contrata hasta que la productividad marginal iguala el salario más el coste de contratación anualizado, y despide hasta que la iguala el salario menos el coste de despido anualizado: <span class="math display">\[F'(L_{h})=w+r\cdot c_{h}\qquad\qquad F'(L_{f})=w-r\cdot c_{f}\]</span></p>
+<p>Gráficamente, en un plano de empleo, <span class="math inline">\(L\)</span>, y productividad marginal y salario, <span class="math inline">\(F'(L)\)</span> y <span class="math inline">\(w\)</span>, como el de la <a href="#fig-12-banda-de-inaccion" class="quarto-xref">Figura&nbsp;<span>12.3</span></a>, se representan la productividad marginal del trabajo, <span class="math inline">\(F'(L)\)</span>, el salario, <span class="math inline">\(w\)</span>, con el que se contrataría sin costes hasta <span class="math inline">\(L^{*}\)</span>, y los umbrales <span class="math inline">\(w+r\cdot c_{h}\)</span> y <span class="math inline">\(w-r\cdot c_{f}\)</span>.<a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a> En él:</p>
+<ul>
+<li><p>Si el empleo de partida es menor que <span class="math inline">\(L_{h}\)</span>, la productividad marginal supera el umbral de contratación y la empresa contrata hasta <span class="math inline">\(L_{h}\)</span>.</p></li>
+<li><p>Si es mayor que <span class="math inline">\(L_{f}\)</span>, la productividad marginal queda por debajo del umbral de despido y la empresa despide hasta <span class="math inline">\(L_{f}\)</span>.</p></li>
+<li><p>Entre <span class="math inline">\(L_{h}\)</span> y <span class="math inline">\(L_{f}\)</span> se abre una banda de inacción: a la empresa no le compensa modificar el empleo, que se queda donde estaba <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 126-28</a>)</span>.</p></li>
+</ul>
+<div id="fig-12-banda-de-inaccion" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Banda de inacción con costes de ajuste lineales y asimétricos">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-banda-de-inaccion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.3: Banda de inacción con costes de ajuste lineales y asimétricos
+</figcaption>
+<div aria-describedby="fig-12-banda-de-inaccion-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-banda-de-inaccion.svg" class="img-fluid figure-img" alt="Banda de inacción con costes de ajuste lineales y asimétricos">
+</div>
+</figure>
+</div>
+</section>
+<section id="implicaciones-de-política-económica-3" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-3">Implicaciones de política económica</h5>
+<p>Los costes de despido estabilizan el empleo, pero no tienen un efecto claro sobre su nivel medio. En un entorno incierto, al encarecer el despido la empresa despide menos en las recesiones, pero también contrata menos en las expansiones, porque anticipa que más adelante tendrá que despedir. Bentolila y Bertola <span class="citation" data-cites="12_BentolilaBertola1990">(<a href="01-tema-a1.html#ref-12_BentolilaBertola1990" role="doc-biblioref">1990</a>)</span> mostraron que el primer efecto domina ligeramente, de modo que los costes de despido pueden incluso elevar algo el empleo medio a largo plazo, aunque reducen la rotación de trabajadores <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 133-35</a>)</span>.</p>
+</section>
+<section id="evidencia-empírica-española-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="evidencia-empírica-española-1">Evidencia empírica española</h5>
+<p>El caso español muestra que lo decisivo puede ser la diferencia de costes entre contratos. En España, el despido improcedente de un trabajador indefinido se indemniza con 33 días de salario por año trabajado, con un máximo de 24 mensualidades, mientras que la extinción de un contrato temporal da derecho a 12 días por año.<a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a> Con esa dualidad, el ajuste recae sobre los temporales. <span class="citation" data-cites="12_BentolilaEtAl2012">Bentolila et&nbsp;al. (<a href="01-tema-a1.html#ref-12_BentolilaEtAl2012" role="doc-biblioref">2012</a>)</span> estiman, con un modelo de búsqueda calibrado, que España habría evitado alrededor del 45 % del aumento del paro durante la Gran Recesión si hubiera tenido la legislación francesa de protección del empleo: el paro, del 8 % en ambos países antes de la crisis, subió al 10 % en Francia y al 23 % en España. La reforma laboral de 2021 atacó esa dualidad limitando el contrato temporal a las circunstancias de la producción y a la sustitución de trabajadores, y fomentando el contrato fijo discontinuo.<a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a> La tasa de temporalidad de los asalariados ha bajado del 25,4 % a finales de 2021 al 15,1 % en el segundo trimestre de 2026.<a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a> Desde finales de 2019, el empleo indefinido ha crecido un 31,4 % y el temporal ha caído un 33,2 % <span class="citation" data-cites="12_FelguerosoDomenech2026">(<a href="01-tema-a1.html#ref-12_FelguerosoDomenech2026" role="doc-biblioref">Felgueroso et&nbsp;al. 2026, 2</a>)</span>.</p>
+<p>Hasta aquí, el salario se ha tomado como dado o como resultado de una negociación sin fricciones. Queda por explicar por qué, cuando hay paro, no baja lo suficiente para vaciar el mercado.</p>
+</section>
+</section>
+<section id="mención-a-las-teorías-de-la-rigidez-salarial" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="mención-a-las-teorías-de-la-rigidez-salarial"><span class="header-section-number">12.4</span> Mención a las teorías de la rigidez salarial&nbsp;<span><img src="emojis/reloj.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="4 minutos 30 segundos">4'30"</span></h2>
+<p>Las respuestas a esa pregunta comparten una idea: el salario deja de ser un precio que se ajusta libremente. Lo negocian empresa y sindicato, lo fija la empresa por encima del de mercado para que sus trabajadores rindan más, o se pacta de forma implícita como un seguro. Varias de ellas generan, además, paro involuntario: trabajadores dispuestos a trabajar al salario vigente, o incluso a uno menor, que no encuentran empleo.</p>
+<section id="modelos-de-negociación" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="modelos-de-negociación">Modelos de negociación</h3>
+<p>La teoría de la negociación salarial parte de Hicks <span class="citation" data-cites="12_Hicks1932">(<a href="01-tema-a1.html#ref-12_Hicks1932" role="doc-biblioref">1932</a>)</span>, que explicaba el salario pactado por la capacidad de cada parte para aguantar una huelga. La curva de concesión de la empresa, el salario que está dispuesta a aceptar, crece con la duración de la huelga, y la de resistencia del sindicato, el salario que exige, decrece con ella. El salario se fija en su cruce y, si ambas partes lo prevén, la huelga no llega a producirse <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 414-15</a>)</span>.</p>
+<p>Nash <span class="citation" data-cites="12_Nash1950">(<a href="01-tema-a1.html#ref-12_Nash1950" role="doc-biblioref">1950</a>)</span> dio después a la negociación su solución axiomática, que el juego de ofertas alternativas de Rubinstein <span class="citation" data-cites="12_Rubinstein1982">(<a href="01-tema-a1.html#ref-12_Rubinstein1982" role="doc-biblioref">1982</a>)</span> permitió fundamentar como resultado de un comportamiento estratégico <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 416-22</a>)</span>.<a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a></p>
+<p>En su versión generalizada, aplicada a un sindicato y a una empresa, la solución maximiza el producto de lo que gana cada parte respecto a su situación sin acuerdo, ponderado por su poder de negociación.<a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a> Llamando <span class="math inline">\(V(w,L)\)</span> a la utilidad del sindicato, <span class="math inline">\(\pi(w,L)\)</span> al beneficio de la empresa, <span class="math inline">\(\bar{V}\)</span> y <span class="math inline">\(\bar{\pi}\)</span> a sus valores sin acuerdo y <span class="math inline">\(\beta\)</span> al poder de negociación del sindicato: <span class="math display">\[\max\left[V(w,L)-\bar{V}\right]^{\beta}\cdot\left[\pi(w,L)-\bar{\pi}\right]^{1-\beta}\]</span> Los modelos de negociación colectiva aplican esta solución y se distinguen por lo que se negocia.</p>
+<section id="modelo-de-derecho-a-gestionar" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelo-de-derecho-a-gestionar">Modelo de derecho a gestionar</h5>
+<p>En el modelo de derecho a gestionar de Nickell y Andrews <span class="citation" data-cites="12_NickellAndrews1983">(<a href="01-tema-a1.html#ref-12_NickellAndrews1983" role="doc-biblioref">1983</a>)</span>, el sindicato y la empresa negocian solo el salario, y la empresa elige después el empleo sobre su curva de demanda. Con todo el poder de negociación en manos del sindicato, el modelo se reduce al sindicato monopolista de Dunlop <span class="citation" data-cites="12_Dunlop1944">(<a href="01-tema-a1.html#ref-12_Dunlop1944" role="doc-biblioref">1944</a>)</span>, y sin poder alguno, al resultado competitivo.</p>
+<p>Gráficamente, en un plano de empleo, <span class="math inline">\(L\)</span>, y salario, <span class="math inline">\(w\)</span>, como el de la <a href="#fig-12-modelo-de-nickell-y-andrews" class="quarto-xref">Figura&nbsp;<span>12.4</span></a>, se representan la demanda de trabajo, <span class="math inline">\(L^{D}\)</span>, el salario de reserva, <span class="math inline">\(w_{R}\)</span>, el número de afiliados, <span class="math inline">\(N\)</span>, una isobeneficio de la empresa, <span class="math inline">\(\pi\)</span>, una curva de indiferencia del sindicato, <span class="math inline">\(CI\)</span>, y la curva de contrato, <span class="math inline">\(CC\)</span>. Así:</p>
+<ul>
+<li><p>Sin poder sindical, el acuerdo es el competitivo, <span class="math inline">\(E_{0}\)</span>, sobre la demanda y al salario de reserva.</p></li>
+<li><p>Con poder sindical, el acuerdo de derecho a gestionar, <span class="math inline">\(E\)</span>, tiene un salario mayor y menos empleo, y es ineficiente: la curva de indiferencia y la isobeneficio se cortan, y entre ellas queda una zona de mejoras paretianas sin explotar <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 433-35</a>)</span>.</p></li>
+</ul>
+<p>Si la función de ingresos de la empresa es isoelástica, la elasticidad de la demanda de trabajo es constante, el salario negociado no responde a las perturbaciones y todo el ajuste recae en el empleo.<a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a></p>
+<div id="fig-12-modelo-de-nickell-y-andrews" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelos de derecho a gestionar y de contrato eficiente">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-modelo-de-nickell-y-andrews-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.4: Modelos de derecho a gestionar y de contrato eficiente
+</figcaption>
+<div aria-describedby="fig-12-modelo-de-nickell-y-andrews-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-modelo-nickell-y-andrews.svg" class="img-fluid figure-img" alt="Modelos de derecho a gestionar y de contrato eficiente">
+</div>
+</figure>
+</div>
+</section>
+<section id="modelo-de-contrato-eficiente" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelo-de-contrato-eficiente">Modelo de contrato eficiente</h5>
+<p>McDonald y Solow <span class="citation" data-cites="12_McDonaldSolow1981">(<a href="01-tema-a1.html#ref-12_McDonaldSolow1981" role="doc-biblioref">1981</a>)</span> mostraron que esa ineficiencia desaparece si se negocian a la vez el salario y el empleo.<a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a> El acuerdo se sitúa entonces sobre la curva de contrato, <span class="math inline">\(CC\)</span>, de la <a href="#fig-12-modelo-de-nickell-y-andrews" class="quarto-xref">Figura&nbsp;<span>12.4</span></a>, donde se tocan las curvas de indiferencia y las isobeneficio, a la derecha de la demanda de trabajo, y con trabajadores aversos al riesgo hay más empleo que en la situación competitiva.<a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a></p>
+</section>
+<section id="implicaciones-de-política-económica-4" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-4">Implicaciones de política económica</h5>
+<p>En el modelo de contrato eficiente, la moderación salarial no crea empleo, y un mayor poder sindical puede incluso aumentarlo. En la práctica, sin embargo, el salario suele negociarse antes que el empleo y de forma más centralizada, por lo que ambos modelos se interpretan como casos límite de un mismo marco <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 440-41</a>)</span>.<a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a></p>
+</section>
+<section id="modelo-de-insiders-outsiders" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="modelo-de-insiders-outsiders">Modelo de insiders-outsiders</h5>
+<p>El modelo de insiders-outsiders de Lindbeck y Snower <span class="citation" data-cites="12_LindbeckSnower1988">(<a href="01-tema-a1.html#ref-12_LindbeckSnower1988" role="doc-biblioref">1988</a>)</span> parte de que la negociación no representa por igual a todos los trabajadores. Los insiders, que ya tienen empleo, negocian con la empresa, mientras que los outsiders, parados o con contratos más precarios, quedan fuera. El poder de los insiders procede de los costes de rotación, como los de contratar, formar o despedir: sustituirlos por outsiders dispuestos a trabajar por menos le cuesta a la empresa, y mientras ese coste supere la diferencia salarial no le compensa hacerlo <span class="citation" data-cites="12_LindbeckSnower2001">(<a href="01-tema-a1.html#ref-12_LindbeckSnower2001" role="doc-biblioref">Lindbeck y Snower 2001</a>)</span>. En su versión más sencilla, si contratar a un outsider cuesta <span class="math inline">\(c_{h}\)</span> y despedir a un insider <span class="math inline">\(c_{f}\)</span>, el salario de los insiders, <span class="math inline">\(w_{I}\)</span>, puede superar al de los outsiders, <span class="math inline">\(w_{O}\)</span>, hasta en la suma de ambos costes: <span class="math display">\[w_{I}=w_{O}+c_{h}+c_{f}\]</span></p>
+<p>El modelo explica así que haya paro involuntario, porque los outsiders trabajarían por menos pero la empresa no los contrata, y también que el paro persista. Tras una caída de la demanda, los despedidos pasan a ser outsiders y dejan de contar en la negociación, y los insiders que quedan fijan salarios que solo protegen sus propios puestos <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 549</a>)</span>.<a href="#fn34" class="footnote-ref" id="fnref34" role="doc-noteref"><sup>34</sup></a></p>
+<p>Su implicación de política es reducir el poder de los insiders y facilitar la entrada de los outsiders: abaratar los costes de rotación, permitir que las empresas se descuelguen de los convenios cuando lo necesiten y mejorar la formación de los parados. En España, la dualidad entre indefinidos y temporales es la versión más clara de esta división, porque los temporales soportan la mayor parte del ajuste.<a href="#fn35" class="footnote-ref" id="fnref35" role="doc-noteref"><sup>35</sup></a></p>
+</section>
+</section>
+<section id="salarios-de-eficiencia" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="salarios-de-eficiencia">Salarios de eficiencia</h3>
+<section id="salario-de-eficiencia" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="salario-de-eficiencia">Salario de eficiencia</h5>
+<p>El salario de eficiencia es el salario que la empresa fija por encima del que vaciaría el mercado porque la productividad de sus trabajadores depende de lo que les paga.<a href="#fn36" class="footnote-ref" id="fnref36" role="doc-noteref"><sup>36</sup></a> Las razones pueden ser la reducción de la rotación <span class="citation" data-cites="12_Salop1979">(<a href="01-tema-a1.html#ref-12_Salop1979" role="doc-biblioref">Salop 1979</a>)</span>, la selección de mejores candidatos <span class="citation" data-cites="12_Weiss1980">(<a href="01-tema-a1.html#ref-12_Weiss1980" role="doc-biblioref">Weiss 1980</a>)</span>, la reciprocidad de quien se siente bien tratado, que Akerlof <span class="citation" data-cites="12_Akerlof1982">(<a href="01-tema-a1.html#ref-12_Akerlof1982" role="doc-biblioref">1982</a>)</span> llamó intercambio de regalos, o la disuasión del escaqueo <span class="citation" data-cites="12_ShapiroStiglitz1984">(<a href="01-tema-a1.html#ref-12_ShapiroStiglitz1984" role="doc-biblioref">Shapiro y Stiglitz 1984</a>)</span>.</p>
+<p>Solow <span class="citation" data-cites="12_Solow1979">(<a href="01-tema-a1.html#ref-12_Solow1979" role="doc-biblioref">1979</a>)</span> mostró el resultado común a todas ellas. Si el esfuerzo de los trabajadores, <span class="math inline">\(e(w)\)</span>, crece con el salario, la empresa elige el salario que minimiza el coste de cada unidad de esfuerzo, <span class="math inline">\(w/e(w)\)</span>, y lo encuentra donde la elasticidad del esfuerzo respecto al salario es unitaria <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 525</a>)</span>: <span class="math display">\[\dfrac{e'(w)\cdot w}{e(w)}=1\]</span></p>
+<p>Gráficamente, en dos planos, uno de salario, <span class="math inline">\(w\)</span>, y esfuerzo, <span class="math inline">\(e\)</span>, y otro de salario y coste por unidad de esfuerzo, <span class="math inline">\(w/e\)</span>, como los de la <a href="#fig-12-condicion-de-solow" class="quarto-xref">Figura&nbsp;<span>12.5</span></a>, se representan la función de esfuerzo, <span class="math inline">\(e(w)\)</span>, y el coste por unidad de esfuerzo, <span class="math inline">\(w/e(w)\)</span>. En ellos:</p>
+<ul>
+<li><p>El salario de eficiencia, <span class="math inline">\(w^{*}\)</span>, es aquel en el que un rayo desde el origen es tangente a la función de esfuerzo, donde la elasticidad es unitaria.</p></li>
+<li><p>En ese mismo salario, el coste por unidad de esfuerzo alcanza su mínimo, <span class="math inline">\((w/e)^{*}\)</span>.</p></li>
+<li><p>Ese salario no depende de la demanda de trabajo, de modo que las perturbaciones se trasladan al empleo y no al salario real.<a href="#fn37" class="footnote-ref" id="fnref37" role="doc-noteref"><sup>37</sup></a></p></li>
+</ul>
+<div id="fig-12-condicion-de-solow" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Condición de Solow">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-condicion-de-solow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.5: Condición de Solow
+</figcaption>
+<div aria-describedby="fig-12-condicion-de-solow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-condicion-de-solow.svg" class="img-fluid figure-img" alt="Condición de Solow">
+</div>
+</figure>
+</div>
+<p>Shapiro y Stiglitz <span class="citation" data-cites="12_ShapiroStiglitz1984">(<a href="01-tema-a1.html#ref-12_ShapiroStiglitz1984" role="doc-biblioref">1984</a>)</span> dieron a la idea un fundamento de riesgo moral. La empresa no observa el esfuerzo y solo puede despedir a quien sorprende escaqueándose, pero con pleno empleo el despedido encontraría otro trabajo enseguida y el despido no disciplinaría a nadie. La curva de no escaqueo, <span class="math inline">\(CNE\)</span>, da para cada nivel de empleo el salario mínimo que hace que no compense escaquearse, y es creciente porque, cuanto menor es el paro, menos cuesta perder el empleo.</p>
+<p>Gráficamente, en un plano de empleo, <span class="math inline">\(L\)</span>, y salario, <span class="math inline">\(w\)</span>, como el de la <a href="#fig-12-modelo-de-shapiro-y-stiglitz" class="quarto-xref">Figura&nbsp;<span>12.6</span></a>, se representan la oferta de trabajo con información simétrica, <span class="math inline">\(L^{S}\)</span>, horizontal en <span class="math inline">\(\bar{e}\)</span> hasta el pleno empleo, <span class="math inline">\(\bar{L}\)</span>, la curva de no escaqueo, <span class="math inline">\(CNE\)</span>, y la demanda de trabajo, <span class="math inline">\(L^{D}\)</span>. Así:</p>
+<ul>
+<li><p>El equilibrio, <span class="math inline">\(E\)</span>, está en el corte de la curva de no escaqueo con la demanda, con un salario, <span class="math inline">\(w^{*}\)</span>, superior a <span class="math inline">\(\bar{e}\)</span> y un empleo, <span class="math inline">\(L^{*}\)</span>, inferior al pleno empleo.</p></li>
+<li><p>La diferencia entre <span class="math inline">\(\bar{L}\)</span> y <span class="math inline">\(L^{*}\)</span> es paro involuntario: los parados trabajarían al salario vigente, pero no pueden comprometerse de forma creíble a no escaquearse. El paro actúa así como mecanismo de disciplina.<a href="#fn38" class="footnote-ref" id="fnref38" role="doc-noteref"><sup>38</sup></a></p></li>
+<li><p>Una caída de la demanda de trabajo, de <span class="math inline">\(L^{D}\)</span> a <span class="math inline">\(L^{D\prime}\)</span>, desplaza el equilibrio de <span class="math inline">\(E\)</span> a <span class="math inline">\(E^{\prime}\)</span> a lo largo de la curva de no escaqueo: bajan el salario y el empleo y aumenta el paro <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 540</a>)</span>.</p></li>
+</ul>
+</section>
+<section id="implicaciones-de-política-económica-5" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="implicaciones-de-política-económica-5">Implicaciones de política económica</h5>
+<p>El equilibrio es además ineficiente. Con pleno empleo, la productividad marginal del trabajo supera lo que a los trabajadores les cuesta esforzarse, de modo que lo óptimo sería que todos trabajaran y se esforzaran. El Estado no puede lograrlo obligando a las empresas a contratar hasta el pleno empleo: sin paro que discipline, los trabajadores se escaquearían y la producción se hundiría. Lo que sí mejora el bienestar es un subsidio al empleo financiado con impuestos de suma fija o sobre los beneficios. El subsidio desplaza hacia arriba la demanda de trabajo, y la economía sube a lo largo de la curva de no escaqueo, con más salario y más empleo. Como el valor de la producción adicional supera su coste de oportunidad, el bienestar aumenta. El reparto de esa ganancia entre trabajadores y empresas depende de cómo se financie el subsidio <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 541</a>)</span>.</p>
+<div id="fig-12-modelo-de-shapiro-y-stiglitz" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Modelo de Shapiro y Stiglitz">
+<figure class="quarto-float quarto-float-fig figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-12-modelo-de-shapiro-y-stiglitz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;12.6: Modelo de Shapiro y Stiglitz
+</figcaption>
+<div aria-describedby="fig-12-modelo-de-shapiro-y-stiglitz-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="graficos/a-12-modelo-s-s.svg" class="img-fluid figure-img" alt="Modelo de Shapiro y Stiglitz">
+</div>
+</figure>
+</div>
+</section>
+<section id="evidencia-empírica-1" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="evidencia-empírica-1">Evidencia empírica</h5>
+<p>El ejemplo clásico es el de Henry Ford, que en 1914 duplicó el salario de sus trabajadores hasta cinco dólares diarios. Según Raff y Summers <span class="citation" data-cites="12_RaffSummers1987">(<a href="01-tema-a1.html#ref-12_RaffSummers1987" role="doc-biblioref">1987</a>)</span>, la rotación anual en la fábrica pasó del 370 % en 1913 al 16 % en 1915 y el absentismo diario cayó del 10 % al 2,5 %, con aumentos notables de la productividad.<a href="#fn39" class="footnote-ref" id="fnref39" role="doc-noteref"><sup>39</sup></a></p>
+</section>
+</section>
+<section id="contratos-implícitos" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="contratos-implícitos">Contratos implícitos</h3>
+<p>La teoría de los contratos implícitos, desarrollada por Baily <span class="citation" data-cites="12_Baily1974">(<a href="01-tema-a1.html#ref-12_Baily1974" role="doc-biblioref">1974</a>)</span>, Azariadis <span class="citation" data-cites="12_Azariadis1975">(<a href="01-tema-a1.html#ref-12_Azariadis1975" role="doc-biblioref">1975</a>)</span> y Gordon <span class="citation" data-cites="12_Gordon1974">(<a href="01-tema-a1.html#ref-12_Gordon1974" role="doc-biblioref">1974</a>)</span>, explica la rigidez salarial como un seguro. Los trabajadores son aversos al riesgo y no pueden asegurar su renta en los mercados financieros, mientras que la empresa, que sí tiene acceso a ellos, se comporta como neutral al riesgo.<a href="#fn40" class="footnote-ref" id="fnref40" role="doc-noteref"><sup>40</sup></a> El contrato óptimo, que no está escrito y se sostiene en la reputación de la empresa, garantiza al trabajador una renta estable a lo largo del ciclo a cambio de un salario medio algo menor, y deja que el ajuste recaiga en las horas o en el empleo. La teoría explica así la rigidez del salario real, pero no el paro involuntario. En el contrato óptimo, la empresa no elige el empleo tomando el salario como dado. Lo fija el propio contrato, en el nivel en que la productividad marginal del trabajo iguala a la desutilidad marginal, es decir, a lo que al trabajador le cuesta trabajar una hora más, y nadie queda sin trabajar contra su voluntad. Lo que sí puede haber es paro aparente: en las recesiones se trabaja menos por la misma renta, el salario por hora resulta alto y los trabajadores querrían trabajar más a ese salario, aunque el contrato sea óptimo <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 545-47</a>)</span>.</p>
+<section id="evidencia-empírica-española-2" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="evidencia-empírica-española-2">Evidencia empírica española</h5>
+<p>Los ERTE de la pandemia aplicaron el mismo principio desde lo público: en el peor momento llegaron a cubrir a unos 3,6 millones de trabajadores, cuya renta quedó asegurada mientras el ajuste recaía en las horas y no en el empleo.<a href="#fn41" class="footnote-ref" id="fnref41" role="doc-noteref"><sup>41</sup></a></p>
+</section>
+</section>
+</section>
+<section id="conclusiones" class="level2" data-number="12.5">
+<h2 data-number="12.5" class="anchored" data-anchor-id="conclusiones"><span class="header-section-number">12.5</span> Conclusiones&nbsp;<span><img src="emojis/reloj-done.svg" class="img-fluid" alt="Tiempo de exposición"></span> <span class="tiempo" role="img" aria-label="30 segundos">30"</span></h2>
+<p>Como conclusión, encontrar empleo lleva tiempo, cambiar de plantilla cuesta y el salario no siempre es un precio que vacía el mercado. Esta lección está hoy más viva que nunca:</p>
+<ul>
+<li><p>Tecnología: las plataformas digitales de empleo y la inteligencia artificial pueden mejorar la eficiencia del emparejamiento y acercar la curva de Beveridge al origen, pero también destruir empleos y exigir cualificaciones nuevas que la alejen. ¿Qué efecto dominará?</p></li>
+<li><p>Desajuste: los 900.000 parados de larga duración son el reflejo más claro de un emparejamiento que falla. Si ese desajuste es estructural, no se corrige bajando salarios, sino con formación, intermediación y movilidad.</p></li>
+<li><p>Vivienda: si los parados no pueden trasladarse a donde están las vacantes porque la vivienda es cara o escasa, el emparejamiento empeora. El mercado de trabajo y el de la vivienda están más conectados de lo que parece.</p></li>
+<li><p>Transición ecológica: el cierre de sectores intensivos en carbono y el auge de otros es una perturbación de reasignación de manual, que puede alejar la curva de Beveridge del origen durante años. ¿Está preparada la política de empleo para recolocar a los trabajadores afectados?</p></li>
+</ul>
+</section>
+<section id="apéndice" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="apéndice">Apéndice</h2>
+<section id="a.1.-el-salario-de-reserva-en-el-modelo-de-búsqueda-secuencial" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.1.-el-salario-de-reserva-en-el-modelo-de-búsqueda-secuencial">12.A.1.&nbsp;&nbsp;El salario de reserva en el modelo de búsqueda secuencial</h3>
+<p>Se trabaja en tiempo continuo con la notación del cuerpo del tema <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 262-64</a>)</span>. Un trabajador empleado con salario <span class="math inline">\(w\)</span> pierde su empleo a la tasa <span class="math inline">\(\lambda\)</span>, de modo que el valor de estar empleado, <span class="math inline">\(V_{e}(w)\)</span>, cumple <span class="math display">\[r\cdot V_{e}(w)=w+\lambda\cdot\left[V_{u}-V_{e}(w)\right]\qquad\Longrightarrow\qquad V_{e}(w)=\dfrac{w+\lambda\cdot V_{u}}{r+\lambda}\]</span> donde <span class="math inline">\(V_{u}\)</span> es el valor de estar parado. El parado obtiene la renta <span class="math inline">\(z\)</span> y recibe ofertas a la tasa <span class="math inline">\(a\)</span>, que acepta si le dan un valor mayor que seguir buscando: <span class="math display">\[r\cdot V_{u}=z+a\cdot\int^{\infty}_{0}\max\left\{ V_{e}(w)-V_{u},0\right\} dH(w)\]</span></p>
+<p>El salario de reserva es el que deja al parado indiferente, <span class="math inline">\(V_{e}(w_{R})=V_{u}\)</span>. Sustituyendo en la expresión de <span class="math inline">\(V_{e}\)</span> se obtiene <span class="math inline">\(w_{R}=r\cdot V_{u}\)</span>, y por tanto <span class="math inline">\(V_{e}(w)-V_{u}=(w-w_{R})/(r+\lambda)\)</span>, que es positivo solo para las ofertas que superan el salario de reserva. Llevando estos dos resultados a la ecuación de <span class="math inline">\(V_{u}\)</span> se llega a la ecuación (<a href="#eq-12-salario-de-reserva" class="quarto-xref">&nbsp;<span>12.1</span></a>) del cuerpo: <span class="math display">\[w_{R}=z+\dfrac{a}{r+\lambda}\cdot\int^{\infty}_{w_{R}}\left(w-w_{R}\right)dH(w)\]</span></p>
+<p>Como el parado sale del paro cuando recibe una oferta y esta supera su umbral, la tasa de salida del paro es <span class="math inline">\(a\cdot\left[1-H(w_{R})\right]\)</span> y la duración media del paro, su inversa. Diferenciando la ecuación anterior respecto a <span class="math inline">\(z\)</span> se obtiene el efecto de la prestación: <span class="math display">\[\dfrac{\partial w_{R}}{\partial z}=\dfrac{1}{1+\dfrac{a}{r+\lambda}\cdot\left[1-H(w_{R})\right]}\in(0,1)\]</span> de modo que una prestación más alta eleva el salario de reserva, aunque menos que proporcionalmente, y alarga la duración media del paro.</p>
+</section>
+<section id="a.2.-el-equilibrio-del-modelo-de-diamond-mortensen-y-pissarides" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.2.-el-equilibrio-del-modelo-de-diamond-mortensen-y-pissarides">12.A.2.&nbsp;&nbsp;El equilibrio del modelo de Diamond, Mortensen y Pissarides</h3>
+<p>Se sigue la versión básica de Pissarides <span class="citation" data-cites="12_Pissarides2000">(<a href="01-tema-a1.html#ref-12_Pissarides2000" role="doc-biblioref">2000, cap. 1</a>)</span>. Para la empresa, el valor de una vacante, <span class="math inline">\(V\)</span>, y el de un puesto ocupado, <span class="math inline">\(J\)</span>, cumplen <span class="math display">\[r\cdot V=-p\cdot c+q(\theta)\cdot\left(J-V\right)\qquad\qquad r\cdot J=p-w-\lambda\cdot J\]</span> La vacante cuesta <span class="math inline">\(p\cdot c\)</span> por unidad de tiempo y se cubre a la tasa <span class="math inline">\(q(\theta)\)</span>, y el puesto ocupado produce <span class="math inline">\(p\)</span>, paga <span class="math inline">\(w\)</span> y se destruye a la tasa <span class="math inline">\(\lambda\)</span>. Con libre entrada, <span class="math inline">\(V=0\)</span>, de modo que <span class="math inline">\(J=p\cdot c/q(\theta)\)</span>, y como <span class="math inline">\(J=(p-w)/(r+\lambda)\)</span>, se obtiene la curva de creación de empleo, (<a href="#eq-12-creacion-de-empleo" class="quarto-xref">&nbsp;<span>12.3</span></a>).</p>
+<p>Para el trabajador, el valor de estar parado, <span class="math inline">\(U\)</span>, y el de estar empleado, <span class="math inline">\(W\)</span>, cumplen <span class="math display">\[r\cdot U=z+\theta\cdot q(\theta)\cdot\left(W-U\right)\qquad\qquad r\cdot W=w+\lambda\cdot\left(U-W\right)\]</span> El salario resuelve el problema de Nash, <span class="math inline">\(\max_{w}\left(W-U\right)^{\beta}\cdot\left(J-V\right)^{1-\beta}\)</span>, cuya condición de primer orden es <span class="math inline">\((1-\beta)\cdot(W-U)=\beta\cdot(J-V)\)</span>: el trabajador se queda con una fracción <span class="math inline">\(\beta\)</span> del excedente total del emparejamiento. Como <span class="math inline">\((r+\lambda)\cdot(W-U)=w-r\cdot U\)</span> y <span class="math inline">\((r+\lambda)\cdot J=p-w\)</span>, la regla de reparto da <span class="math display">\[w=(1-\beta)\cdot r\cdot U+\beta\cdot p\]</span> y, sustituyendo <span class="math inline">\(W-U=\beta\cdot J/(1-\beta)\)</span> y <span class="math inline">\(J=p\cdot c/q(\theta)\)</span> en la ecuación de <span class="math inline">\(U\)</span>, se obtiene <span class="math inline">\(r\cdot U=z+\beta\cdot p\cdot c\cdot\theta/(1-\beta)\)</span>. Llevando este valor a la expresión del salario resulta la curva salarial, (<a href="#eq-12-curva-salarial" class="quarto-xref">&nbsp;<span>12.4</span></a>).</p>
+<p>Eliminando el salario entre la curva de creación de empleo y la curva salarial se obtiene la condición que determina la tensión de equilibrio: <span id="eq-12-tension-de-equilibrio"><span class="math display">\[(1-\beta)\cdot(p-z)=\left[r+\lambda+\beta\cdot\theta\cdot q(\theta)\right]\cdot\dfrac{p\cdot c}{q(\theta)} \tag{12.5}\]</span></span> El primer miembro no depende de <span class="math inline">\(\theta\)</span> y el segundo es creciente en <span class="math inline">\(\theta\)</span>, porque <span class="math inline">\(q(\theta)\)</span> es decreciente y <span class="math inline">\(\theta\cdot q(\theta)\)</span> creciente, así que el equilibrio, <span class="math inline">\(\theta^{*}\)</span>, es único. Con <span class="math inline">\(\theta^{*}\)</span>, la curva de Beveridge, (<a href="#eq-12-curva-de-beveridge" class="quarto-xref">&nbsp;<span>12.2</span></a>), da la tasa de paro, <span class="math inline">\(u^{*}\)</span>, y las vacantes son <span class="math inline">\(v^{*}=\theta^{*}\cdot u^{*}\)</span>. La estática comparativa del cuerpo se lee directamente en esta ecuación: un aumento de <span class="math inline">\(z\)</span> o de <span class="math inline">\(\beta\)</span> reduce el primer miembro de la ecuación o eleva el segundo, y con ello reduce la tensión de equilibrio, mientras que un aumento de <span class="math inline">\(p\)</span> la eleva, porque el coste de la vacante, <span class="math inline">\(p\cdot c\)</span>, crece en la misma proporción que <span class="math inline">\(p\)</span> pero <span class="math inline">\(z\)</span> no.</p>
+</section>
+<section id="a.3.-la-demanda-de-trabajo-con-costes-de-ajuste" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.3.-la-demanda-de-trabajo-con-costes-de-ajuste">12.A.3.&nbsp;&nbsp;La demanda de trabajo con costes de ajuste</h3>
+<p>Con costes cuadráticos, <span class="math inline">\(C(\dot{L}_{t})=(b/2)\cdot\dot{L}^{2}_{t}\)</span>, el problema de la empresa se resuelve con el hamiltoniano en valor presente, en el que la variable de control es <span class="math inline">\(x_{t}=\dot{L}_{t}\)</span> y <span class="math inline">\(\mu_{t}\)</span> es la variable de coestado: <span class="math display">\[H=e^{-rt}\cdot\left[F(L_{t})-w\cdot L_{t}-\dfrac{b}{2}\cdot x^{2}_{t}\right]+\mu_{t}\cdot x_{t}\]</span> La condición <span class="math inline">\(\partial H/\partial x_{t}=0\)</span> da <span class="math inline">\(\mu_{t}=e^{-rt}\cdot b\cdot x_{t}\)</span>, y la ecuación de la coestado, <span class="math inline">\(\dot{\mu}_{t}=-\partial H/\partial L_{t}=-e^{-rt}\left[F'(L_{t})-w\right]\)</span>. Derivando la primera respecto al tiempo e igualando con la segunda se obtiene la ecuación de Euler <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 123-24</a>)</span>: <span class="math display">\[F'(L_{t})=w+r\cdot b\cdot\dot{L}_{t}-b\cdot\ddot{L}_{t}\]</span> En el estado estacionario, <span class="math inline">\(\dot{L}=\ddot{L}=0\)</span> y se recupera la condición estática, <span class="math inline">\(F'(L^{*})=w\)</span>. Linealizando alrededor de <span class="math inline">\(L^{*}\)</span>, la senda estable es <span class="math inline">\(L_{t}=L^{*}+(L_{0}-L^{*})\cdot e^{\nu t}\)</span>, con <span class="math inline">\(\nu=\left[r-\sqrt{r^{2}+4\kappa}\right]/2&lt;0\)</span> y <span class="math inline">\(\kappa=-F''(L^{*})/b&gt;0\)</span>. Cuanto mayor es el coste de ajuste, <span class="math inline">\(b\)</span>, menor es <span class="math inline">\(\kappa\)</span>, menor es el valor absoluto de <span class="math inline">\(\nu\)</span> y más lento es el ajuste.</p>
+<p>Con costes lineales y asimétricos, contratar a un trabajador cuesta <span class="math inline">\(c_{h}\)</span> una sola vez y despedirlo, <span class="math inline">\(c_{f}\)</span>. Contratar un trabajador más compensa si el valor actual de lo que aporta, <span class="math inline">\(\left[F'(L)-w\right]/r\)</span>, supera el coste de contratarlo, y despedirlo compensa si el ahorro, <span class="math inline">\(\left[w-F'(L)\right]/r\)</span>, supera el coste del despido. Los umbrales son, por tanto, <span class="math display">\[F'(L_{h})=w+r\cdot c_{h}\qquad\qquad F'(L_{f})=w-r\cdot c_{f}\]</span> y la demanda de trabajo, a partir de un empleo inicial <span class="math inline">\(L_{0}\)</span>, es <span class="math inline">\(L=L_{h}\)</span> si <span class="math inline">\(L_{0}&lt;L_{h}\)</span>, <span class="math inline">\(L=L_{0}\)</span> si <span class="math inline">\(L_{h}\leq L_{0}\leq L_{f}\)</span> y <span class="math inline">\(L=L_{f}\)</span> si <span class="math inline">\(L_{0}&gt;L_{f}\)</span> <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 126-27</a>)</span>. En este caso determinista, un aumento de <span class="math inline">\(c_{f}\)</span> desplaza <span class="math inline">\(L_{f}\)</span> hacia la derecha y amplía la banda de inacción sin afectar al umbral de contratación. El caso con incertidumbre se estudia en el apartado siguiente.</p>
+</section>
+<section id="a.4.-los-costes-de-ajuste-con-incertidumbre" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.4.-los-costes-de-ajuste-con-incertidumbre">12.A.4.&nbsp;&nbsp;Los costes de ajuste con incertidumbre</h3>
+<p>Con incertidumbre, la empresa decide la plantilla de hoy pensando en las perturbaciones futuras, y sus expectativas pasan a determinar la senda del empleo. Si los costes son cuadráticos y la empresa forma expectativas racionales, la demanda de trabajo en tiempo discreto cumple <span class="math display">\[L_{t}=\varphi\cdot L_{t-1}+\mu_{0}\cdot\sum^{\infty}_{i=0}\left(a_{0}\cdot\mu_{0}\right)^{i}\cdot E_{t}\,a_{t+i}\]</span> En ella, <span class="math inline">\(a_{t}\)</span> mide la rentabilidad del empleo en cada periodo, que crece con la perturbación de productividad y cae con el salario, y <span class="math inline">\(E_{t}\)</span> son las expectativas formadas en <span class="math inline">\(t\)</span>. Los parámetros <span class="math inline">\(\varphi\)</span>, <span class="math inline">\(\mu_{0}\)</span> y <span class="math inline">\(a_{0}\)</span> dependen de la tecnología, del tipo de interés y del coste de ajuste, <span class="math inline">\(b\)</span>. El coeficiente <span class="math inline">\(\varphi\)</span>, entre cero y uno, crece con <span class="math inline">\(b\)</span>, de modo que, cuanto más cuesta ajustar, más pesa el empleo pasado <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 128-31</a>)</span>. El empleo depende así del pasado, a través de los costes de ajuste, y del futuro esperado, a través de las expectativas. Una perturbación transitoria apenas altera lo que se espera de los periodos siguientes y mueve poco el empleo. Una permanente, en cambio, desplaza todas las expectativas y provoca un ajuste mayor, aunque gradual.</p>
+<p>Con costes lineales, la productividad alterna entre un estado bueno, <span class="math inline">\(A_{G}\)</span>, y uno malo, <span class="math inline">\(A_{B}\)</span>. Se pasa del bueno al malo con probabilidad instantánea <span class="math inline">\(q_{G}\)</span> y del malo al bueno con <span class="math inline">\(q_{B}\)</span>. La empresa mantiene un empleo <span class="math inline">\(L_{G}\)</span> en el estado bueno y <span class="math inline">\(L_{B}\)</span> en el malo, que cumplen <span class="math display">\[F_{L}(A_{G},L_{G})=w_{G}+q_{G}\cdot c_{f}+(r+q_{G})\cdot c_{h}\qquad\qquad F_{L}(A_{B},L_{B})=w_{B}-q_{B}\cdot c_{h}-(r+q_{B})\cdot c_{f}\]</span> En el estado bueno, la productividad marginal debe cubrir el salario, el coste de contratar y también el coste esperado de despedir cuando el ciclo cambie. Por eso <span class="math inline">\(L_{G}\)</span> cae con los dos costes. Simétricamente, <span class="math inline">\(L_{B}\)</span> sube con ambos: un despido caro frena los despidos en las recesiones, y una contratación cara también, porque la empresa sabe que tendrá que volver a contratar en la recuperación. Los costes de ajuste estabilizan así el empleo, y la rotación, <span class="math inline">\(\tau\)</span>, que es la suma de empleos creados y destruidos, <span class="math display">\[\tau=\frac{2\cdot q_{G}\cdot q_{B}}{q_{G}+q_{B}}\cdot\left(L_{G}-L_{B}\right)\]</span> cae cuando el mercado de trabajo se vuelve más rígido <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 132-34</a>)</span>.</p>
+</section>
+<section id="a.5.-la-condición-de-hosios" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.5.-la-condición-de-hosios">12.A.5.&nbsp;&nbsp;La condición de Hosios</h3>
+<p>El planificador elige la tensión para maximizar el valor descontado de la producción neta, que es lo que producen los ocupados, más la renta de los parados, menos los costes de las vacantes, sujeto a la dinámica del paro: <span class="math display">\[\max_{\{\theta_{t}\}}\int^{\infty}_{0}e^{-rt}\cdot\left[p\cdot(1-u_{t})+z\cdot u_{t}-p\cdot c\cdot\theta_{t}\cdot u_{t}\right]dt\qquad\text{s.a.}\qquad\dot{u}_{t}=\lambda\cdot(1-u_{t})-\theta_{t}\cdot q(\theta_{t})\cdot u_{t}\]</span> En este problema, <span class="math inline">\(z\)</span> recoge solo el valor del ocio o de la producción doméstica, y no transferencias como la prestación por desempleo, que únicamente redistribuyen <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 601</a>)</span>. Llamando <span class="math inline">\(\eta=-\theta\cdot q'(\theta)/q(\theta)\)</span> a la elasticidad de la función de emparejamiento respecto al paro, las condiciones de optimalidad en el estado estacionario se reducen a <span class="math display">\[(1-\eta)\cdot(p-z)=\left[r+\lambda+\eta\cdot\theta\cdot q(\theta)\right]\cdot\dfrac{p\cdot c}{q(\theta)}\]</span> que tiene la misma forma que la condición de equilibrio, (<a href="#eq-12-tension-de-equilibrio" class="quarto-xref">&nbsp;<span>12.5</span></a>), con <span class="math inline">\(\eta\)</span> en el lugar de <span class="math inline">\(\beta\)</span> <span class="citation" data-cites="12_Hosios1990">(<a href="01-tema-a1.html#ref-12_Hosios1990" role="doc-biblioref">Hosios 1990</a>)</span>. Las dos coinciden, y el equilibrio es eficiente, si y solo si <span class="math inline">\(\beta=\eta\)</span>, siempre que la renta del parado del equilibrio no incluya tampoco la prestación por desempleo. Con una prestación positiva, el primer miembro de la condición de equilibrio es menor que en el óptimo y, aunque se cumpla <span class="math inline">\(\beta=\eta\)</span>, la tensión es demasiado baja y el paro, demasiado alto <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 601</a>)</span>. Si <span class="math inline">\(\beta&gt;\eta\)</span>, el primer miembro de la condición de equilibrio es menor y el segundo mayor que en el óptimo, la tensión es demasiado baja y el paro, demasiado alto, y si <span class="math inline">\(\beta&lt;\eta\)</span>, ocurre lo contrario <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 600-602</a>)</span>.</p>
+</section>
+<section id="a.6.-la-solución-de-nash-en-la-negociación-colectiva" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.6.-la-solución-de-nash-en-la-negociación-colectiva">12.A.6.&nbsp;&nbsp;La solución de Nash en la negociación colectiva</h3>
+<p>La empresa obtiene unos ingresos <span class="math inline">\(R(L)\)</span>, cóncavos, y su beneficio es <span class="math inline">\(\pi=R(L)-w\cdot L\)</span>, con una demanda de trabajo dada por <span class="math inline">\(R'(L)=w\)</span>, cuya elasticidad respecto al salario, en valor absoluto, es <span class="math inline">\(\varepsilon_{L}\)</span>. El sindicato tiene <span class="math inline">\(N\)</span> afiliados y es utilitarista: cada empleado obtiene <span class="math inline">\(u(w)\)</span> y cada parado <span class="math inline">\(u(w_{R})\)</span>, con <span class="math inline">\(u\)</span> cóncava. Sin acuerdo, la empresa no produce y los afiliados obtienen <span class="math inline">\(u(w_{R})\)</span>, de modo que las ganancias de cada parte son <span class="math inline">\(L\cdot\left[u(w)-u(w_{R})\right]\)</span> y <span class="math inline">\(\pi\)</span> <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 431-37</a>)</span>.</p>
+<p>En el modelo de derecho a gestionar se negocia solo el salario, y el empleo lo fija la empresa sobre su demanda, <span class="math inline">\(L=L^{D}(w)\)</span>. El problema es <span class="math inline">\(\max_{w}\beta\cdot\ln\left\{ L^{D}(w)\cdot\left[u(w)-u(w_{R})\right]\right\} +(1-\beta)\cdot\ln\pi(w)\)</span>. Como <span class="math inline">\(d\pi/dw=-L\)</span>, la condición de primer orden, multiplicada por <span class="math inline">\(w\)</span>, da <span class="math display">\[\dfrac{u(w)-u(w_{R})}{w\cdot u'(w)}=\dfrac{\beta}{\beta\cdot\varepsilon_{L}+(1-\beta)\cdot\dfrac{w\cdot L}{\pi}}\]</span> Con <span class="math inline">\(\beta=1\)</span> se obtiene el sindicato monopolista de Dunlop, que con neutralidad al riesgo fija <span class="math inline">\(w=w_{R}/\left(1-1/\varepsilon_{L}\right)\)</span>, un margen sobre el salario de reserva. Si los ingresos son isoelásticos, <span class="math inline">\(R(L)=A\cdot L^{\alpha}\)</span>, se cumple <span class="math inline">\(\varepsilon_{L}=1/(1-\alpha)\)</span> y <span class="math inline">\(w\cdot L/\pi=\alpha/(1-\alpha)\)</span>, ambos constantes: el salario negociado es proporcional al de reserva y no responde a las perturbaciones de <span class="math inline">\(A\)</span>, que recaen por entero en el empleo.</p>
+<p>En el modelo de contrato eficiente se negocian el salario y el empleo, y el acuerdo está sobre la curva de contrato, donde la relación marginal de sustitución del sindicato iguala la de la empresa: <span class="math display">\[R'(L)=w-\dfrac{u(w)-u(w_{R})}{u'(w)}\]</span> Como <span class="math inline">\(u(w)&gt;u(w_{R})\)</span>, se cumple <span class="math inline">\(R'(L)&lt;w\)</span> y el acuerdo está a la derecha de la demanda de trabajo. Con neutralidad al riesgo, <span class="math inline">\(u(w)=w\)</span>, la condición se reduce a <span class="math inline">\(R'(L)=w_{R}\)</span>: la curva de contrato es vertical en el empleo competitivo y la negociación solo reparte la renta. Con aversión al riesgo, la concavidad de <span class="math inline">\(u\)</span> implica <span class="math inline">\(u(w)-u(w_{R})&gt;u'(w)\cdot(w-w_{R})\)</span>, de modo que <span class="math inline">\(R'(L)&lt;w_{R}\)</span> y hay sobreempleo respecto al nivel competitivo.</p>
+</section>
+<section id="a.7.-el-paro-de-equilibrio-con-salarios-de-eficiencia" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.7.-el-paro-de-equilibrio-con-salarios-de-eficiencia">12.A.7.&nbsp;&nbsp;El paro de equilibrio con salarios de eficiencia</h3>
+<p>Se sigue a Romer <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">2019, 528-30</a>)</span>, que formaliza una idea de Summers <span class="citation" data-cites="12_Summers1988">(<a href="01-tema-a1.html#ref-12_Summers1988" role="doc-biblioref">1988</a>)</span>. La condición de Solow fija el salario de cada empresa, pero no dice cuánto paro hay cuando todas pagan por encima del salario que vaciaría el mercado. Para responder, el esfuerzo debe depender también del salario que pagan las demás empresas, <span class="math inline">\(w_{a}\)</span>, y de la tasa de paro, <span class="math inline">\(u\)</span>: <span class="math inline">\(e=e(w,w_{a},u)\)</span>. El esfuerzo crece con el salario propio y con el paro, porque perder el empleo cuesta más, y cae con el salario de las demás empresas, porque el despido es menos grave si fuera se paga bien. Cada empresa es pequeña y toma <span class="math inline">\(w_{a}\)</span> y <span class="math inline">\(u\)</span> como dados, de modo que sigue eligiendo el salario en el que la elasticidad del esfuerzo es unitaria.</p>
+<p>Con la forma funcional de Summers, el esfuerzo depende de la prima que el salario propio paga sobre las oportunidades del trabajador fuera de la empresa, <span class="math inline">\(x\)</span>: <span class="math display">\[e=\left(\frac{w-x}{x}\right)^{\gamma}\qquad\qquad x=(1-b\cdot u)\cdot w_{a}\]</span> donde <span class="math inline">\(\gamma\)</span>, entre cero y uno, es la elasticidad del esfuerzo respecto a esa prima, y <span class="math inline">\(b\)</span> mide cuánto pesa el paro en la valoración del trabajador. La condición de Solow da <span class="math display">\[w=\frac{x}{1-\gamma}=\frac{1-b\cdot u}{1-\gamma}\cdot w_{a}\]</span> de modo que cada empresa paga una prima aproximadamente igual a <span class="math inline">\(\gamma\)</span> sobre las oportunidades externas. En equilibrio todas pagan lo mismo, <span class="math inline">\(w=w_{a}\)</span>, lo que solo es posible si <span class="math inline">\(1-\gamma=1-b\cdot u\)</span>, es decir, si <span class="math display">\[u=\frac{\gamma}{b}\]</span> Si el paro fuera menor, cada empresa querría pagar más que las demás, el salario subiría y el empleo caería hasta restablecerlo. El paro de equilibrio depende solo de la función de esfuerzo y no de la de producción, de modo que el progreso técnico no lo reduce a largo plazo. Además, bastan elasticidades pequeñas para generar un paro considerable: con <span class="math inline">\(\gamma=0{,}06\)</span> y <span class="math inline">\(b=1\)</span>, el paro de equilibrio es del 6 % <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 530</a>)</span>.</p>
+</section>
+<section id="a.8.-la-condición-de-no-escaqueo-de-shapiro-y-stiglitz" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.8.-la-condición-de-no-escaqueo-de-shapiro-y-stiglitz">12.A.8.&nbsp;&nbsp;La condición de no escaqueo de Shapiro y Stiglitz</h3>
+<p>Se sigue la formulación de Romer <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">2019, 532-39</a>)</span>. Un trabajador obtiene utilidad <span class="math inline">\(w-\bar{e}\)</span> si se esfuerza y <span class="math inline">\(w\)</span> si se escaquea, y un parado obtiene cero. Los empleos se destruyen a la tasa <span class="math inline">\(\lambda\)</span>, el escaqueo se detecta a la tasa <span class="math inline">\(q\)</span> y los parados encuentran empleo a la tasa <span class="math inline">\(a\)</span>. Con un tipo de descuento <span class="math inline">\(\rho\)</span>, los valores de estar empleado y esforzarse, <span class="math inline">\(V_{E}\)</span>, de estar empleado y escaquearse, <span class="math inline">\(V_{S}\)</span>, y de estar parado, <span class="math inline">\(V_{U}\)</span>, cumplen <span class="math display">\[\rho\cdot V_{E}=(w-\bar{e})-\lambda\cdot\left(V_{E}-V_{U}\right)\qquad\rho\cdot V_{S}=w-(\lambda+q)\cdot\left(V_{S}-V_{U}\right)\qquad\rho\cdot V_{U}=a\cdot\left(V_{E}-V_{U}\right)\]</span></p>
+<p>La empresa paga el salario mínimo que evita el escaqueo, <span class="math inline">\(V_{E}=V_{S}\)</span>. Igualando las dos primeras ecuaciones se obtiene <span class="math inline">\(V_{E}-V_{U}=\bar{e}/q\)</span>: el empleo tiene que valer más que el paro exactamente lo que cuesta el esfuerzo, corregido por la probabilidad de ser descubierto. Restando la tercera ecuación de la primera, <span class="math inline">\(\rho\cdot(V_{E}-V_{U})=w-\bar{e}-(a+\lambda)\cdot(V_{E}-V_{U})\)</span>, y sustituyendo, el salario necesario es <span class="math display">\[w=\bar{e}+\left(\rho+a+\lambda\right)\cdot\dfrac{\bar{e}}{q}\]</span></p>
+<p>En estado estacionario, con <span class="math inline">\(\bar{L}\)</span> trabajadores y <span class="math inline">\(L\)</span> empleados, las salidas del empleo igualan a las entradas, <span class="math inline">\(\lambda\cdot L=a\cdot(\bar{L}-L)\)</span>, de modo que <span class="math inline">\(a+\lambda=\lambda\cdot\bar{L}/(\bar{L}-L)\)</span>. Sustituyendo se obtiene la curva de no escaqueo: <span class="math display">\[w=\bar{e}+\left(\rho+\dfrac{\lambda\cdot\bar{L}}{\bar{L}-L}\right)\cdot\dfrac{\bar{e}}{q}\]</span> que es creciente en el empleo y tiende a infinito cuando <span class="math inline">\(L\)</span> se acerca a <span class="math inline">\(\bar{L}\)</span>: con pleno empleo ningún salario evita el escaqueo. Si la detección es perfecta, <span class="math inline">\(q\to\infty\)</span>, el salario se reduce a <span class="math inline">\(\bar{e}\)</span>, el de información simétrica.</p>
+</section>
+<section id="a.9.-el-contrato-implícito-óptimo" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.9.-el-contrato-implícito-óptimo">12.A.9.&nbsp;&nbsp;El contrato implícito óptimo</h3>
+<p>Se sigue a Romer <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">2019, 543-47</a>)</span>. La productividad toma el valor <span class="math inline">\(A_{i}\)</span> con probabilidad <span class="math inline">\(p_{i}\)</span>, <span class="math inline">\(i=1,\ldots,n\)</span>. La empresa, neutral al riesgo, paga al trabajador <span class="math inline">\(C_{i}\)</span> y le pide <span class="math inline">\(L_{i}\)</span> horas en cada estado, y el trabajador obtiene <span class="math inline">\(U(C_{i})-V(L_{i})\)</span>, con <span class="math inline">\(U\)</span> cóncava y <span class="math inline">\(V\)</span> convexa. El contrato maximiza el beneficio esperado sujeto a que el trabajador alcance al menos la utilidad esperada <span class="math inline">\(u_{0}\)</span>, con multiplicador <span class="math inline">\(\mu\)</span>: <span class="math display">\[\mathcal{L}=\sum^{n}_{i=1}p_{i}\cdot\left[A_{i}\cdot F(L_{i})-C_{i}\right]+\mu\cdot\left\{ \sum^{n}_{i=1}p_{i}\cdot\left[U(C_{i})-V(L_{i})\right]-u_{0}\right\}\]</span> Las condiciones de primer orden respecto a <span class="math inline">\(C_{i}\)</span> y a <span class="math inline">\(L_{i}\)</span> son <span class="math display">\[U'(C_{i})=\dfrac{1}{\mu}\qquad\qquad A_{i}\cdot F'(L_{i})=\dfrac{V'(L_{i})}{U'(C)}\]</span> La primera implica que la renta del trabajador es la misma en todos los estados, <span class="math inline">\(C_{i}=C\)</span>: la empresa le asegura por completo. La segunda iguala en cada estado la productividad marginal del trabajo con la relación marginal de sustitución entre ocio y consumo, de modo que el empleo es eficiente. Como el empleo es mayor cuando <span class="math inline">\(A_{i}\)</span> es alto y la renta es constante, el salario por hora, <span class="math inline">\(C/L_{i}\)</span>, es contracíclico, y no hay paro involuntario.</p>
+<!-- caja-glosario-tema: generada por construir_web.py -->
+<div class="caja-glosario-tema" role="note" aria-label="Términos del glosario de este tema">
+<p class="caja-glosario-titulo">Términos del glosario de este tema</p>
+<p class="caja-glosario-sub">25 términos · <a href="glosario.html">ver el glosario completo</a></p>
+<div class="glosario-chips"><a class="glosario-chip" href="glosario.html#g-banda-de-inaccion" data-definicion="Intervalo de situaciones en las que a la empresa no le compensa ni contratar ni despedir. Técnicamente, con costes de contratación y despido lineales, es el tramo de empleo comprendido entre el nivel en que la productividad marginal iguala el salario más el coste anualizado de contratar y aquel en que iguala el salario menos el coste anualizado de despedir.">Banda de inacción</a><a class="glosario-chip" href="glosario.html#g-condicion-de-hosios" data-definicion="Condición para que el mercado genere el paro socialmente adecuado: cada parte debe llevarse una parte del excedente proporcional a lo que aporta a los emparejamientos. Técnicamente, el equilibrio del modelo DMP es eficiente si el poder de negociación de los trabajadores coincide con la elasticidad de la función de emparejamiento respecto al paro y la renta del parado no incluye transferencias como la prestación por desempleo (Hosios, 1990).">Condición de Hosios</a><a class="glosario-chip" href="glosario.html#g-condicion-de-solow" data-definicion="Regla que dice hasta dónde le conviene a la empresa subir el salario cuando pagar más hace trabajar mejor. Técnicamente, el salario de eficiencia es aquel en el que la elasticidad del esfuerzo respecto al salario es igual a uno, lo que minimiza el coste por unidad de esfuerzo (Solow, 1979).">Condición de Solow</a><a class="glosario-chip" href="glosario.html#g-contratos-implicitos" data-definicion="Acuerdos tácitos por los que la empresa garantiza al trabajador una renta estable a cambio de pagarle algo menos de media. Técnicamente, la teoría de Baily, Azariadis y Gordon explica la rigidez del salario real como un reparto eficiente del riesgo entre empresas neutrales al riesgo y trabajadores aversos a él, sin generar paro involuntario.">Contratos implícitos</a><a class="glosario-chip" href="glosario.html#g-costes-de-ajuste" data-definicion="Costes que soporta la empresa por cambiar el tamaño de su plantilla, como contratar, formar o despedir. Técnicamente, convierten la demanda de trabajo en un problema dinámico. Si son cuadráticos, el empleo se ajusta de forma gradual, y si son lineales aparece una banda de inacción con ajustes bruscos.">Costes de ajuste</a><a class="glosario-chip" href="glosario.html#g-curva-de-beveridge" data-definicion="Relación que muestra que, cuando hay muchas vacantes, hay poco paro, y al revés. Técnicamente, es la relación decreciente y convexa entre la tasa de vacantes y la tasa de paro que resulta de igualar las entradas y salidas del paro. Un desplazamiento hacia fuera indica un emparejamiento menos eficiente o una destrucción de empleo más rápida.">Curva de Beveridge</a><a class="glosario-chip" href="glosario.html#g-curva-de-creacion-de-empleo" data-definicion="Relación que indica cuántas vacantes compensa abrir para cada salario: cuanto más caro es el trabajo, menos. Técnicamente, iguala el coste esperado de cubrir una vacante con el valor de un puesto ocupado, y define una relación decreciente entre el salario y la tensión del mercado que hace el papel de la demanda de trabajo en el modelo DMP.">Curva de creación de empleo</a><a class="glosario-chip" href="glosario.html#g-curva-de-no-escaqueo" data-definicion="Curva que indica cuánto hay que pagar, como mínimo, para que a los trabajadores no les compense escaquearse. Técnicamente, da para cada nivel de empleo el salario más bajo compatible con el esfuerzo, y es creciente porque, cuanto menor es el paro, menos cuesta ser despedido.">Curva de no escaqueo</a><a class="glosario-chip" href="glosario.html#g-curva-salarial" data-definicion="Relación que muestra que el salario negociado sube cuando hay más vacantes por cada parado. Técnicamente, es el resultado de la negociación de Nash en el modelo DMP, una relación creciente entre el salario y la tensión del mercado que ocupa el lugar de la oferta de trabajo.">Curva salarial</a><a class="glosario-chip" href="glosario.html#g-desempleo-friccional" data-definicion="Paro que existe porque encontrar trabajo, o a quien contratar, lleva tiempo, aunque haya puestos para todos. Técnicamente, es el desempleo que generan las fricciones de búsqueda y emparejamiento entre parados y vacantes, y es compatible con un exceso de demanda de trabajo nulo.">Desempleo friccional</a><a class="glosario-chip" href="glosario.html#g-factor-cuasifijo" data-definicion="Factor que, una vez contratado, no conviene despedir a la primera, porque incorporarlo costó dinero. Técnicamente, es el trabajo cuando contratar y formar exige costes fijos, de modo que la empresa retiene al trabajador mientras su productividad marginal cubra el salario (Oi, 1962).">Factor cuasifijo</a><a class="glosario-chip" href="glosario.html#g-funcion-de-emparejamiento" data-definicion="Relación que indica cuántos contratos se firman según cuántos parados y cuántas vacantes buscan a la vez. Técnicamente, es una función creciente, cóncava y con rendimientos constantes a escala del paro y las vacantes, que resume las fricciones del mercado sin modelizarlas una a una.">Función de emparejamiento</a><a class="glosario-chip" href="glosario.html#g-histeresis" data-definicion="Situación en la que el paro no vuelve a su nivel anterior cuando desaparece la causa que lo elevó. Técnicamente, el paro de equilibrio depende del paro pasado, de modo que una perturbación transitoria tiene efectos permanentes. En el modelo insiders-outsiders surge porque, tras una caída del empleo, los insiders que quedan fijan salarios que solo protegen sus propios puestos.">Histéresis</a><a class="glosario-chip" href="glosario.html#g-modelo-de-busqueda" data-definicion="Modelo que explica qué empleo acepta un parado cuando las ofertas llegan poco a poco y con salarios distintos. Técnicamente, el parado acepta la primera oferta que supera su salario de reserva, de modo que la duración del paro depende de ese umbral y de la frecuencia de las ofertas (McCall y Mortensen, 1970).">Modelo de búsqueda</a><a class="glosario-chip" href="glosario.html#g-modelo-de-contrato-eficiente" data-definicion="Negociación en la que se pactan a la vez el salario y el número de empleos, de modo que no queda ningún acuerdo mejor para ambas partes. Técnicamente, el acuerdo está sobre la curva de contrato, a la derecha de la demanda de trabajo, y con trabajadores aversos al riesgo genera más empleo que la competencia (McDonald y Solow, 1981).">Modelo de contrato eficiente</a><a class="glosario-chip" href="glosario.html#g-modelo-de-derecho-a-gestionar" data-definicion="Negociación en la que sindicato y empresa pactan el salario y la empresa decide después cuánta gente contrata. Técnicamente, el acuerdo está sobre la demanda de trabajo y es ineficiente en el sentido de Pareto, porque la curva de indiferencia del sindicato y la isobeneficio de la empresa se cortan en vez de ser tangentes (Nickell y Andrews, 1983).">Modelo de derecho a gestionar</a><a class="glosario-chip" href="glosario.html#g-modelo-de-huelgas-de-hicks" data-definicion="Modelo que explica el salario pactado por lo que cada parte está dispuesta a aguantar una huelga. Técnicamente, el salario se fija en el cruce entre la curva de concesión de la empresa, creciente con la duración de la huelga, y la curva de resistencia del sindicato, decreciente con ella (Hicks, 1932).">Modelo de huelgas de Hicks</a><a class="glosario-chip" href="glosario.html#g-modelo-de-insiders-outsiders" data-definicion="Teoría según la cual los trabajadores con empleo negocian salarios que protegen sus puestos aunque dejen fuera a los parados. Técnicamente, los costes de rotación dan poder de negociación a los insiders, que logran salarios superiores a los que aceptarían los outsiders sin que a la empresa le compense sustituirlos (Lindbeck y Snower, 1988).">Modelo de insiders-outsiders</a><a class="glosario-chip" href="glosario.html#g-modelo-de-shapiro-stiglitz" data-definicion="Modelo en el que la empresa paga más de lo necesario para que perder el empleo cueste y nadie se escaquee. Técnicamente, al no observar el esfuerzo, la empresa fija el salario sobre la curva de no escaqueo, y en equilibrio hay paro involuntario, que actúa como mecanismo de disciplina (Shapiro y Stiglitz, 1984).">Modelo de Shapiro-Stiglitz</a><a class="glosario-chip" href="glosario.html#g-modelo-dmp" data-definicion="Modelo que explica por qué hay paro aunque el salario sea flexible: encontrar empleo, o a quien contratar, lleva tiempo. Técnicamente, combina una función de emparejamiento, la libre entrada de vacantes y un salario negociado a la Nash para determinar a la vez la tensión, el salario y el paro de equilibrio (Diamond, Mortensen y Pissarides).">Modelo DMP</a><a class="glosario-chip" href="glosario.html#g-paradoja-de-diamond" data-definicion="Resultado según el cual, si las empresas fijan los salarios y buscar cuesta, todas acaban pagando lo mínimo aceptable y no queda nada que buscar. Técnicamente, la distribución de salarios se reduce a un único valor, el salario de reserva, lo que contradice la dispersión que justificaba la búsqueda (Diamond, 1971).">Paradoja de Diamond</a><a class="glosario-chip" href="glosario.html#g-puzle-de-la-volatilidad-del-paro" data-definicion="Constatación de que el paro y las vacantes fluctúan mucho más de lo que predice el modelo de búsqueda y emparejamiento. Técnicamente, Shimer (2005) mostró que la volatilidad de la tensión del mercado es casi veinte veces la de la productividad, mientras que el modelo DMP con salarios negociados predice volatilidades parecidas.">Puzle de la volatilidad del paro</a><a class="glosario-chip" href="glosario.html#g-salario-de-eficiencia" data-definicion="Salario más alto de lo necesario para contratar, que la empresa paga porque así sus trabajadores rinden más. Técnicamente, es el salario que minimiza el coste por unidad de esfuerzo cuando la productividad depende del salario. Si supera el que vaciaría el mercado, genera paro involuntario.">Salario de eficiencia</a><a class="glosario-chip" href="glosario.html#g-solucion-de-negociacion-de-nash" data-definicion="Forma de predecir el resultado de una negociación a partir de lo que cada parte gana con el acuerdo y de su poder para imponerse. Técnicamente, es la única solución que cumple los axiomas de Nash (1950) y maximiza el producto de las ganancias de cada parte respecto a su situación sin acuerdo, ponderadas en la versión generalizada por su poder de negociación.">Solución de negociación de Nash</a><a class="glosario-chip" href="glosario.html#g-tension-del-mercado-de-trabajo" data-definicion="Número de vacantes que hay por cada parado. Técnicamente, es el cociente entre la tasa de vacantes y la tasa de paro, y de él dependen la rapidez con que los parados encuentran empleo y la rapidez con que se cubren las vacantes.">Tensión del mercado de trabajo</a></div>
+</div>
+<script>
+// Definicion al pasar el raton, en la misma ventanita que las figuras (tippy de Quarto)
+document.addEventListener("DOMContentLoaded", function () {
+  if (!window.tippy) { return; }
+  window.tippy(".glosario-chip", { content: function (el) { return el.dataset.definicion; },
+    theme: "quarto", maxWidth: 420, placement: "top", delay: [150, 0], appendTo: document.body });
+});
+</script>
+<!-- /caja-glosario-tema -->
+</section>
+</section>
+<section id="bibliografía" class="level2 unnumbered">
+<h2 class="unnumbered anchored" data-anchor-id="bibliografía">Bibliografía</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list" style="display: none">
+<div id="ref-12_Akerlof1982" class="csl-entry" role="listitem">
+Akerlof, George A. 1982. <span>«Labor Contracts as Partial Gift Exchange»</span>. <em>Quarterly Journal of Economics</em> 97 (4): 543-69.
+</div>
+<div id="ref-12_Azariadis1975" class="csl-entry" role="listitem">
+Azariadis, Costas. 1975. <span>«Implicit Contracts and Underemployment Equilibria»</span>. <em>Journal of Political Economy</em> 83 (6): 1183-202.
+</div>
+<div id="ref-12_Baily1974" class="csl-entry" role="listitem">
+Baily, Martin Neil. 1974. <span>«Wages and Employment under Uncertain Demand»</span>. <em>Review of Economic Studies</em> 41 (1): 37-50.
+</div>
+<div id="ref-12_BentolilaBertola1990" class="csl-entry" role="listitem">
+Bentolila, Samuel, y Giuseppe Bertola. 1990. <span>«Firing Costs and Labour Demand: How Bad is <span>Eurosclerosis</span>?»</span> <em>Review of Economic Studies</em> 57 (3): 381-402.
+</div>
+<div id="ref-12_BentolilaEtAl2012" class="csl-entry" role="listitem">
+Bentolila, Samuel, Pierre Cahuc, Juan J. Dolado, y Thomas Le Barbanchon. 2012. <span>«Two-Tier Labour Markets in the <span>Great Recession</span>: <span>France</span> Versus <span>Spain</span>»</span>. <em>Economic Journal</em> 122 (562): F155-87.
+</div>
+<div id="ref-12_Beveridge1944" class="csl-entry" role="listitem">
+Beveridge, William H. 1944. <em>Full Employment in a Free Society</em>. George Allen &amp; Unwin.
+</div>
+<div id="ref-12_BoscaEtAl2017" class="csl-entry" role="listitem">
+Boscá, José E., Rafael Doménech, Javier Ferri, y José R. García. 2017. <span>«Shifts in the <span>Beveridge</span> Curve in <span>Spain</span> and Their Macroeconomic Effects»</span>. <em>Revista de Economía Aplicada</em> 25 (75): 5-27.
+</div>
+<div id="ref-12_BurdettMortensen1998" class="csl-entry" role="listitem">
+Burdett, Kenneth, y Dale T. Mortensen. 1998. <span>«Wage Differentials, Employer Size, and Unemployment»</span>. <em>International Economic Review</em> 39 (2): 257-73.
+</div>
+<div id="ref-12_CahucEtAl2014" class="csl-entry" role="listitem">
+Cahuc, Pierre, Stéphane Carcillo, y André Zylberberg. 2014. <em>Labor Economics</em>. Segunda. MIT Press.
+</div>
+<div id="ref-12_CalmforsDriffill1988" class="csl-entry" role="listitem">
+Calmfors, Lars, y John Driffill. 1988. <span>«Bargaining Structure, Corporatism and Macroeconomic Performance»</span>. <em>Economic Policy</em> 3 (6): 13-61.
+</div>
+<div id="ref-12_Diamond1971" class="csl-entry" role="listitem">
+Diamond, Peter A. 1971. <span>«A Model of Price Adjustment»</span>. <em>Journal of Economic Theory</em> 3 (2): 156-68.
+</div>
+<div id="ref-12_Diamond1982b" class="csl-entry" role="listitem">
+Diamond, Peter A. 1982. <span>«Wage Determination and Efficiency in Search Equilibrium»</span>. <em>Review of Economic Studies</em> 49 (2): 217-27.
+</div>
+<div id="ref-12_DowDicksMireaux1958" class="csl-entry" role="listitem">
+Dow, J. C. R., y L. A. Dicks-Mireaux. 1958. <span>«The Excess Demand for Labour: A Study of Conditions in <span>Great Britain</span>, 1946–56»</span>. <em>Oxford Economic Papers</em> 10 (1): 1-33.
+</div>
+<div id="ref-12_Dunlop1944" class="csl-entry" role="listitem">
+Dunlop, John T. 1944. <em>Wage Determination under Trade Unions</em>. Macmillan.
+</div>
+<div id="ref-12_ElsbyEtAl2015" class="csl-entry" role="listitem">
+Elsby, Michael W. L., Ryan Michaels, y David Ratner. 2015. <span>«The <span>Beveridge</span> Curve: A Survey»</span>. <em>Journal of Economic Literature</em> 53 (3): 571-630.
+</div>
+<div id="ref-12_FelguerosoDomenech2026" class="csl-entry" role="listitem">
+Felgueroso, Florentino, Rafael Doménech, Juan Ramón García, Marcel Jansen, y Analía Viola. 2026. <em>Observatorio Trimestral del Mercado de Trabajo. Boletín n.º 17</em>. Apuntes 2026/14. FEDEA y BBVA Research.
+</div>
+<div id="ref-12_Gordon1974" class="csl-entry" role="listitem">
+Gordon, Donald F. 1974. <span>«A Neo-Classical Theory of <span>Keynesian</span> Unemployment»</span>. <em>Economic Inquiry</em> 12 (4): 431-59.
+</div>
+<div id="ref-12_Hall2005" class="csl-entry" role="listitem">
+Hall, Robert E. 2005. <span>«Employment Fluctuations with Equilibrium Wage Stickiness»</span>. <em>American Economic Review</em> 95 (1): 50-65.
+</div>
+<div id="ref-12_Hicks1932" class="csl-entry" role="listitem">
+Hicks, John R. 1932. <em>The Theory of Wages</em>. Macmillan.
+</div>
+<div id="ref-12_HoltEtAl1960" class="csl-entry" role="listitem">
+Holt, Charles C., Franco Modigliani, John F. Muth, y Herbert A. Simon. 1960. <em>Planning Production, Inventories, and Work Force</em>. Prentice-Hall.
+</div>
+<div id="ref-12_Hosios1990" class="csl-entry" role="listitem">
+Hosios, Arthur J. 1990. <span>«On the Efficiency of Matching and Related Models of Search and Unemployment»</span>. <em>Review of Economic Studies</em> 57 (2): 279-98.
+</div>
+<div id="ref-12_LindbeckSnower1988" class="csl-entry" role="listitem">
+Lindbeck, Assar, y Dennis J. Snower. 1988. <em>The Insider-Outsider Theory of Employment and Unemployment</em>. MIT Press.
+</div>
+<div id="ref-12_LindbeckSnower2001" class="csl-entry" role="listitem">
+Lindbeck, Assar, y Dennis J. Snower. 2001. <span>«Insiders versus Outsiders»</span>. <em>Journal of Economic Perspectives</em> 15 (1): 165-88.
+</div>
+<div id="ref-12_McCall1970" class="csl-entry" role="listitem">
+McCall, John J. 1970. <span>«Economics of Information and Job Search»</span>. <em>Quarterly Journal of Economics</em> 84 (1): 113-26.
+</div>
+<div id="ref-12_McDonaldSolow1981" class="csl-entry" role="listitem">
+McDonald, Ian M., y Robert M. Solow. 1981. <span>«Wage Bargaining and Employment»</span>. <em>American Economic Review</em> 71 (5): 896-908.
+</div>
+<div id="ref-12_Mortensen1970" class="csl-entry" role="listitem">
+Mortensen, Dale T. 1970. <span>«Job Search, the Duration of Unemployment, and the <span>Phillips</span> Curve»</span>. <em>American Economic Review</em> 60 (5): 847-62.
+</div>
+<div id="ref-12_MortensenPissarides1994" class="csl-entry" role="listitem">
+Mortensen, Dale T., y Christopher A. Pissarides. 1994. <span>«Job Creation and Job Destruction in the Theory of Unemployment»</span>. <em>Review of Economic Studies</em> 61 (3): 397-415.
+</div>
+<div id="ref-12_Nash1950" class="csl-entry" role="listitem">
+Nash, John F. 1950. <span>«The Bargaining Problem»</span>. <em>Econometrica</em> 18 (2): 155-62.
+</div>
+<div id="ref-12_Nickell1986" class="csl-entry" role="listitem">
+Nickell, Stephen J. 1986. <span>«Dynamic Models of Labour Demand»</span>. Chap. 9 en <em>Handbook of Labor Economics</em>, editado por Orley Ashenfelter y Richard Layard, vol. 1. North-Holland.
+</div>
+<div id="ref-12_NickellAndrews1983" class="csl-entry" role="listitem">
+Nickell, Stephen J., y Martyn Andrews. 1983. <span>«Unions, Real Wages and Employment in <span>Britain</span> 1951–79»</span>. <em>Oxford Economic Papers</em> 35 (Supplement): 183-206.
+</div>
+<div id="ref-12_Oi1962" class="csl-entry" role="listitem">
+Oi, Walter Y. 1962. <span>«Labor as a Quasi-Fixed Factor»</span>. <em>Journal of Political Economy</em> 70 (6): 538-55.
+</div>
+<div id="ref-12_PetrongoloPissarides2001" class="csl-entry" role="listitem">
+Petrongolo, Barbara, y Christopher A. Pissarides. 2001. <span>«Looking into the Black Box: A Survey of the Matching Function»</span>. <em>Journal of Economic Literature</em> 39 (2): 390-431.
+</div>
+<div id="ref-12_Pissarides1985" class="csl-entry" role="listitem">
+Pissarides, Christopher A. 1985. <span>«Short-Run Equilibrium Dynamics of Unemployment, Vacancies, and Real Wages»</span>. <em>American Economic Review</em> 75 (4): 676-90.
+</div>
+<div id="ref-12_Pissarides2000" class="csl-entry" role="listitem">
+Pissarides, Christopher A. 2000. <em>Equilibrium Unemployment Theory</em>. Segunda. MIT Press.
+</div>
+<div id="ref-12_RaffSummers1987" class="csl-entry" role="listitem">
+Raff, Daniel M. G., y Lawrence H. Summers. 1987. <span>«Did <span>Henry Ford</span> Pay Efficiency Wages?»</span> <em>Journal of Labor Economics</em> 5 (4, Part 2): S57-86.
+</div>
+<div id="ref-12_Romer2019" class="csl-entry" role="listitem">
+Romer, David. 2019. <em>Advanced Macroeconomics</em>. Quinta. McGraw-Hill Education.
+</div>
+<div id="ref-12_Rubinstein1982" class="csl-entry" role="listitem">
+Rubinstein, Ariel. 1982. <span>«Perfect Equilibrium in a Bargaining Model»</span>. <em>Econometrica</em> 50 (1): 97-109.
+</div>
+<div id="ref-12_Salop1979" class="csl-entry" role="listitem">
+Salop, Steven C. 1979. <span>«A Model of the Natural Rate of Unemployment»</span>. <em>American Economic Review</em> 69 (1): 117-25.
+</div>
+<div id="ref-12_ShapiroStiglitz1984" class="csl-entry" role="listitem">
+Shapiro, Carl, y Joseph E. Stiglitz. 1984. <span>«Equilibrium Unemployment as a Worker Discipline Device»</span>. <em>American Economic Review</em> 74 (3): 433-44.
+</div>
+<div id="ref-12_Shimer2005" class="csl-entry" role="listitem">
+Shimer, Robert. 2005. <span>«The Cyclical Behavior of Equilibrium Unemployment and Vacancies»</span>. <em>American Economic Review</em> 95 (1): 25-49.
+</div>
+<div id="ref-12_Solow1979" class="csl-entry" role="listitem">
+Solow, Robert M. 1979. <span>«Another Possible Source of Wage Stickiness»</span>. <em>Journal of Macroeconomics</em> 1 (1): 79-82.
+</div>
+<div id="ref-12_Stigler1961" class="csl-entry" role="listitem">
+Stigler, George J. 1961. <span>«The Economics of Information»</span>. <em>Journal of Political Economy</em> 69 (3): 213-25.
+</div>
+<div id="ref-12_Stigler1962" class="csl-entry" role="listitem">
+Stigler, George J. 1962. <span>«Information in the Labor Market»</span>. <em>Journal of Political Economy</em> 70 (5, Part 2): 94-105.
+</div>
+<div id="ref-12_Summers1988" class="csl-entry" role="listitem">
+Summers, Lawrence H. 1988. <span>«Relative Wages, Efficiency Wages, and Keynesian Unemployment»</span>. <em>American Economic Review</em> 78 (2): 383-88.
+</div>
+<div id="ref-12_Weiss1980" class="csl-entry" role="listitem">
+Weiss, Andrew. 1980. <span>«Job Queues and Layoffs in Labor Markets with Flexible Wages»</span>. <em>Journal of Political Economy</em> 88 (3): 526-38.
+</div>
+</div>
+
+
+</section>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn1"><p>Datos corregidos de variaciones estacionales y efecto calendario <span class="citation" data-cites="12_FelguerosoDomenech2026">(<a href="01-tema-a1.html#ref-12_FelguerosoDomenech2026" role="doc-biblioref">Felgueroso et&nbsp;al. 2026, 3-4</a>)</span>.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>El modelo neoclásico de oferta y demanda de trabajo, que aquí se da por conocido, se desarrolla en el Tema 11 de la Parte A.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>La intuición es que buscar empleo, o buscar a quien contratar, lleva tiempo y cuesta recursos, porque la información sobre qué puestos existen, qué exigen y qué pagan está dispersa y no llega a todos a la vez. Mientras dura esa búsqueda, el trabajador figura como parado y el puesto como vacante.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>La intuición es que, cuando la actividad se acelera, las empresas abren más puestos y una parte de ellos se cubre con parados, de modo que las vacantes suben mientras el paro baja. La convexidad refleja que, en un mercado ya muy tenso, cada vacante adicional encuentra menos parados con los que emparejarse y reduce el paro cada vez menos.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>No todo desplazamiento aparente es estructural. Tras una recesión, la economía suele recorrer un bucle en sentido antihorario alrededor de la curva, porque entre la apertura de una vacante y la contratación pasa tiempo. Por eso Lazear y Spletzer consideraban prematuro atribuir a desajustes el desplazamiento observado en Estados Unidos tras 2009 <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 576</a>)</span>.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Esa estrategia no secuencial no es óptima, porque puede llevar a seguir buscando después de haber recibido una oferta superior al salario de reserva. McCall demostró la optimalidad de la regla de parada secuencial <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 262</a>)</span>.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>La intuición es que aceptar una oferta tiene un coste de oportunidad, que es renunciar a encontrar otra mejor. El salario de reserva es el punto en el que ese coste se iguala con lo que se gana al dejar de buscar.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>La derivación completa del salario de reserva y de la duración media del paro figura en el Apéndice 12.A.1.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>El riesgo moral se estudia en el Tema 13 de la Parte A. La predicción es teóricamente robusta, pero su magnitud es empírica: muchos parados no cobran prestación, y para ellos una prestación más generosa puede reducir el salario de reserva, porque aceptar un empleo da derecho a cobrarla en el futuro <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 265</a>)</span>.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Artículo 270.2 del texto refundido de la Ley General de la Seguridad Social, en la redacción dada por la Ley 31/2022, de 23 de diciembre, de Presupuestos Generales del Estado para 2023, en vigor desde el 1 de enero de 2023.<a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p>La intuición es que ninguna empresa gana nada pagando más que el salario de reserva, porque cualquier oferta que lo iguale ya se acepta. Si todas pagan lo mismo, no hay ninguna oferta mejor que buscar, y el salario cae hasta la renta del parado, <span class="math inline">\(z\)</span>.<a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p>En el modelo de Burdett y Mortensen los trabajadores siguen buscando cuando ya tienen empleo, de modo que las empresas compiten por atraerlos y retenerlos. En equilibrio surge una distribución de salarios no degenerada, en la que las empresas que pagan más son también las más grandes <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 306</a>)</span>.<a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p>Mortensen y Pissarides <span class="citation" data-cites="12_MortensenPissarides1994">(<a href="01-tema-a1.html#ref-12_MortensenPissarides1994" role="doc-biblioref">1994</a>)</span> endogeneizaron después la destrucción de empleo, que pasa a depender de perturbaciones de productividad específicas de cada puesto, de modo que la creación y la destrucción de empleo se mueven en sentido opuesto a lo largo del ciclo.<a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p>La intuición es que funciona como una función de producción de contratos cuyos factores son los parados y las vacantes. Resume en una sola relación todas las fricciones del mercado, como la información incompleta o los desajustes de cualificación y de localización, sin modelizarlas una a una.<a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p>La intuición es que, en un mercado tenso, el trabajador que rompe la negociación encuentra pronto otro empleo, mientras que la empresa tendría que volver a buscar. El término <span class="math inline">\(p\cdot c\cdot\theta\)</span> es precisamente el coste medio de contratación por cada parado, y el trabajador se queda con una parte de ese ahorro proporcional a su poder de negociación.<a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p>La derivación de las tres relaciones y del equilibrio figura en el Apéndice 12.A.2.<a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>El paro de equilibrio del modelo DMP es uno de los fundamentos de la tasa natural de paro, que se estudia en el Tema 11 de la Parte B.<a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p>El resultado depende de que la renta del parado, <span class="math inline">\(z\)</span>, no crezca con la productividad. Si <span class="math inline">\(z\)</span> y el coste de la vacante crecieran en proporción a los salarios, el nivel de productividad no afectaría al paro a largo plazo <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 599</a>)</span>.<a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p>La intuición es que cada vacante y cada parado que entran en el mercado congestionan a los de su mismo lado y facilitan la búsqueda a los del otro, y nadie tiene en cuenta esos efectos al decidir. El reparto del salario solo los compensa cuando lo que obtiene cada parte coincide con lo que aporta al emparejamiento, que es lo que mide la elasticidad.<a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p><span class="citation" data-cites="12_CahucEtAl2014">Cahuc et&nbsp;al. (<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">2014, 600-603</a>)</span> la llaman condición de Hosios-Pissarides. La ineficiencia es propia de la búsqueda aleatoria con salarios negociados: si los trabajadores pueden dirigir su búsqueda hacia los salarios que anuncian las empresas, como en el modelo de Moen, la competencia por atraerlos restaura la eficiencia del equilibrio. La condición supone, además, que la renta del parado solo recoge el valor del ocio. Si incluye una prestación, que para la sociedad es una mera transferencia, el equilibrio genera demasiado paro aunque se cumpla <span class="math inline">\(\beta=\eta\)</span>.<a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p>La desviación típica de la tensión es de 0,38 en los datos y de 0,035 en el modelo calibrado. Además, el modelo predice una elasticidad del salario a la productividad prácticamente unitaria, frente a unos 0,45 en las estimaciones de Hagedorn y Manovskii. Pissarides objeta, sin embargo, que los salarios de los nuevos contratos sí son flexibles <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 613-16</a>)</span>.<a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p>La intuición es que incorporar a un trabajador no termina al firmar el contrato: hay que buscarlo, seleccionarlo y formarlo, y desprenderse de él también cuesta. Cambiar de plantilla tiene así un precio propio, que se suma al salario.<a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p>Su cuantía varía mucho entre países. En Estados Unidos, reponer a un trabajador cuesta entre el 25 % del salario anual, en los menos cualificados, y más del 100 %, en los más cualificados, y contratar es más caro que despedir. En Francia ocurre lo contrario: según Abowd y Kramarz, una separación cuesta en promedio el 56 % del coste laboral anual y una contratación el 3,3 % <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 120</a>)</span>.<a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p>La derivación de estos umbrales y de la demanda de trabajo resultante figura en el Apéndice 12.A.3.<a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p>Artículos 56.1 y 49.1.c del texto refundido de la Ley del Estatuto de los Trabajadores. La cuantía del despido improcedente procede de la reforma de 2012 (Real Decreto-ley 3/2012 y Ley 3/2012). El despido objetivo procedente se indemniza con 20 días por año y un máximo de 12 mensualidades (artículo 53.1.b).<a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p>Real Decreto-ley 32/2021, de 28 de diciembre, de medidas urgentes para la reforma laboral, la garantía de la estabilidad en el empleo y la transformación del mercado de trabajo.<a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p>INE, Encuesta de Población Activa del cuarto trimestre de 2021, y Ministerio de Trabajo y Economía Social, a partir de la Encuesta de Población Activa del segundo trimestre de 2026. El Banco de España advierte de que ese descenso no puede atribuirse sin más a la reforma, y de que parte de la rotación se ha trasladado a los fijos discontinuos, cuya tasa de bajas casi se ha duplicado desde 2022 (Banco de España, <em>Informe Anual 2023</em>, capítulo 3).<a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p>Cuando el intervalo entre ofertas tiende a cero, el equilibrio del juego de Rubinstein converge a la solución de Nash generalizada, en la que el poder de negociación de cada parte es mayor cuanto más paciente es, como mostraron Binmore, Rubinstein y Wolinsky. El punto de desacuerdo es entonces lo que cada parte obtiene mientras dura el conflicto, y no sus opciones externas <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 421-22</a>)</span>.<a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p>Nash exigió a la solución cuatro propiedades. La eficiencia en el sentido de Pareto obliga a que las partes aprovechen todas las ganancias mutuas. La invariancia ante transformaciones afines crecientes de las utilidades hace que el resultado no dependa de cómo se representen las preferencias. La independencia de las alternativas irrelevantes garantiza que, si se descartan acuerdos que de todos modos no se habrían elegido, el resultado no cambia. Por último, la simetría supone que dos partes intercambiables obtienen lo mismo, es decir, que tienen igual poder de negociación. La única solución que cumple las cuatro maximiza el producto de las ganancias netas de las partes. Al suprimir la simetría se obtiene la solución generalizada, en la que el exponente <span class="math inline">\(\beta\)</span> mide el poder de negociación <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 415-16</a>)</span>.<a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p>La intuición es que el sindicato fija el salario como un margen sobre el salario de reserva que depende de la elasticidad de la demanda de trabajo. Si la perturbación no altera esa elasticidad, tampoco altera el salario.<a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p>La idea se remonta a Leontief, que ya advirtió que negociar a la vez salario y empleo permite alcanzar acuerdos eficientes <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 435</a>)</span>.<a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p>Si además se negocian las prestaciones de los parados o las indemnizaciones por despido, el sindicato puede asegurar a sus afiliados frente al riesgo de perder el empleo, y el empleo vuelve al nivel competitivo. Es el contrato fuertemente eficiente, que reconcilia la eficiencia productiva con la eficiencia en el sentido de Pareto <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 437-39</a>)</span>.<a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p>También importa el nivel en que se negocia. Calmfors y Driffill <span class="citation" data-cites="12_CalmforsDriffill1988">(<a href="01-tema-a1.html#ref-12_CalmforsDriffill1988" role="doc-biblioref">1988</a>)</span> encontraron una relación en forma de U invertida entre la centralización de la negociación y el paro: los resultados son mejores con una negociación muy centralizada, que tiene en cuenta sus efectos sobre el conjunto de la economía, o muy descentralizada, disciplinada por la competencia, y peores en los casos intermedios, como la negociación por sectores.<a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn34"><p>Este modelo es una de las explicaciones de la persistencia del paro y de la histéresis, que se estudian en el Tema 11 de la Parte B.<a href="#fnref34" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn35"><p>Si la empresa puede pagar salarios distintos a insiders y entrantes, el poder de los insiders genera más discriminación que paro: los entrantes cobran menos, pero el empleo total no cambia. El paro solo aparece cuando la empresa debe pagar a todos el mismo salario <span class="citation" data-cites="12_CahucEtAl2014">(<a href="01-tema-a1.html#ref-12_CahucEtAl2014" role="doc-biblioref">Cahuc et&nbsp;al. 2014, 443-45</a>)</span>.<a href="#fnref35" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn36"><p>La intuición es que un salario más alto puede hacer que el trabajador se esfuerce más, que no se marche a otra empresa o que se presenten mejores candidatos. Si esas ganancias compensan el mayor coste, a la empresa le conviene pagar más de lo necesario para contratar.<a href="#fnref36" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn37"><p>El paro de equilibrio que resulta cuando todas las empresas pagan salarios de eficiencia se obtiene en el Apéndice 12.A.7.<a href="#fnref37" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn38"><p>La teoría tiene un punto débil reconocido: si los trabajadores prefieren el empleo al paro, la empresa podría exigirles una fianza que perderían si se les sorprende escaqueándose, o cobrarles por el puesto, y el racionamiento desaparecería. Que esas prácticas apenas se observen es un enigma para el modelo <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 542</a>)</span>.<a href="#fnref38" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn39"><p>Los propios autores advierten de que la recesión de 1914 en Detroit pudo explicar parte de la caída de la rotación.<a href="#fnref39" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn40"><p>El supuesto es razonable ante perturbaciones específicas de la empresa, que sus propietarios pueden diversificar, pero no tanto ante las agregadas, que son precisamente las que la teoría quiere explicar <span class="citation" data-cites="12_Romer2019">(<a href="01-tema-a1.html#ref-12_Romer2019" role="doc-biblioref">Romer 2019, 544</a>)</span>.<a href="#fnref40" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn41"><p>Según la Seguridad Social, el máximo, de 3.608.148 trabajadores, se alcanzó en la primavera de 2020 (comparecencia del Secretario de Estado de la Seguridad Social en el Senado, mayo de 2021).<a href="#fnref41" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/microeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./11-tema-a11.html" class="pagination-link" aria-label="Teorías microeconómicas del mercado de trabajo (I)">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Teorías microeconómicas del mercado de trabajo (I)</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./13-tema-a13.html" class="pagination-link" aria-label="Economía de la información y teoría de la agencia">
+        <span class="nav-page-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Economía de la información y teoría de la agencia</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<div class="pie-sitio">
+<a class="pie-nombre" href="../index.html">Manuel Cabado García</a>
+<p class="pie-enlaces">
+<a href="../index.html">Inicio</a><span class="pie-sep">·</span><a href="../temario.html">Temario</a><span class="pie-sep">·</span><a href="../recursos.html">Recursos</a><span class="pie-sep">·</span><a href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">Sobre mí</a>
+</p>
+<p class="pie-creditos">
+© 2026<span class="pie-sep">·</span>Diplomado Comercial del Estado<span class="pie-sep">·</span>Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a>
+</p>
+</div>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>

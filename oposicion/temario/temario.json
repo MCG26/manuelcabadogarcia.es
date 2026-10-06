@@ -366,9 +366,9 @@
       {
        "codigo": "3.A.12",
        "titulo": "Teorías microeconómicas del mercado de trabajo (II). La curva de Beveridge, el modelo de búsqueda y emparejamiento y costes de ajuste. Mención a los modelos de negociación, salarios de eficiencia y contratos implícitos.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/microeconomia/12-tema-a12.html"
       },
       {
        "codigo": "3.A.13",
