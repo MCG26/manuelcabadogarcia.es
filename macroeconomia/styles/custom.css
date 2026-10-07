@@ -1,0 +1,184 @@
+/* CUSTOM.CSS - VERSIÓN FINAL DEFINITIVA
+   Estilos personalizados para web
+   ÚLTIMA ACTUALIZACIÓN: 03/05/2026 */
+
+/* ============================================================
+   TIPOGRAFÍA - Latin Modern Roman como en PDF
+   ============================================================ */
+
+/* Latin Modern Roman (la de los PDF de LyX): @font-face en estilos/comun.scss */
+
+body, h1, h2, h3, h4, h5, h6 {
+  font-family: "Latin Modern Roman", "Latin Modern", Georgia, serif;
+}
+
+/* ============================================================
+   FIGURAS Y CAPTIONS
+   ============================================================ */
+
+.quarto-float-caption {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+figure {
+  text-align: center;
+  margin: 20px auto;
+}
+
+figcaption {
+  text-align: center;
+  margin-top: 10px;
+  color: var(--tinta);
+}
+
+/* ============================================================
+   REFERENCIAS Y CITACIONES
+   ============================================================ */
+
+/* Forzar visibilidad de la bibliografía (Quarto la oculta si no hay citas inline) */
+#refs {
+  display: block !important;
+}
+
+/* Emojis en títulos de sección */
+img[src*="emojis"] {
+  height: 1em;
+  /* Apoyado en la linea de la letra y a la altura de las mayusculas
+     (con "middle" se centraba en las minusculas y quedaba mas bajo) */
+  vertical-align: -0.12em;
+}
+
+.citation {
+  font-weight: normal;
+  color: var(--purpura-texto);
+}
+
+a.citation {
+  text-decoration: underline;
+}
+
+/* Sin subrayado en crossref */
+a[href*="#fig-"],
+a[href*="#eq-"],
+a[href*="#tbl-"],
+a[href*="#sec-"] {
+  text-decoration: none !important;
+}
+
+/* ============================================================
+   PÁRRAFOS Y ESPACIADO
+   ============================================================ */
+
+p {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+  text-indent: 1.5em;
+}
+
+section p {
+  margin-bottom: 0.3rem;
+}
+
+/* ============================================================
+   SANGRÍA - Excepciones
+   ============================================================ */
+
+/* Sin sangría: primer párrafo después de headings */
+h1 + p,
+h2 + p,
+h3 + p,
+h4 + p,
+h5 + p,
+h6 + p {
+  text-indent: 0 !important;
+}
+
+/* Sin sangría: items de listas */
+li {
+  text-indent: 0 !important;
+}
+
+li > p:first-child {
+  text-indent: 0 !important;
+}
+
+/* Sin sangría: primer párrafo después de listas */
+ol + p,
+ul + p {
+  text-indent: 0 !important;
+}
+
+/* Sin sangría: párrafos que empiezan con strong (**Título** $\quad$) */
+p:has(> strong:first-child) {
+  text-indent: 0 !important;
+}
+
+/* ============================================================
+   HEADINGS - Peso normal y color tinta (estilo minimalista,
+   ver estilos/comun.scss)
+   ============================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: normal;
+  color: var(--tinta) !important;
+}
+
+/* ============================================================
+   CAPÍTULO - "TEMA X" como etiqueta pequeña encima del título
+   corto; el título oficial completo va debajo como subtítulo
+   ============================================================ */
+
+h1.title {
+  display: flex;
+  flex-direction: column;
+  font-size: 1.65rem;
+  line-height: 1.35;
+}
+
+h1.title .chapter-number {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: var(--purpura-texto);
+  margin-bottom: 0.6rem;
+}
+
+h1.title .chapter-number::before {
+  content: "TEMA ";
+}
+
+#title-block-header .subtitle {
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: var(--tinta);   /* antes gris piedra; Manuel, 2026-10-07 */
+  font-style: italic;
+  margin-top: 0.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+/* ============================================================
+   NUMERACIÓN DE SECCIONES - Negro, mismo tamaño, con punto
+   ============================================================ */
+
+h2 .header-section-number,
+h3 .header-section-number,
+h4 .header-section-number,
+h5 .header-section-number,
+h6 .header-section-number {
+  color: var(--tinta) !important;
+  font-weight: normal;
+  margin-right: 0.3em;
+  font-size: 1.2em;
+  font-family: "Latin Modern Roman", "Latin Modern", Georgia, serif;
+}
+
+h2 .header-section-number::after,
+h3 .header-section-number::after {
+  content: ".";
+}
+/* Separadores con patron seigaiha: es la Parte B (ver estilos/comun.scss) */
+body {
+  --patron: var(--patron-b);
+}

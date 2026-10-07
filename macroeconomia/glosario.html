@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es"><head>
+
+<meta charset="utf-8">
+<!-- cortina-prelanzamiento -->
+<meta name="robots" content="noindex, nofollow">
+<style id="cortina-estilo">
+html.cortina, html.cortina body { overflow: hidden !important; }
+html.cortina body > *:not(#cortina) { visibility: hidden !important; }
+#cortina { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column;
+  background: #f7f4ec; color: #2b2a28; font-family: "Latin Modern Roman", Georgia, serif;
+  touch-action: none; user-select: none; }
+#cortina .c-cabecera { background: #7a1f4b; color: #f7f4ec; text-align: center; padding: 2.4rem 1rem 1.9rem; }
+#cortina .c-nombre { font-size: clamp(1.7rem, 5vw, 2.4rem); letter-spacing: .02em; }
+#cortina .c-lema { font-style: italic; opacity: .85; margin-top: .5rem; }
+#cortina .c-cuerpo { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background-color: #f7f4ec; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='24'%3E%3Cg fill='%23f7f4ec' stroke='%237a1f4b' stroke-opacity='0.45' stroke-width='1'%3E%3Cg id='o'%3E%3Ccircle r='23' /%3E%3Ccircle r='17' /%3E%3Ccircle r='11' /%3E%3Ccircle r='5' /%3E%3C/g%3E%3Cuse href='%23o' x='24' y='12' /%3E%3Cuse href='%23o' x='0' y='24' /%3E%3Cuse href='%23o' x='48' y='24' /%3E%3C/g%3E%3C/svg%3E"); background-size: 48px 24px; }
+#cortina .c-caja { background: #f7f4ec; border: 1px solid #ddd6c6; padding: 2rem 2.6rem; text-align: center; max-width: 34rem; }
+#cortina .c-titulo { font-size: clamp(1.9rem, 6vw, 2.8rem); color: #7a1f4b; }
+#cortina .c-texto { color: #6f6b62; margin-top: .8rem; line-height: 1.5; }
+#cortina .c-pista { font-size: 2rem; color: #7a1f4b; letter-spacing: .4em; text-shadow: 0 0 6px #f7f4ec, 0 0 12px #f7f4ec; }
+@media (prefers-color-scheme: dark) {
+  #cortina, #cortina .c-cuerpo, #cortina .c-caja { background-color: #1e1d1b; color: #e6e0d2; }
+  #cortina .c-cuerpo { background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2748.00%27 height=%2724%27 viewBox=%270 0 48 24%27%3E%3Cdefs%3E%3Cfilter id=%27h%27 x=%270%27 y=%270%27 width=%27100%25%27 height=%27100%25%27%3E%3CfeGaussianBlur in=%27SourceGraphic%27 stdDeviation=%270.90%27 result=%27b%27/%3E%3CfeColorMatrix in=%27b%27 type=%27luminanceToAlpha%27 result=%27a%27/%3E%3CfeFlood flood-color=%27%233EE6A8%27 flood-opacity=%271%27 result=%27c%27/%3E%3CfeComposite in=%27c%27 in2=%27a%27 operator=%27in%27 result=%27g%27/%3E%3CfeMerge%3E%3CfeMergeNode in=%27SourceGraphic%27/%3E%3CfeMergeNode in=%27g%27/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%27url%28%23h%29%27%3E%3Cg fill=%27%231E1D1B%27 stroke=%27%23A6F7D2%27 stroke-opacity=%270.6%27 stroke-width=%271.00%27%3E%3Cg id=%27o%27%3E%3Ccircle r=%2723%27/%3E%3Ccircle r=%2717%27/%3E%3Ccircle r=%2711%27/%3E%3Ccircle r=%275%27/%3E%3C/g%3E%3Cuse href=%27%23o%27 x=%2724%27 y=%2712%27/%3E%3Cuse href=%27%23o%27 x=%270%27 y=%2724%27/%3E%3Cuse href=%27%23o%27 x=%2748%27 y=%2724%27/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  #cortina .c-caja { border-color: #3b3934; }
+  #cortina .c-pista { color: #3ee6a8; text-shadow: 0 0 10px rgba(62,230,168,.6), 0 0 4px #1e1d1b; }
+  #cortina .c-texto { color: #a39d90; }
+}
+</style>
+<script>
+(function () {
+  var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  var abierta = false;
+  try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
+  if (abierta) { return; }
+  document.documentElement.classList.add('cortina');
+  // SHA-256 propio (texto ASCII): crypto.subtle solo existe en paginas https, y la
+  // cortina tiene que funcionar tambien por http (p. ej. antes de tener el certificado)
+  function huella(ascii) {
+    function rot(v, n) { return (v >>> n) | (v << (32 - n)); }
+    var max = Math.pow(2, 32), res = '', palabras = [], bits = ascii.length * 8;
+    var h = [], k = [], n = 0, compuesto = {}, i, j;
+    for (var c = 2; n < 64; c++) {
+      if (!compuesto[c]) {
+        for (i = 0; i < 313; i += c) { compuesto[i] = c; }
+        h[n] = (Math.pow(c, 0.5) * max) | 0;
+        k[n++] = (Math.pow(c, 1 / 3) * max) | 0;
+      }
+    }
+    ascii += String.fromCharCode(128);
+    while (ascii.length % 64 - 56) { ascii += String.fromCharCode(0); }
+    for (i = 0; i < ascii.length; i++) { palabras[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8; }
+    palabras[palabras.length] = (bits / max) | 0;
+    palabras[palabras.length] = bits;
+    for (j = 0; j < palabras.length;) {
+      var w = palabras.slice(j, j += 16), viejo = h;
+      h = h.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2], a = h[0], e = h[4];
+        var t1 = h[7] + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & h[5]) ^ ((~e) & h[6])) + k[i] +
+          (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rot(w15, 7) ^ rot(w15, 18) ^ (w15 >>> 3)) + w[i - 7] +
+            (rot(w2, 17) ^ rot(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & h[1]) ^ (a & h[2]) ^ (h[1] & h[2]));
+        h = [(t1 + t2) | 0].concat(h);
+        h[4] = (h[4] + t1) | 0;
+      }
+      for (i = 0; i < 8; i++) { h[i] = (h[i] + viejo[i]) | 0; }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) { var b = (h[i] >> (j * 8)) & 255; res += (b < 16 ? '0' : '') + b.toString(16); }
+    }
+    return res;
+  }
+  var tituloReal = '';
+  function abrir() {
+    try { localStorage.setItem(CLAVE, H_TECLADO); } catch (e) {}
+    if (tituloReal) { document.title = tituloReal; }
+    document.documentElement.classList.remove('cortina');
+    var c = document.getElementById('cortina'); if (c) { c.remove(); }
+  }
+  function comprobar(texto, esperada) {
+    if (huella(texto) === esperada) { abrir(); }
+  }
+  function pista(n) {
+    var p = document.querySelector('#cortina .c-pista');
+    if (p) { p.textContent = '·'.repeat(n); }
+  }
+  // Teclado: varias teclas pulsadas a la vez
+  var pulsadas = {}, N_TECLAS = 4;
+  function nombre(e) { return e.key.length === 1 ? e.key.toLowerCase() : e.key; }
+  document.addEventListener('keydown', function (e) {
+    if (!document.getElementById('cortina')) { return; }
+    var k = nombre(e);
+    if (/^Arrow|^Enter$/.test(k)) { e.preventDefault(); }
+    pulsadas[k] = true;
+    var lista = Object.keys(pulsadas).sort();
+    pista(Math.min(lista.length, N_TECLAS));
+    if (lista.length === N_TECLAS) { comprobar(lista.join('+'), H_TECLADO); }
+  });
+  document.addEventListener('keyup', function (e) { delete pulsadas[nombre(e)]; pista(Object.keys(pulsadas).length); });
+  window.addEventListener('blur', function () { pulsadas = {}; pista(0); });
+  // Movil: gestos seguidos (deslizar, tocar en el centro, mantener pulsado)
+  var gestos = [], N_GESTOS = 4, x0 = null, y0 = null, t0 = 0;
+  document.addEventListener('touchstart', function (e) {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (x0 === null || !document.getElementById('cortina')) { return; }
+    var x = e.changedTouches[0].clientX, y = e.changedTouches[0].clientY;
+    var dx = x - x0, dy = y - y0, dt = Date.now() - t0, g; x0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 30) {
+      g = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'derecha' : 'izquierda') : (dy > 0 ? 'abajo' : 'arriba');
+    } else if (dt >= 700) {
+      g = 'dentro';
+    } else if (Math.abs(x - innerWidth / 2) < innerWidth * 0.2 && Math.abs(y - innerHeight / 2) < innerHeight * 0.2) {
+      g = 'centro';
+    } else {
+      g = 'toque';
+    }
+    gestos.push(g); if (gestos.length > N_GESTOS) { gestos.shift(); }
+    pista(gestos.length);
+    if (gestos.length === N_GESTOS) { comprobar(gestos.join(','), H_MOVIL); }
+  }, { passive: true });
+  document.addEventListener('DOMContentLoaded', function () {
+    var c = document.createElement('div');
+    c.id = 'cortina';
+    // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
+    // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
+    c.innerHTML = '<div class="c-cuerpo"><div class="c-pista" aria-hidden="true"></div></div>';
+    tituloReal = document.title;
+    document.title = 'Próximamente';
+    document.body.appendChild(c);
+  });
+})();
+</script>
+<!-- /cortina-prelanzamiento -->
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Manuel Cabado García">
+<meta name="description" content="Glosario de 79 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+
+<title>Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./22-tema-b22-pendiente.html" rel="prev">
+<link href="./favicon.svg" rel="icon" type="image/svg+xml">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-dark-d0ae9245876894da5ac7e18953ecc5cc.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-b414c83e96cb79a7c63742f74b890562.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-2d33edbdffab11fc14504c433ba92e55.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-b414c83e96cb79a7c63742f74b890562.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No se han encontrado resultados",
+    "search-matching-documents-text": "documentos encontrados",
+    "search-copy-link-title": "Copiar el enlace en la búsqueda",
+    "search-hide-matches-text": "Ocultar resultados adicionales",
+    "search-more-match-text": "resultado adicional en este documento",
+    "search-more-matches-text": "resultados adicionales en este documento",
+    "search-clear-button-title": "Borrar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Buscar"
+  }
+}</script>
+<style>html{ scroll-behavior: smooth; }</style>
+<!-- Favicon (sello MCG): PNG/ICO para navegadores sin SVG y icono del movil.
+     El SVG principal lo declara Quarto con la opcion "favicon". -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<!-- Letra Latin Modern: se pide lo primero de todo para que el nombre y las
+     pestanas no salgan un instante con otra letra al cambiar de pagina -->
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-regular.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
+<link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
+
+
+<link rel="stylesheet" href="styles/custom.css">
+<meta property="og:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
+<meta property="og:description" content="Glosario de 79 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta property="og:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
+<meta property="og:site_name" content="Macroeconomía y Economía Internacional">
+<meta property="og:locale" content="es_ES">
+<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="1200">
+<meta name="twitter:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
+<meta name="twitter:description" content="Glosario de 79 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta name="twitter:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image-height" content="630">
+<meta name="twitter:image-width" content="1200">
+</head>
+
+<body class="nav-sidebar docked nav-fixed fullcontent quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Macroeconomía y Economía Internacional</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Buscar"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Navegación de palanca" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="./../index.html"> 
+<span class="menu-text">Inicio</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../temario.html"> 
+<span class="menu-text">Temario</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./../recursos.html"> 
+<span class="menu-text">Recursos</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/"> 
+<span class="menu-text">Sobre mí</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Alternar modo oscuro"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./glosario.html">Glosario</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Prefacio</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01-tema-b1-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Magnitudes macroeconómicas y contabilidad nacional.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02-tema-b2-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">El modelo de oferta y demanda agregada.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03-tema-b3.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Teorías de la demanda de consumo.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04-tema-b4-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Teorías de la demanda de inversión.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-tema-b5-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Teorías de la demanda de dinero</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06-tema-b6-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Política monetaria: diseño e instrumentación.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07-tema-b7-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Política monetaria: los mecanismos de transmisión.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./08-tema-b8-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">La política fiscal.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./09-tema-b9-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Déficit público: financiación, dinámica y sostenibilidad.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10-tema-b10-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Inflación: eficiencia y bienestar.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./11-tema-b11-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Análisis macroeconómico del mercado de trabajo.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./12-tema-b12-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Teorías de los ciclos económicos.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./13-tema-b13-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Teorías del crecimiento económico.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./14-tema-b14-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Teoría tradicional del Comercio Internacional.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./15-tema-b15-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Nuevos desarrollos de la teoría del Comercio Internacional.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./16-tema-b16-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Política comercial: barreras arancelarias y no arancelarias.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./17-tema-b17-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">La política comercial estratégica.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./18-tema-b18-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">18</span>&nbsp; <span class="chapter-title">Teorías de la integración económica.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./19-tema-b19-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">19</span>&nbsp; <span class="chapter-title">Balanza de Pagos: concepto, medición e interpretación.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./20-tema-b20-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">20</span>&nbsp; <span class="chapter-title">Mecanismos de ajuste de la Balanza de Pagos.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./21-tema-b21-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">21</span>&nbsp; <span class="chapter-title">El mercado de divisas.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22-tema-b22-pendiente.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Teorías de la integración monetaria.</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glosario.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Glosario</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<!-- Franja de cabecera comun a la web y a los libros (como la web de Victor):
+
+     nombre grande arriba y, debajo, la barra de pestanas de Quarto.
+
+     Quarto inserta este bloque dentro del contenido; el script lo sube
+
+     encima de la barra (#quarto-header) antes de que se pinte la pagina. -->
+
+<div class="cabecera-sitio">
+
+  <a class="cabecera-nombre" href="./">Manuel Cabado García</a>
+
+  <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
+
+</div>
+
+<script>
+
+  // El modo lectura de Quarto se quito (2026-10-04), pero los navegadores que lo
+
+  // activaron guardan "quarto-reader-mode" y Quarto lo seguiria aplicando (indices
+
+  // escondidos y recuadros flotantes encima de la cabecera). Se borra antes de que
+
+  // Quarto lo lea (su quarto.js es un modulo diferido, va despues de esto).
+
+  try { localStorage.removeItem('quarto-reader-mode'); } catch (e) {}
+
+
+
+  (function () {
+
+    var cabecera = document.currentScript.previousElementSibling;
+
+    var barra = document.getElementById('quarto-header');
+
+    if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+  })();
+
+
+
+  // Enlaces a otras webs (LinkedIn de "Sobre mi", BOE...) en pestana nueva, tambien
+
+  // los de la barra y el pie, que Quarto no trata con link-external-newwindow
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('a[href^="http"]').forEach(function (a) {
+
+      if (a.hostname && a.hostname !== window.location.hostname) {
+
+        a.setAttribute('target', '_blank');
+
+        a.setAttribute('rel', 'noopener');
+
+      }
+
+    });
+
+  });
+
+
+
+  // Anochecer y amanecer lentos: el cambio dia/noche de Quarto se hace dentro de
+
+  // una "view transition", que funde la pagina vieja con la nueva (duracion en
+
+  // comun.scss). Sin soporte en el navegador, o con movimiento reducido, cambia al momento.
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cambiar = window.quartoToggleColorScheme;
+
+    if (!cambiar || !document.startViewTransition ||
+
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) { return; }
+
+    window.quartoToggleColorScheme = function () {
+
+      // .transicion-lenta: el dia/noche dura 1,8 s (la navegacion entre paginas, 0,3 s)
+
+      var raiz = document.documentElement;
+
+      raiz.classList.add('transicion-lenta');
+
+      var t = document.startViewTransition(function () { cambiar(); });
+
+      t.finished.finally(function () { raiz.classList.remove('transicion-lenta'); });
+
+    };
+
+  });
+
+
+
+  // Reloj de arena + tiempo (1', 7'...) siempre juntos: sin esto el navegador puede
+
+  // partir la linea entre la imagen y el texto y el tiempo queda colgando solo
+
+  // (pasaba en el indice "En esta pagina")
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    document.querySelectorAll('.tiempo').forEach(function (t) {
+
+      var reloj = t.previousElementSibling;
+
+      if (!reloj || !reloj.querySelector('img[src*="emojis"]') || t.parentNode.classList.contains('reloj-tiempo')) { return; }
+
+      var junto = document.createElement('span');
+
+      junto.className = 'reloj-tiempo';
+
+      t.parentNode.insertBefore(junto, reloj);
+
+      junto.appendChild(reloj);
+
+      junto.appendChild(t);
+
+    });
+
+  });
+
+
+
+  // Barra de progreso de lectura: linea fina bajo las pestanas que avanza hasta
+
+  // el final del texto (sin contar el pie). Solo en paginas largas (temas, glosario).
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var cabecera = document.getElementById('quarto-header');
+
+    var texto = document.querySelector('main');
+
+    if (!cabecera || !texto) { return; }
+
+    var barra = document.createElement('div');
+
+    barra.id = 'progreso-lectura';
+
+    barra.setAttribute('aria-hidden', 'true');
+
+    cabecera.appendChild(barra);
+
+    var pendiente = false;
+
+    function medir() {
+
+      pendiente = false;
+
+      var fin = texto.getBoundingClientRect().bottom + window.scrollY - window.innerHeight;
+
+      if (fin < window.innerHeight) {            // pagina corta: no hace falta
+
+        barra.style.display = 'none';
+
+        return;
+
+      }
+
+      barra.style.display = '';
+
+      var avance = Math.min(1, Math.max(0, window.scrollY / fin));
+
+      barra.style.transform = 'scaleX(' + avance + ')';
+
+    }
+
+    function pedir() {
+
+      if (!pendiente) { pendiente = true; window.requestAnimationFrame(medir); }
+
+    }
+
+    window.addEventListener('scroll', pedir, { passive: true });
+
+    window.addEventListener('resize', pedir);
+
+    window.addEventListener('load', pedir);   // las formulas y figuras cambian la altura
+
+    medir();
+
+  });
+
+</script>
+
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Glosario</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- generado por construir_web.py a partir del glosario de LyX: no editar a mano -->
+<div class="glosario-herramientas">
+  <input type="search" id="glosario-buscar" placeholder="Buscar entre los 79 términos…" aria-label="Buscar en el glosario" autocomplete="off">
+  <p class="glosario-cuenta" id="glosario-cuenta">79 términos</p>
+  <nav class="glosario-abecedario" aria-label="Letras"><a href="#letra-a">A</a> <a href="#letra-b">B</a> <a href="#letra-c">C</a> <a href="#letra-d">D</a> <a href="#letra-e">E</a> <a href="#letra-f">F</a> <a href="#letra-h">H</a> <a href="#letra-i">I</a> <a href="#letra-l">L</a> <a href="#letra-m">M</a> <a href="#letra-n">N</a> <a href="#letra-p">P</a> <a href="#letra-q">Q</a> <a href="#letra-r">R</a> <a href="#letra-s">S</a> <a href="#letra-t">T</a> <a href="#letra-v">V</a></nav>
+</div>
+<div class="glosario">
+<section id="letra-a" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-a">A</h2>
+<div id="g-agregados-monetarios" class="glosario-termino">
+<p><strong>Agregados monetarios</strong> Medidas de la cantidad de dinero que agrupan activos según su grado de liquidez. M1 es el más estricto, con rendimiento nominal nulo o muy bajo, y M3 es un agregado más amplio, que incluye otros activos líquidos y es el que sigue el BCE. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-ahorro-precautorio" class="glosario-termino">
+<p><strong>Ahorro precautorio</strong> Ahorro que se hace por si vienen mal dadas. Técnicamente, es el ahorro adicional que genera la incertidumbre sobre la renta futura, reforzado por la posibilidad de restricciones de liquidez, y hace que la senda de consumo sea creciente aunque el tipo de interés iguale la tasa de descuento. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Exceso de suavidad">Tema 3</a></p>
+</div>
+<div id="g-aversion-al-riesgo" class="glosario-termino">
+<p><strong>Aversión al riesgo</strong> Preferencia por un resultado seguro frente a una apuesta incierta con el mismo rendimiento esperado. En el modelo de cartera se traduce en curvas de indiferencia convexas entre rendimiento y riesgo. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-b" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-b">B</h2>
+<div id="g-bien-duradero" class="glosario-termino">
+<p><strong>Bien duradero</strong> Bien que se usa durante años, como un coche o una lavadora. Técnicamente, proporciona servicios de consumo durante un largo período, generalmente más de tres años, por lo que su compra se asemeja a una inversión y su gasto es mucho más volátil que el de los bienes no duraderos. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.9">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-c" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-c">C</h2>
+<div id="g-condicion-de-no-juego-de-ponzi" class="glosario-termino">
+<p><strong>Condición de no juego de Ponzi</strong> Restricción que impide endeudarse indefinidamente para pagar las deudas anteriores. Técnicamente, exige que el valor actual de la deuda de un agente no sea positivo en el límite cuando el horizonte tiende a infinito, de modo que se cumpla su restricción presupuestaria intertemporal. Es una condición de viabilidad, que imponen los prestamistas, mientras que la de transversalidad es de optimalidad, porque el propio agente no quiere dejar riqueza sin consumir. Juntas implican que el valor actual de los activos en el límite es exactamente cero. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
+</div>
+<div id="g-condicion-de-transversalidad" class="glosario-termino">
+<p><strong>Condición de transversalidad</strong> Condición que exige que, al final del horizonte de planificación, no quede riqueza de valor sin aprovechar. Técnicamente, en un problema de optimización dinámica de horizonte infinito, es la condición de optimalidad que obliga a que el valor actual de los activos o del capital, valorado a su precio sombra, tienda a cero cuando el tiempo tiende a infinito. Descarta así las sendas explosivas, que se alejan cada vez más del estado estacionario, como las que acumulan riqueza o capital sin consumirlos nunca, y, junto con la ecuación de Euler y la condición de no juego de Ponzi, selecciona la única senda estable. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
+</div>
+<div id="g-constante-de-cambridge" class="glosario-termino">
+<p><strong>Constante de Cambridge</strong> Fracción de su renta nominal que las personas desean tener en forma de dinero. Técnicamente, es el parámetro de proporcionalidad entre la demanda de dinero y la renta nominal, y es el inverso de la velocidad de circulación respecto a la renta. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-contabilidad-mental" class="glosario-termino">
+<p><strong>Contabilidad mental</strong> Costumbre de repartir el dinero en cuentas mentales separadas, como la de las vacaciones o la de la hipoteca. Técnicamente, según Thaler, los agentes evalúan cada decisión por su efecto sobre una cuenta concreta y no sobre el conjunto de sus activos. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Exceso de sensibilidad">Tema 3</a></p>
+</div>
+<div id="g-costes-de-corretaje" class="glosario-termino">
+<p><strong>Costes de corretaje</strong> Lo que cuesta cada vez que hay que convertir bonos en dinero. Técnicamente, son los costes fijos de esa conversión, que crecen con el número de operaciones y por eso reducen la conveniencia de mantener pocos saldos. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-cota-inferior-efectiva-del-tipo-de-interes" class="glosario-termino">
+<p><strong>Cota inferior efectiva del tipo de interés</strong> Nivel por debajo del cual el banco central ya no puede bajar los tipos sin que la gente se refugie en el efectivo. Técnicamente, existe porque el efectivo ofrece un rendimiento nominal nulo, aunque no coincide exactamente con cero y los tipos pueden ser algo negativos. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-d" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-d">D</h2>
+<div id="g-datos-de-corte-transversal" class="glosario-termino">
+<p><strong>Datos de corte transversal</strong> Datos que fotografían a muchos individuos en un mismo momento. Técnicamente, recogen una o varias características de distintos individuos, hogares o empresas en una fecha determinada, suelen proceder de una muestra aleatoria de una población, como una encuesta, y el orden de las observaciones no importa. También se llaman de sección cruzada. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.1. Datos en econometría">Tema 3</a></p>
+</div>
+<div id="g-datos-de-panel" class="glosario-termino">
+<p><strong>Datos de panel</strong> Datos que siguen a los mismos individuos a lo largo del tiempo. Técnicamente, combinan corte transversal y series temporales, porque observan las mismas unidades en varios períodos, lo que permite controlar sus características individuales, aunque son caros y sufren desgaste muestral, es decir, la pérdida de individuos con el tiempo. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.1. Datos en econometría">Tema 3</a></p>
+</div>
+<div id="g-demanda-de-dinero" class="glosario-termino">
+<p><strong>Demanda de dinero</strong> Cantidad de dinero que los agentes desean mantener en lugar de otros activos que rinden más. Técnicamente, es la cantidad de saldos, nominales o reales, que se desea tener en función de variables como la renta, el tipo de interés o la riqueza. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-descuento-cuasi-hiperbolico" class="glosario-termino">
+<p><strong>Descuento cuasi-hiperbólico</strong> Forma de valorar el futuro en la que se es muy impaciente con lo inmediato y paciente con lo lejano. Técnicamente, propuesto por Laibson, multiplica toda la utilidad futura por un factor menor que 1, el sesgo hacia el presente, además del descuento exponencial de cada período. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
+</div>
+<div id="g-dicotomia-clasica" class="glosario-termino">
+<p><strong>Dicotomía clásica</strong> Separación entre lo que ocurre con las cantidades reales y lo que ocurre con los precios. Técnicamente, las variables reales se determinan sin intervención de las nominales, que solo fijan el nivel de precios. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-dinero-electronico" class="glosario-termino">
+<p><strong>Dinero electrónico</strong> Dinero que existe solo como anotación contable y se paga mediante transferencias de fondos, por ejemplo con tarjeta o aplicación. Técnicamente, es dinero porque la sociedad le reconoce el valor nominal y es suficientemente líquido como medio de cambio. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-dinero-en-la-funcion-de-utilidad-miu" class="glosario-termino">
+<p><strong>Dinero en la función de utilidad (MIU)</strong> Modelo que supone que tener dinero da satisfacción directa a quien lo posee. Técnicamente, los saldos reales entran junto al consumo en la función de utilidad del agente, y su demanda depende positivamente del consumo y negativamente del tipo de interés nominal. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-doble-coincidencia-de-deseos" class="glosario-termino">
+<p><strong>Doble coincidencia de deseos</strong> Dificultad del trueque, que exige encontrar a alguien que tenga lo que uno quiere y quiera a la vez lo que uno ofrece. El dinero la resuelve al servir de medio de cambio aceptado por todos. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-e" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-e">E</h2>
+<div id="g-economias-de-escala-en-la-tenencia-de-dinero" class="glosario-termino">
+<p><strong>Economías de escala en la tenencia de dinero</strong> Los saldos de dinero necesarios crecen menos que las operaciones que hay que pagar. Técnicamente, equivale a una elasticidad-renta de la demanda de dinero menor que uno, como la de 1/2 del modelo de inventarios. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-ecuacion-cuantitativa-del-dinero" class="glosario-termino">
+<p><strong>Ecuación cuantitativa del dinero</strong> Identidad según la cual lo que se paga en una economía es igual a lo que se compra. Técnicamente, la cantidad de dinero por su velocidad de circulación es igual al nivel de precios por el número de transacciones, y se convierte en teoría al suponer que la velocidad y las transacciones son constantes. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-ecuacion-de-euler" class="glosario-termino">
+<p><strong>Ecuación de Euler</strong> Regla para repartir el consumo entre hoy y mañana: consumir un euro más hoy debe compensar lo mismo que ahorrarlo y consumir mañana lo que rinda. Técnicamente, es la condición de primer orden del problema intertemporal del consumidor, y determina si la senda de consumo es creciente, constante o decreciente según el tipo de interés sea mayor, igual o menor que la tasa de descuento. <a href="03-tema-b3.html" class="glosario-tema" title="Teorías de la renta normal > Modelo de la renta normal">Tema 3</a></p>
+</div>
+<div id="g-efecto-demostracion" class="glosario-termino">
+<p><strong>Efecto demostración</strong> Tendencia a gastar para no quedarse atrás respecto de los vecinos. Técnicamente, los hogares de renta baja tienen una propensión media a consumir mayor porque tratan de emular el consumo de los de renta más alta, lo que explica la propensión media decreciente en los datos de sección cruzada. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
+</div>
+<div id="g-efecto-trinquete-consumo" class="glosario-termino">
+<p><strong>Efecto trinquete (consumo)</strong> Resistencia de los hogares a recortar su consumo cuando baja la renta. Técnicamente, el consumo depende del nivel más alto alcanzado en el pasado, de modo que ante una caída de la renta se reduce el ahorro y no el consumo, y la propensión media a consumir aumenta a corto plazo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
+</div>
+<div id="g-efectos-sustitucion-y-renta-del-tipo-de-interes-demanda-de-dinero" class="glosario-termino">
+<p><strong>Efectos sustitución y renta del tipo de interés (demanda de dinero)</strong> Dos fuerzas que mueven a la vez la tenencia de dinero cuando cambia el tipo de interés. El efecto sustitución reduce el dinero porque mantenerlo sale más caro, y el efecto renta lo reduce o lo aumenta según el agente sea deudor o acreedor, porque su riqueza baja o sube. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-enigma-del-consumo" class="glosario-termino">
+<p><strong>Enigma del consumo</strong> Contradicción entre lo que muestran los datos de consumo a corto y a largo plazo. Técnicamente, es el hallazgo de Kuznets de que en series largas la propensión media a consumir se mantiene estable e igual a la marginal, mientras que en datos de sección cruzada y en series cortas decrece con la renta, como predecía Keynes. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes > Evidencia empírica">Tema 3</a></p>
+</div>
+<div id="g-equivalencia-ricardiana" class="glosario-termino">
+<p><strong>Equivalencia ricardiana</strong> Idea de que da igual que el Estado se financie con impuestos o con deuda, porque los hogares ahorran hoy para pagar los impuestos de mañana. Técnicamente, dado el gasto público, una rebaja de impuestos financiada con deuda no altera el consumo, ya que los hogares, unidos a sus descendientes por un legado voluntario, no consideran la deuda riqueza neta. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Implicaciones de política económica">Tema 3</a></p>
+</div>
+<div id="g-esquema-de-ponzi" class="glosario-termino">
+<p><strong>Esquema de Ponzi</strong> Forma de financiarse que paga las deudas antiguas con deuda nueva, de modo que la deuda nunca llega a devolverse. Técnicamente, es una senda en la que un agente, un banco o un Estado refinancia indefinidamente su deuda y sus intereses, de forma que el valor actual de su deuda no tiende a cero. Debe su nombre a Charles Ponzi, que en los años veinte pagaba a los primeros inversores con el dinero de los nuevos, y Minsky llama financiación Ponzi a la de quien necesita endeudarse más incluso para pagar los intereses. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
+</div>
+<div id="g-estancamiento-secular" class="glosario-termino">
+<p><strong>Estancamiento secular</strong> Situación en la que una economía crece poco durante muchos años, no por un bache pasajero. Técnicamente, es un período prolongado de crecimiento bajo que abarca varios ciclos y que, en su versión de demanda, se debe a que el ahorro deseado de pleno empleo supera a la inversión y el tipo de interés real que los igualaría es inalcanzable. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.4">Tema 3</a></p>
+</div>
+<div id="g-exceso-de-sensibilidad" class="glosario-termino">
+<p><strong>Exceso de sensibilidad</strong> Reacción del consumo a cambios de la renta que ya se conocían de antemano. Técnicamente, es una respuesta del consumo a las variaciones previsibles de la renta mayor que la que predicen la renta permanente y el paseo aleatorio de Hall, que la cifran en cero. <a href="03-tema-b3.html" class="glosario-tema" title="Consumo e incertidumbre > Críticas; Desarrollos recientes">Tema 3</a></p>
+</div>
+<div id="g-exceso-de-suavidad" class="glosario-termino">
+<p><strong>Exceso de suavidad</strong> Reacción del consumo menor de la esperada ante sorpresas en la renta. Técnicamente, es una respuesta del consumo a las variaciones inesperadas de la renta inferior a la que predice la renta permanente, sobre todo cuando las perturbaciones de la renta son persistentes. <a href="03-tema-b3.html" class="glosario-tema" title="Consumo e incertidumbre > Críticas; Desarrollos recientes">Tema 3</a></p>
+</div>
+<div id="g-expectativas-adaptativas" class="glosario-termino">
+<p><strong>Expectativas adaptativas</strong> Forma de prever el futuro corrigiendo poco a poco la previsión anterior según el error cometido. Técnicamente, cada previsión se ajusta en una fracción, entre 0 y 1, de la diferencia entre el valor observado y el previsto, y Friedman la usó para que los hogares estimaran su renta permanente a partir de sus rentas pasadas. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente > Modelo">Tema 3</a></p>
+</div>
+<div id="g-expectativas-racionales" class="glosario-termino">
+<p><strong>Expectativas racionales</strong> Forma de prever el futuro usando toda la información disponible sin equivocarse de forma sistemática. Técnicamente, la expectativa coincide con la esperanza matemática de la variable condicionada a la información disponible, de modo que los errores de previsión son puramente aleatorios. <a href="03-tema-b3.html" class="glosario-tema" title="Consumo e incertidumbre: la teoría del paseo aleatorio">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-f" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-f">F</h2>
+<div id="g-funcion-de-consumo" class="glosario-termino">
+<p><strong>Función de consumo</strong> Relación que indica cuánto gastan los hogares según la renta de que disponen. Técnicamente, expresa el consumo agregado en función de la renta disponible, y en la versión keynesiana lineal es la suma de un consumo autónomo y de una fracción constante de esa renta, la propensión marginal a consumir. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-h" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-h">H</h2>
+<div id="g-hogar-hand-to-mouth" class="glosario-termino">
+<p><strong>Hogar hand-to-mouth</strong> Hogar que gasta en cada período lo que ingresa, sin colchón de ahorro disponible. Técnicamente, consume toda su renta corriente, por lo que no sigue la renta permanente (hogar no ricardiano), y en su versión pobre carece de riqueza de cualquier clase. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
+</div>
+<div id="g-hogar-hand-to-mouth-acomodado" class="glosario-termino">
+<p><strong>Hogar hand-to-mouth acomodado</strong> Hogar con patrimonio, como una vivienda o un plan de pensiones, pero casi sin dinero disponible, que por eso gasta lo que ingresa. Técnicamente, posee riqueza ilíquida y poca liquidez, y no suaviza su consumo porque acceder a esa riqueza le exigiría pagar costes de transacción o endeudarse caro, de modo que su propensión marginal a consumir es alta. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-i" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-i">I</h2>
+<div id="g-impuesto-inflacionario" class="glosario-termino">
+<p><strong>Impuesto inflacionario</strong> Pérdida de poder adquisitivo que la inflación impone a quien mantiene dinero. Técnicamente, es el producto de la tasa de inflación por los saldos reales, y es el ingreso que obtiene el Estado al emitir dinero. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-inconsistencia-dinamica-de-las-preferencias" class="glosario-termino">
+<p><strong>Inconsistencia dinámica de las preferencias</strong> Cambio de planes que se produce solo porque pasa el tiempo, como quien decide ahorrar a partir del mes que viene y, llegado el mes, lo vuelve a aplazar. Técnicamente, ocurre cuando el plan óptimo trazado hoy deja de serlo en el futuro sin que llegue información nueva, y genera problemas de autocontrol. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-l" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-l">L</h2>
+<div id="g-ley-de-say" class="glosario-termino">
+<p><strong>Ley de Say</strong> Principio clásico según el cual la oferta crea su propia demanda. Técnicamente, si el dinero no se atesora y el tipo de interés es flexible, todo lo que no se consume se invierte, y la demanda agregada nunca resulta insuficiente. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-m" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-m">M</h2>
+<div id="g-modelo-de-busqueda" class="glosario-termino">
+<p><strong>Modelo de búsqueda</strong> Modelo en el que el dinero existe porque facilita encontrar con quién intercambiar. Técnicamente, el dinero se demanda si aumenta la probabilidad de emparejamiento frente al trueque, y puede haber equilibrios con dinero, sin dinero o mixtos. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-cagan" class="glosario-termino">
+<p><strong>Modelo de Cagan</strong> Modelo de las hiperinflaciones en el que los saldos reales caen cuando se espera más inflación. Técnicamente, con una semielasticidad constante de la demanda a la inflación esperada, el señoreaje tiene un máximo, y si el déficit financiado con dinero lo supera la inflación se acelera. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-cartera" class="glosario-termino">
+<p><strong>Modelo de cartera</strong> Modelo que explica el dinero como la parte segura de una cartera de la que se quiere vivir con poco riesgo. Técnicamente, el agente maximiza una utilidad creciente en el rendimiento y decreciente en el riesgo al repartir su riqueza entre dinero sin riesgo y bonos con riesgo. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-cash-in-advance-cia" class="glosario-termino">
+<p><strong>Modelo de cash in advance (CIA)</strong> Modelo en el que hay que tener el dinero antes de poder comprar. Técnicamente, introduce una restricción de liquidez por la que el consumo no puede superar los saldos monetarios, de modo que la demanda de dinero es igual al valor nominal del consumo. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-costes-de-ruptura" class="glosario-termino">
+<p><strong>Modelo de costes de ruptura</strong> Modelo en el que el agente no sabe cuándo cobrará ni cuándo pagará y mantiene efectivo para no tener que vender bonos de urgencia. Técnicamente, los saldos de precaución son óptimos cuando el ahorro marginal en costes de corretaje iguala al coste de oportunidad de mantenerlos. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-generaciones-solapadas" class="glosario-termino">
+<p><strong>Modelo de generaciones solapadas</strong> Modelo en el que conviven jóvenes que trabajan y mayores que ya no lo hacen, y el dinero sirve para trasladar renta del primer periodo de la vida al segundo. Técnicamente, los agentes viven dos periodos y solo ahorran en dinero si este no pierde valor más deprisa que el capital. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-inventarios" class="glosario-termino">
+<p><strong>Modelo de inventarios</strong> Modelo que trata el dinero como una existencia que se repone, igual que las mercancías de un almacén. Técnicamente, el agente elige cuántas veces convertir bonos en dinero para minimizar la suma de los costes de corretaje y del coste de oportunidad de los saldos medios, y obtiene una demanda proporcional a la raíz cuadrada de la renta. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-modelo-de-tiempo-de-compra" class="glosario-termino">
+<p><strong>Modelo de tiempo de compra</strong> Modelo en el que el dinero se demanda porque ahorra tiempo al comprar, tiempo que se puede dedicar al ocio. Técnicamente, una tecnología de compra relaciona el tiempo dedicado a comprar con los saldos reales, y el dinero es un bien intermedio. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-moneda-digital-de-banco-central-cbdc" class="glosario-termino">
+<p><strong>Moneda digital de banco central (CBDC)</strong> Dinero del banco central en formato electrónico, es decir, una versión digital del efectivo. El euro digital es el proyecto del BCE, y el riesgo para la demanda de dinero es que sustituya a los depósitos bancarios. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-motivo-especulacion" class="glosario-termino">
+<p><strong>Motivo especulación</strong> Razón para tener dinero a mano a la espera de una oportunidad mejor para comprar bonos. Técnicamente, es la demanda de dinero como depósito de valor que depende negativamente del tipo de interés y de las expectativas sobre su evolución. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-motivo-precaucion" class="glosario-termino">
+<p><strong>Motivo precaución</strong> Razón para tener dinero a mano por si surge un imprevisto. Técnicamente, es la demanda de dinero para afrontar pagos inesperados, que depende positivamente de la renta y negativamente del tipo de interés. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-motivo-transaccion" class="glosario-termino">
+<p><strong>Motivo transacción</strong> Razón para tener dinero a mano porque los cobros y los pagos no coinciden en el tiempo. Técnicamente, es la demanda de dinero para hacer frente a los gastos corrientes, que depende positivamente de la renta. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-n" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-n">N</h2>
+<div id="g-neutralidad-del-dinero" class="glosario-termino">
+<p><strong>Neutralidad del dinero</strong> El dinero actúa solo como un velo que cambia los precios y deja intacta la economía real. Técnicamente, las variaciones de la cantidad de dinero no afectan a las variables reales, como la producción o el empleo. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-nueva-teoria-cuantitativa-del-dinero" class="glosario-termino">
+<p><strong>Nueva teoría cuantitativa del dinero</strong> Reformulación de Friedman que trata el dinero como un activo más y hace depender su demanda de la riqueza, medida por la renta permanente, y de la rentabilidad de los demás activos. Técnicamente, la demanda es proporcional a la renta permanente y mucho menos sensible al tipo de interés que en Keynes, por lo que es estable. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-p" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-p">P</h2>
+<div id="g-paradoja-de-deaton" class="glosario-termino">
+<p><strong>Paradoja de Deaton</strong> Observación de que el consumo agregado es más suave de lo que la teoría predice. Técnicamente, si las variaciones de la renta son persistentes, cada sorpresa eleva la renta permanente más que la corriente y el consumo debería ser más volátil que la renta, al contrario de lo observado. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.8">Tema 3</a></p>
+</div>
+<div id="g-paseo-aleatorio" class="glosario-termino">
+<p><strong>Paseo aleatorio</strong> Trayectoria en la que el mejor pronóstico del valor de mañana es el valor de hoy, porque los cambios no se pueden prever. Técnicamente, para Hall el consumo de cada período es el del anterior más una perturbación impredecible que recoge la información nueva, de modo que las perturbaciones tienen efectos permanentes y no hay reversión a la media. <a href="03-tema-b3.html" class="glosario-tema" title="Consumo e incertidumbre > Modelo">Tema 3</a></p>
+</div>
+<div id="g-preferencia-por-la-liquidez" class="glosario-termino">
+<p><strong>Preferencia por la liquidez</strong> Deseo de conservar la riqueza en forma de dinero, que se puede gastar de inmediato, en lugar de en activos que rinden pero son menos líquidos. Técnicamente, en Keynes el tipo de interés es el precio que compensa renunciar a esa liquidez y se determina en el mercado monetario. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-propension-marginal-a-consumir" class="glosario-termino">
+<p><strong>Propensión marginal a consumir</strong> Parte de cada euro adicional de renta que se destina a consumo. Técnicamente, es la variación del consumo ante un aumento unitario de la renta disponible, es decir, la pendiente de la función de consumo, que Keynes situó entre 0 y 1. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
+</div>
+<div id="g-propension-media-a-consumir" class="glosario-termino">
+<p><strong>Propensión media a consumir</strong> Proporción de la renta que se gasta en consumo. Técnicamente, es el cociente entre el consumo y la renta disponible, que gráficamente es la pendiente del rayo trazado desde el origen hasta la función de consumo, y en la función keynesiana decrece con la renta. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
+</div>
+<div id="g-pseudopanel" class="glosario-termino">
+<p><strong>Pseudopanel</strong> Forma de seguir a una generación a lo largo del tiempo aunque cada año se encueste a personas distintas. Técnicamente, agrupa los hogares de encuestas repetidas en cohortes definidas por una característica fija, como el año de nacimiento, y sigue la media de cada cohorte, sin desgaste muestral. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.8 (y 3.A.1)">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-q" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-q">Q</h2>
+<div id="g-q-de-tobin" class="glosario-termino">
+<p><strong>Q de Tobin</strong> Cociente entre lo que el mercado paga por una empresa y lo que costaría reponer su capital. Técnicamente, es el valor de mercado del capital instalado dividido por su coste de reposición, y a la empresa le compensa invertir mientras sea mayor que uno (Tobin, 1969). <span class="glosario-tema">Tema 4</span></p>
+</div>
+</section>
+<section id="letra-r" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-r">R</h2>
+<div id="g-regla-de-eleccion-del-instrumento-de-politica-monetaria-poole" class="glosario-termino">
+<p><strong>Regla de elección del instrumento de política monetaria (Poole)</strong> Criterio para decidir si el banco central debe fijar la cantidad de dinero o el tipo de interés. Técnicamente, conviene fijar el tipo de interés si predominan los shocks de demanda de dinero y fijar la cantidad si predominan los de demanda agregada, para minimizar la varianza de la renta. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-regla-de-inflacion-optima-de-friedman" class="glosario-termino">
+<p><strong>Regla de inflación óptima de Friedman</strong> Regla según la cual conviene que los precios bajen para que mantener dinero no cueste nada. Técnicamente, la inflación óptima es igual al tipo de interés real cambiado de signo, porque así el tipo nominal es cero y el coste de oportunidad del dinero desaparece. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-regla-k" class="glosario-termino">
+<p><strong>Regla k %</strong> Compromiso del banco central de dejar crecer el dinero a un ritmo fijo y conocido, sin reaccionar al ciclo. Técnicamente, es la regla de Friedman por la que la masa monetaria crece a una tasa constante igual al crecimiento potencial del PIB. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-renta-permanente" class="glosario-termino">
+<p><strong>Renta permanente</strong> Renta que un hogar espera obtener de media a lo largo del tiempo, sin los altibajos pasajeros. Técnicamente, es el flujo que puede consumirse cada período sin mermar la riqueza de la que procede, es decir, el rendimiento de la riqueza humana y no humana, y según Friedman (1957) es la que determina el consumo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente">Tema 3</a></p>
+</div>
+<div id="g-renta-relativa" class="glosario-termino">
+<p><strong>Renta relativa</strong> Posición de la renta de un hogar frente a la de quienes le rodean y frente a la que tuvo en el pasado. Técnicamente, para Duesenberry el consumo depende de la renta propia en relación con la del grupo de referencia y con la máxima alcanzada antes, lo que da una propensión media decreciente a corto plazo y constante a largo plazo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry">Tema 3</a></p>
+</div>
+<div id="g-renta-transitoria" class="glosario-termino">
+<p><strong>Renta transitoria</strong> Parte de la renta que se debe a circunstancias pasajeras, como una prima puntual o un mal año. Técnicamente, en la teoría de Friedman es la diferencia entre la renta corriente y la permanente, tiene media nula, no está correlacionada con la renta permanente y apenas afecta al consumo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente > Modelo">Tema 3</a></p>
+</div>
+<div id="g-restriccion-de-liquidez" class="glosario-termino">
+<p><strong>Restricción de liquidez</strong> Imposibilidad de pedir prestado para gastar hoy lo que se ganará mañana. Técnicamente, es la incapacidad de un hogar para endeudarse contra su renta futura, o para hacerlo sin pagar más que el Gobierno, lo que le impide suavizar el consumo y hace que este siga a la renta corriente. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
+</div>
+<div id="g-riqueza-humana" class="glosario-termino">
+<p><strong>Riqueza humana</strong> Valor de lo que una persona espera ganar con su trabajo durante el resto de su vida. Técnicamente, es el valor actual de las rentas salariales presentes y futuras esperadas, que junto con la riqueza no humana (dinero, bonos, acciones y capital) forma la riqueza de la que deriva la renta permanente. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente > Modelo">Tema 3</a></p>
+</div>
+</section>
+<section id="letra-s" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-s">S</h2>
+<div id="g-senda-explosiva" class="glosario-termino">
+<p><strong>Senda explosiva</strong> Trayectoria de una variable que se aleja cada vez más de su equilibrio en lugar de converger hacia él. Técnicamente, en los sistemas dinámicos con estabilidad de punto de silla, como el modelo de Ramsey o el de la q de Tobin, todas las sendas salvo la estable divergen del estado estacionario y se descartan porque violan la condición de transversalidad o la de no juego de Ponzi. En la dinámica de la deuda pública, la senda es explosiva cuando el tipo de interés supera al crecimiento del PIB y el saldo primario no basta para estabilizar la ratio de deuda. <span class="glosario-tema">Tema 4</span></p>
+</div>
+<div id="g-senoreaje" class="glosario-termino">
+<p><strong>Señoreaje</strong> Beneficio que obtiene el Estado por tener el monopolio de emitir dinero. Técnicamente, son los ingresos reales que obtiene al crear dinero, que en el estado estacionario del modelo de Cagan son el producto de la tasa de crecimiento del dinero por los saldos reales. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-series-temporales" class="glosario-termino">
+<p><strong>Series temporales</strong> Datos que siguen a una misma variable a lo largo del tiempo, como el PIB trimestral o la cotización diaria de la bolsa. Técnicamente, recogen una o varias características de un único individuo o agregado en períodos sucesivos, por lo que el orden de las observaciones es esencial. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.1. Datos en econometría">Tema 3</a></p>
+</div>
+<div id="g-sistema-casi-ideal-de-demanda-aids" class="glosario-termino">
+<p><strong>Sistema casi ideal de demanda (AIDS)</strong> Modelo que explica cómo reparten los hogares su gasto entre distintos bienes. Técnicamente, el sistema de Deaton y Muellbauer expresa la cuota de gasto de cada bien en función de los logaritmos de los precios y del gasto real, se estima con facilidad y permite contrastar la homogeneidad y la simetría de la demanda. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.8">Tema 3</a></p>
+</div>
+<div id="g-superciclo-de-la-deuda" class="glosario-termino">
+<p><strong>Superciclo de la deuda</strong> Larga fase de endeudamiento creciente seguida de otra, también larga, de reducción de deudas. Técnicamente, es la explicación de la caída del tipo de interés natural como fenómeno transitorio debido al desapalancamiento posterior a la crisis financiera, de modo que los tipos reales volverían a subir cuando este termine. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.4 > El debate sobre su carácter">Tema 3</a></p>
+</div>
+<div id="g-superneutralidad-del-dinero" class="glosario-termino">
+<p><strong>Superneutralidad del dinero</strong> Propiedad más exigente que la neutralidad, referida al ritmo al que crece el dinero y no a su nivel. Técnicamente, las variaciones de la tasa de crecimiento de la oferta monetaria no afectan a los valores de equilibrio de las variables reales. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-t" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-t">T</h2>
+<div id="g-teoria-cuantitativa-del-dinero" class="glosario-termino">
+<p><strong>Teoría cuantitativa del dinero</strong> Idea de que, a largo plazo, más dinero solo se traduce en precios más altos. Técnicamente, interpreta la ecuación cuantitativa con velocidad y producción dadas, de modo que el nivel de precios es proporcional a la cantidad de dinero y la inflación es un fenómeno monetario. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-teoria-del-ciclo-vital" class="glosario-termino">
+<p><strong>Teoría del ciclo vital</strong> Idea de que cada persona planifica su consumo pensando en toda su vida y no en la renta de cada año. Técnicamente, Ando, Brumberg y Modigliani suponen que el consumo es una proporción de los recursos de toda la vida, de modo que se ahorra en la etapa activa, de renta alta, y se desahorra en la jubilación. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría del ciclo vital">Tema 3</a></p>
+</div>
+<div id="g-tipo-de-interes-critico" class="glosario-termino">
+<p><strong>Tipo de interés crítico</strong> Nivel de tipo de interés que cada persona considera normal. Técnicamente, es el valor subjetivo hacia el que cada agente espera que revierta el tipo de mercado, y según esté el tipo de mercado por encima o por debajo prefiere bonos o dinero. <span class="glosario-tema">Tema 5</span></p>
+</div>
+<div id="g-tipo-de-interes-natural" class="glosario-termino">
+<p><strong>Tipo de interés natural</strong> Tipo de interés real que ni estimula ni frena la economía. Técnicamente, es el tipo real que iguala ahorro e inversión en pleno empleo con estabilidad de precios, o el que regiría con precios y salarios flexibles, depende de factores estructurales y no es observable. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.4">Tema 3</a></p>
+</div>
+<div id="g-trampa-de-la-liquidez" class="glosario-termino">
+<p><strong>Trampa de la liquidez</strong> Situación en la que, con tipos de interés muy bajos, todo el dinero nuevo se queda en efectivo y no se compran bonos. Técnicamente, la demanda de dinero es perfectamente elástica al tipo de interés, la curva LM es horizontal y la política monetaria pierde eficacia. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+<section id="letra-v" class="level2 unnumbered glosario-letra">
+<h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-v">V</h2>
+<div id="g-velocidad-de-circulacion-del-dinero" class="glosario-termino">
+<p><strong>Velocidad de circulación del dinero</strong> Número de veces que una misma unidad de dinero cambia de manos en un periodo. Técnicamente, es el cociente entre el valor de las transacciones y la cantidad de dinero, y refleja la tecnología de pagos de la economía. <span class="glosario-tema">Tema 5</span></p>
+</div>
+</section>
+</div>
+<p class="glosario-vacio" id="glosario-vacio" hidden="">Ningún término coincide con la búsqueda.</p>
+<script>
+// Buscador: filtra por nombre y definicion, sin distinguir tildes ni mayusculas
+(function () {
+  var caja = document.getElementById("glosario-buscar");
+  var terminos = Array.from(document.querySelectorAll(".glosario-termino"));
+  var letras = Array.from(document.querySelectorAll(".glosario-letra"));
+  var plano = function (t) { return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); };
+  terminos.forEach(function (t) { t.dataset.texto = plano(t.textContent); });
+  caja.addEventListener("input", function () {
+    var q = plano(caja.value.trim()), n = 0;
+    terminos.forEach(function (t) { var si = !q || t.dataset.texto.indexOf(q) !== -1; t.hidden = !si; if (si) n++; });
+    letras.forEach(function (h) {
+      var sec = h.closest("section") || h, hay = sec.querySelector(".glosario-termino:not([hidden])");
+      sec.hidden = !hay;
+      var a = document.querySelector('.glosario-abecedario a[href="#' + sec.id + '"]');
+      if (a) { a.classList.toggle("sin-resultados", !hay); }
+    });
+    document.getElementById("glosario-cuenta").textContent = q ? n + " de " + terminos.length + " términos" : terminos.length + " términos";
+    document.getElementById("glosario-vacio").hidden = n > 0;
+  });
+  // glosario.html?buscar=renta abre ya filtrado (enlace compartible; no ?q=,
+  // que es el parametro del buscador de Quarto)
+  var q = new URLSearchParams(location.search).get("buscar");
+  if (q) { caja.value = q; caja.dispatchEvent(new Event("input")); }
+})();
+</script>
+
+
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiado");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiado");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/manuelcabadogarcia\.es\/macroeconomia");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./22-tema-b22-pendiente.html" class="pagination-link" aria-label="Teorías de la integración monetaria.">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">22</span>&nbsp; <span class="chapter-title">Teorías de la integración monetaria.</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+      &nbsp;
+    </div>   
+    <div class="nav-footer-center">
+<div class="pie-sitio">
+<a class="pie-nombre" href="../index.html">Manuel Cabado García</a>
+<p class="pie-enlaces">
+<a href="../index.html">Inicio</a><span class="pie-sep">·</span><a href="../temario.html">Temario</a><span class="pie-sep">·</span><a href="../recursos.html">Recursos</a><span class="pie-sep">·</span><a href="https://www.linkedin.com/in/manuel-cabado-garc%C3%ADa-340148145/">Sobre mí</a>
+</p>
+<p class="pie-creditos">
+© 2026<span class="pie-sep">·</span>Diplomado Comercial del Estado<span class="pie-sep">·</span>Licencia <a href="../licencia.html">CC BY-NC-ND 4.0</a>
+</p>
+</div>
+</div>
+    <div class="nav-footer-right">
+      &nbsp;
+    </div>
+  </div>
+</footer>
+
+
+
+
+<script src="site_libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
