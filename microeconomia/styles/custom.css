@@ -151,7 +151,7 @@ h1.title .chapter-number::before {
 #title-block-header .subtitle {
   font-size: 1.05rem;
   line-height: 1.5;
-  color: var(--piedra);
+  color: var(--tinta);   /* antes gris piedra; Manuel, 2026-10-07 */
   font-style: italic;
   margin-top: 0.8rem;
   padding-bottom: 1rem;
