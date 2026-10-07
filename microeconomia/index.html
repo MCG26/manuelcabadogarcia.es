@@ -157,7 +157,26 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -180,9 +199,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-b414c83e96cb79a7c63742f74b890562.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-2d33edbdffab11fc14504c433ba92e55.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-b414c83e96cb79a7c63742f74b890562.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-4b88239f84a6856dc53c6157ba6e6b50.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -910,6 +929,13 @@ ul.task-list li input[type="checkbox"] {
 <a class="sello-licencia" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" target="_blank" rel="noopener license">
   <img src="cc-by-nc-nd.svg" alt="Licencia Creative Commons Atribución-NoComercial-SinDerivados 4.0 Internacional (CC BY-NC-ND 4.0)">
 </a>
+<!-- Bibliografia oculta: Quarto vuelca aqui la del libro entero y asi cada tema conserva
+     la suya completa; construir_web.py (bibliografia_por_tema) la vacia. No quitar. -->
+</section>
+<section id="bibliografia-libro" class="level2 unnumbered unlisted bibliografia-libro-oculta">
+<h2 class="unnumbered unlisted bibliografia-libro-oculta anchored" data-anchor-id="bibliografia-libro">Bibliografía del libro</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+</div>
 
 
 </section>
