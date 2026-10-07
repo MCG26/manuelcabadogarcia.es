@@ -720,6 +720,7 @@ window.Quarto = {
   <li><a href="#a.5.-catálogo-de-funciones-de-utilidad-y-aversión-al-riesgo" id="toc-a.5.-catálogo-de-funciones-de-utilidad-y-aversión-al-riesgo" class="nav-link" data-scroll-target="#a.5.-catálogo-de-funciones-de-utilidad-y-aversión-al-riesgo">4.A.5.&nbsp;&nbsp;Catálogo de funciones de utilidad y aversión al riesgo</a></li>
   <li><a href="#a.6.-ampliación-de-la-teoría-de-las-perspectivas-aplicaciones" id="toc-a.6.-ampliación-de-la-teoría-de-las-perspectivas-aplicaciones" class="nav-link" data-scroll-target="#a.6.-ampliación-de-la-teoría-de-las-perspectivas-aplicaciones">4.A.6.&nbsp;&nbsp;Ampliación de la Teoría de las Perspectivas: aplicaciones</a></li>
   <li><a href="#a.7.-sistemas-de-demanda-flexibles-el-modelo-aids" id="toc-a.7.-sistemas-de-demanda-flexibles-el-modelo-aids" class="nav-link" data-scroll-target="#a.7.-sistemas-de-demanda-flexibles-el-modelo-aids">4.A.7.&nbsp;&nbsp;Sistemas de demanda flexibles: el modelo AIDS</a></li>
+  <li><a href="#a.8.-economía-del-comportamiento-y-el-nudge-de-thaler" id="toc-a.8.-economía-del-comportamiento-y-el-nudge-de-thaler" class="nav-link" data-scroll-target="#a.8.-economía-del-comportamiento-y-el-nudge-de-thaler">4.A.8.&nbsp;&nbsp;Economía del comportamiento y el <em>nudge</em> de Thaler</a></li>
   </ul></li>
   <li><a href="#bibliografía" id="toc-bibliografía" class="nav-link" data-scroll-target="#bibliografía">Bibliografía</a></li>
   </ul>
@@ -1486,12 +1487,13 @@ Figura&nbsp;4.4: Variación compensatoria y equivalente
 <li><p>Neutral al riesgo, cuando le es indiferente jugar la lotería o recibir con certeza su valor esperado, <span class="math inline">\(u\left(\bar{x}\right)={\mathbb{E}\left[u\left(x\right)\right]}\)</span> , por lo que la función de utilidad será lineal.</p></li>
 <li><p>Amante del riesgo, cuando prefiere jugar la lotería antes que recibir con certeza su valor esperado, <span class="math inline">\(u\left(\bar{x}\right)&lt;{\mathbb{E}\left[u\left(x\right)\right]}\)</span> , por lo que la función de utilidad será convexa.</p></li>
 </ul>
-<div id="fig-a-04-4-actitudes-frente-al-riesgo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Actitudes frente al riesgo">
+<p>Gráficamente, en un plano de utilidad, <span class="math inline">\(u\left(x\right)\)</span>, y cantidad de dinero, <span class="math inline">\(x\)</span>, como el de la <a href="#fig-4-actitudes-frente-al-riesgo" class="quarto-xref">Figura&nbsp;<span>4.5</span></a>, se representan las funciones de utilidad de un agente averso, cóncava, neutral, lineal, y amante del riesgo, convexa.</p>
+<div id="fig-4-actitudes-frente-al-riesgo" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Actitudes frente al riesgo">
 <figure class="quarto-float quarto-float-fig figure">
-<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-a-04-4-actitudes-frente-al-riesgo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-fig" id="fig-4-actitudes-frente-al-riesgo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figura&nbsp;4.5: Actitudes frente al riesgo
 </figcaption>
-<div aria-describedby="fig-a-04-4-actitudes-frente-al-riesgo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div aria-describedby="fig-4-actitudes-frente-al-riesgo-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <img src="graficos/a-04-4-actitudes-frente-al-riesgo.svg" class="img-fluid figure-img" alt="Actitudes frente al riesgo">
 </div>
 </figure>
@@ -1630,7 +1632,7 @@ Figura&nbsp;4.8: Función de valor de la Teoría de las Perspectivas
 </div>
 </figure>
 </div>
-<p>En resumen, la Teoría de la Utilidad Esperada, aunque fundamental, fue criticada por no reflejar el comportamiento real. De esta forma, la Teoría de las Perspectivas ofreció una alternativa que, aunque no ha encontrado una aplicación universal, es la base de la economía conductual, ya que explica de forma empírica cómo las personas toman decisiones bajo riesgo e incertidumbre.</p>
+<p>En resumen, la Teoría de la Utilidad Esperada, aunque fundamental, fue criticada por no reflejar el comportamiento real. De esta forma, la Teoría de las Perspectivas ofreció una alternativa que, aunque no ha encontrado una aplicación universal, es la base de la economía conductual, ya que explica de forma empírica cómo las personas toman decisiones bajo riesgo e incertidumbre.<a href="#fn61" class="footnote-ref" id="fnref61" role="doc-noteref"><sup>61</sup></a></p>
 </section>
 </section>
 </section>
@@ -1672,7 +1674,7 @@ A_{3} &amp; -7 &amp; 8 &amp; 9
 <li><p>Criterio de Wald o maximin (pesimista): se identifica el peor resultado de cada estrategia y se elige la de peor resultado menos malo. En el ejemplo, los peores resultados son <span class="math inline">\(\left(-3,-5,-7\right)\)</span>, por lo que se elige <span class="math inline">\(A_{1}\)</span>.</p></li>
 <li><p>Criterio maximax (optimista): se identifica el mejor resultado de cada estrategia y se elige la de mejor resultado más alto. En el ejemplo, los mejores resultados son <span class="math inline">\(\left(2,6,9\right)\)</span>, por lo que se elige <span class="math inline">\(A_{3}\)</span>.</p></li>
 <li><p>Criterio de Laplace o de razón insuficiente: ante la ausencia de información sobre las probabilidades, se asigna la misma probabilidad a cada estado (en el ejemplo, <span class="math inline">\(1/3\)</span>) y se elige la estrategia de mayor valor esperado.</p></li>
-<li><p>Criterio de Hurwicz: define un coeficiente de optimismo <span class="math inline">\(\alpha\in\left[0,1\right]\)</span>, propio de cada decisor, que pondera el mejor resultado de cada estrategia, <span class="math inline">\(M_{i}\)</span>, mientras que <span class="math inline">\(\left(1-\alpha\right)\)</span> pondera el peor, <span class="math inline">\(m_{i}\)</span>: <span class="math display">\[\alpha\cdot M_{i}+\left(1-\alpha\right)\cdot m_{i}\]</span> eligiendo la estrategia de mayor valor ponderado <a href="#fn61" class="footnote-ref" id="fnref61" role="doc-noteref"><sup>61</sup></a>.</p></li>
+<li><p>Criterio de Hurwicz: define un coeficiente de optimismo <span class="math inline">\(\alpha\in\left[0,1\right]\)</span>, propio de cada decisor, que pondera el mejor resultado de cada estrategia, <span class="math inline">\(M_{i}\)</span>, mientras que <span class="math inline">\(\left(1-\alpha\right)\)</span> pondera el peor, <span class="math inline">\(m_{i}\)</span>: <span class="math display">\[\alpha\cdot M_{i}+\left(1-\alpha\right)\cdot m_{i}\]</span> eligiendo la estrategia de mayor valor ponderado <a href="#fn62" class="footnote-ref" id="fnref62" role="doc-noteref"><sup>62</sup></a>.</p></li>
 <li><p>Criterio de Savage o del coste de oportunidad (minimax): se construye primero una matriz de arrepentimiento o coste de oportunidad, restando cada resultado del mejor resultado posible en ese mismo estado de la naturaleza. Se identifica después, para cada estrategia, el máximo coste de oportunidad –el peor de los arrepentimientos posibles–, y se elige la estrategia que minimiza ese máximo, de ahí el nombre minimax. En el ejemplo, los mejores resultados por estado son <span class="math inline">\(\left(4,8,9\right)\)</span>, con lo que la matriz de arrepentimiento resulta: <span class="math display">\[\begin{array}{c|ccc}
 &amp; S_{1} &amp; S_{2} &amp; S_{3}\\
 \hline A_{1} &amp; 3 &amp; 6 &amp; 12\\
@@ -1692,7 +1694,7 @@ A_{3} &amp; 11 &amp; 0 &amp; 0
 <li><p>Dominancia estocástica de primer orden: una distribución <span class="math inline">\(F\left(x\right)\)</span> domina estocásticamente en primer orden a otra <span class="math inline">\(G\left(x\right)\)</span> si es preferida por cualquier agente que prefiera más riqueza a menos, sea cual sea su actitud frente al riesgo: <span class="math display">\[\int u\left(x\right)dF\left(x\right)\geq\int u\left(x\right)dG\left(x\right)\qquad\forall u\left(x\right)\text{ tal que }u^{\prime}\left(x\right)&gt;0\]</span></p></li>
 <li><p>Dominancia estocástica de segundo orden: restringiendo la comparación a loterías con idéntico valor esperado –para aislar el efecto puro del riesgo, ya que un agente puede aceptar un mayor riesgo si el pago esperado es suficientemente grande–, noción estrechamente relacionada con el concepto de aumento del riesgo (mean-preserving spread) de <span class="citation" data-cites="4_RothschildStiglitz1970">Rothschild y Stiglitz (<a href="#ref-4_RothschildStiglitz1970" role="doc-biblioref">1970</a>)</span>, <span class="math inline">\(F\left(x\right)\)</span> domina estocásticamente en segundo orden a <span class="math inline">\(G\left(x\right)\)</span> si es preferida por cualquier agente averso al riesgo: <span class="math display">\[\int u\left(x\right)dF\left(x\right)\geq\int u\left(x\right)dG\left(x\right)\qquad\forall u\left(x\right)\text{ tal que }u^{\prime}\left(x\right)&gt;0\text{ y }u^{\prime\prime}\left(x\right)&lt;0\]</span></p></li>
 </ol>
-<p>Ambos criterios, pese a su elegancia teórica, resultan poco operativos en la práctica: son extremadamente exigentes y solo permiten, en el mejor de los casos, ordenar parcialmente las loterías disponibles, sin cuantificar cuánto mejor es una respecto de otra. Por esta razón se recurre habitualmente al binomio media-varianza, que trata la media como un bien y la varianza como un mal. Aunque supone una pérdida de información respecto de la distribución completa –se prescinde de los momentos de orden superior, como la asimetría o la curtosis–, esta simplificación puede justificarse mediante el Teorema Central del Límite cuando el resultado final proviene de la suma de un número elevado de variables aleatorias, situación paradigmática en la teoría de selección de carteras desarrollada, entre otros, por Markowitz, Tobin y Sharpe <a href="#fn62" class="footnote-ref" id="fnref62" role="doc-noteref"><sup>62</sup></a>.</p>
+<p>Ambos criterios, pese a su elegancia teórica, resultan poco operativos en la práctica: son extremadamente exigentes y solo permiten, en el mejor de los casos, ordenar parcialmente las loterías disponibles, sin cuantificar cuánto mejor es una respecto de otra. Por esta razón se recurre habitualmente al binomio media-varianza, que trata la media como un bien y la varianza como un mal. Aunque supone una pérdida de información respecto de la distribución completa –se prescinde de los momentos de orden superior, como la asimetría o la curtosis–, esta simplificación puede justificarse mediante el Teorema Central del Límite cuando el resultado final proviene de la suma de un número elevado de variables aleatorias, situación paradigmática en la teoría de selección de carteras desarrollada, entre otros, por Markowitz, Tobin y Sharpe <a href="#fn63" class="footnote-ref" id="fnref63" role="doc-noteref"><sup>63</sup></a>.</p>
 </section>
 </section>
 <section id="a.3.-decisión-de-cartera" class="level3 unnumbered">
@@ -1724,7 +1726,7 @@ A_{3} &amp; 11 &amp; 0 &amp; 0
 <section id="a.4.-preferencias-tipo-epstein-zin" class="level3 unnumbered">
 <h3 class="unnumbered anchored" data-anchor-id="a.4.-preferencias-tipo-epstein-zin">4.A.4.&nbsp;&nbsp;Preferencias tipo Epstein-Zin</h3>
 <p>En la utilidad esperada estándar de tipo CRRA, el coeficiente de aversión relativa al riesgo, <span class="math inline">\(\gamma\)</span>, y la elasticidad de sustitución intertemporal (ESI), <span class="math inline">\(\psi\)</span>, quedan atados al mismo parámetro: <span class="math inline">\(\gamma=1/\psi\)</span>. Esto obliga a un agente muy averso al riesgo a ser también, necesariamente, muy reacio a sustituir consumo entre periodos –pese a tratarse de dos actitudes conceptualmente distintas, una frente a la incertidumbre y otra frente al tiempo–.</p>
-<p><span class="citation" data-cites="4_EpsteinZin1989">Epstein y Zin (<a href="#ref-4_EpsteinZin1989" role="doc-biblioref">1989</a>)</span> resuelven esta limitación mediante una utilidad recursiva que introduce <span class="math inline">\(\gamma\)</span> y <span class="math inline">\(\psi\)</span> como dos parámetros independientes: <span class="math display">\[U_{t}=\left[\left(1-\beta\right)c^{1-1/\psi}_{t}+\beta\left(\mathbb{E}_{t}\left[U^{1-\gamma}_{t+1}\right]\right)^{\frac{1-1/\psi}{1-\gamma}}\right]^{\frac{1}{1-1/\psi}}\]</span> <a href="#fn63" class="footnote-ref" id="fnref63" role="doc-noteref"><sup>63</sup></a>que recupera la utilidad esperada estándar como caso particular cuando <span class="math inline">\(\gamma=1/\psi\)</span>.</p>
+<p><span class="citation" data-cites="4_EpsteinZin1989">Epstein y Zin (<a href="#ref-4_EpsteinZin1989" role="doc-biblioref">1989</a>)</span> resuelven esta limitación mediante una utilidad recursiva que introduce <span class="math inline">\(\gamma\)</span> y <span class="math inline">\(\psi\)</span> como dos parámetros independientes: <span class="math display">\[U_{t}=\left[\left(1-\beta\right)c^{1-1/\psi}_{t}+\beta\left(\mathbb{E}_{t}\left[U^{1-\gamma}_{t+1}\right]\right)^{\frac{1-1/\psi}{1-\gamma}}\right]^{\frac{1}{1-1/\psi}}\]</span> <a href="#fn64" class="footnote-ref" id="fnref64" role="doc-noteref"><sup>64</sup></a>que recupera la utilidad esperada estándar como caso particular cuando <span class="math inline">\(\gamma=1/\psi\)</span>.</p>
 <p>La motivación empírica de esta separación es la siguiente: si se calibra <span class="math inline">\(\gamma\)</span> para que el modelo reproduzca la elevada prima de riesgo observada en los mercados de acciones –lo que exige un agente muy averso–, la ligadura <span class="math inline">\(\gamma=1/\psi\)</span> obliga simultáneamente a una ESI muy baja, un agente que apenas estaría dispuesto a sustituir consumo entre periodos, en clara contradicción con el crecimiento suave y persistente del consumo agregado observado empíricamente. Esta tensión, conocida como el problema del tipo de interés libre de riesgo (risk-free rate puzzle), es la que las preferencias de Epstein-Zin permiten resolver al desvincular ambos parámetros.</p>
 <p>Una implicación sustantiva de esta generalización, ausente en la utilidad esperada estándar, es que el agente pasa a tener preferencias sobre el momento en que se resuelve la incertidumbre, no solo sobre su nivel: si <span class="math inline">\(\gamma&gt;1/\psi\)</span>, el agente prefiere que la incertidumbre se resuelva cuanto antes; si <span class="math inline">\(\gamma&lt;1/\psi\)</span>, prefiere que se resuelva tarde; y si <span class="math inline">\(\gamma=1/\psi\)</span>, es indiferente al momento de resolución, recuperando de nuevo el caso estándar.</p>
 <p>Esta propiedad es precisamente la que explotan los modelos de riesgo a largo plazo (long-run risk) en macrofinanzas, como el de <span class="citation" data-cites="4_BansalYaron2004">Bansal y Yaron (<a href="#ref-4_BansalYaron2004" role="doc-biblioref">2004</a>)</span>: si el consumo agregado contiene un componente persistente de crecimiento incierto, un agente con <span class="math inline">\(\gamma&gt;1/\psi\)</span> penaliza mucho más ese riesgo prolongado que un riesgo puramente transitorio de la misma varianza, lo que permite generar primas de riesgo elevadas –explicando así el equity premium puzzle– sin recurrir a niveles de aversión al riesgo poco realistas, a diferencia de la utilidad esperada estándar, donde ambos tipos de riesgo se tratan de forma equivalente.</p>
@@ -1735,7 +1737,7 @@ A_{3} &amp; 11 &amp; 0 &amp; 0
 <ul>
 <li><p>CARA (<span class="math inline">\(u(w)=-e^{-\alpha w}\)</span>, <span class="math inline">\(r_{A}=\alpha\)</span> constante, <span class="math inline">\(r_{R}=\alpha w\)</span> creciente): la más manejable en modelos financieros con rendimientos normales, ya que al ser constante la aversión absoluta, la cantidad en euros invertida en el activo arriesgado no depende de la riqueza del agente.</p></li>
 <li><p>CRRA (<span class="math inline">\(u(w)=\dfrac{w^{1-\gamma}-1}{1-\gamma}\)</span>, <span class="math inline">\(r_{A}=\gamma/w\)</span> decreciente, <span class="math inline">\(r_{R}=\gamma\)</span> constante): la más usada en Macroeconomía, ya que al ser constante la aversión relativa, la proporción de riqueza invertida en el activo arriesgado no cambia con el nivel de riqueza; liga además la aversión al riesgo con la elasticidad de sustitución intertemporal.</p></li>
-<li><p>Logarítmica (caso límite de la CRRA con <span class="math inline">\(\gamma=1\)</span>): la función que usó el propio Bernoulli para resolver la paradoja de San Petersburgo; puente natural entre las familias anteriores y la más simple de manejar en ejemplos<a href="#fn64" class="footnote-ref" id="fnref64" role="doc-noteref"><sup>64</sup></a>.</p></li>
+<li><p>Logarítmica (caso límite de la CRRA con <span class="math inline">\(\gamma=1\)</span>): la función que usó el propio Bernoulli para resolver la paradoja de San Petersburgo; puente natural entre las familias anteriores y la más simple de manejar en ejemplos<a href="#fn65" class="footnote-ref" id="fnref65" role="doc-noteref"><sup>65</sup></a>.</p></li>
 <li><p>Cuadrática (<span class="math inline">\(u(w)=aw-bw^{2}\)</span>, <span class="math inline">\(r_{A}\)</span> creciente): es la única función de utilidad bajo la cual el criterio media-varianza de Markowitz es exactamente óptimo, no una aproximación; sin embargo, tiene aversión absoluta creciente (poco realista) y no genera ahorro precautorio, al ser nula su tercera derivada.</p></li>
 </ul>
 </section>
@@ -1769,6 +1771,42 @@ A_{3} &amp; 11 &amp; 0 &amp; 0
 <p>El AIDS resultó determinante para la econometría de la demanda por combinar flexibilidad funcional –no impone de antemano formas restrictivas de sustitución, a diferencia de la Cobb-Douglas o la CES–, con estimación sencilla y verificación directa de las propiedades teóricas. Su extensión más influyente, el QUAIDS de <span class="citation" data-cites="4_BanksBlundellLewbel1997">Banks et&nbsp;al. (<a href="#ref-4_BanksBlundellLewbel1997" role="doc-biblioref">1997</a>)</span> –que añade un término cuadrático en <span class="math inline">\(\ln\left(m/P\right)\)</span> para capturar curvas de Engel no lineales–, es hoy la herramienta habitual de organismos como el Banco Mundial, el FMI o la OCDE-FAO al simular el efecto distributivo de reformas de IVA o de subsidios alimentarios sobre distintos deciles de renta.</p>
 <p>A modo de ilustración de este uso, <span class="citation" data-cites="4_VanOordt2018">Oordt (<a href="#ref-4_VanOordt2018" role="doc-biblioref">2018</a>)</span> estima un QUAIDS completo para los hogares sudafricanos con el fin de comparar dos instrumentos redistributivos: mantener el tipo cero del IVA sobre alimentos básicos o eliminarlo y destinar la recaudación adicional a ampliar las transferencias monetarias existentes. Gracias a que el QUAIDS permite simular la respuesta de sustitución de cada hogar ante el cambio de precios relativos –no solo el efecto mecánico de la subida de precio–, el estudio concluye que la transferencia monetaria domina al tipo cero si la recaudación puede destinarse íntegramente a ese fin, pero que en ausencia de esa garantía el tipo reducido sigue protegiendo mejor a los hogares más pobres.</p>
 <p>Este tipo de ejercicio se ha convertido en la práctica habitual de las instituciones que asesoran reformas del IVA en países en desarrollo: el propio Banco Mundial, en su documento de referencia sobre el diseño de tipos de IVA <span class="citation" data-cites="4_Thomas2024">(<a href="#ref-4_Thomas2024" role="doc-biblioref">Thomas 2024</a>)</span>, se apoya en simulaciones basadas en el AIDS/QUAIDS –como la de Van Oordt para Sudáfrica <span class="citation" data-cites="4_VanOordt2018">(<a href="#ref-4_VanOordt2018" role="doc-biblioref">2018</a>)</span> o la de Thomas para Nueva Zelanda <span class="citation" data-cites="4_Thomas2022">(<a href="#ref-4_Thomas2022" role="doc-biblioref">2022</a>)</span>– para argumentar que sustituir tipos reducidos generalizados por una combinación de tipo único y transferencias focalizadas suele mejorar la eficiencia recaudatoria sin perjudicar a los hogares de renta baja, siempre que el sistema de transferencias sea suficientemente amplio y fiable.</p>
+</section>
+<section id="a.8.-economía-del-comportamiento-y-el-nudge-de-thaler" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="a.8.-economía-del-comportamiento-y-el-nudge-de-thaler">4.A.8.&nbsp;&nbsp;Economía del comportamiento y el <em>nudge</em> de Thaler</h3>
+<p>La teoría de las perspectivas abrió el camino a la economía del comportamiento, que incorpora al análisis de la elección los sesgos sistemáticos observados en las decisiones reales. Richard Thaler recibió en 2017 el Premio Nobel de Economía “por sus contribuciones a la economía del comportamiento”&nbsp;<span class="citation" data-cites="4_Nobel2017">(<a href="#ref-4_Nobel2017" role="doc-biblioref">Royal Swedish Academy of Sciences 2017</a>)</span>, y su aportación más influyente en la política pública es el <em>nudge</em>, literalmente “empujón”.</p>
+<section id="el-nudge-y-el-paternalismo-libertario" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="el-nudge-y-el-paternalismo-libertario">El <em>nudge</em> y el paternalismo libertario</h5>
+<p>&nbsp;<span class="citation" data-cites="4_ThalerSunstein2008">Thaler y Sunstein (<a href="#ref-4_ThalerSunstein2008" role="doc-biblioref">2008</a>)</span> definieron el <em>nudge</em> como cualquier aspecto de la arquitectura de la elección que altera el comportamiento de las personas de forma predecible sin prohibir ninguna opción ni cambiar significativamente sus incentivos económicos. Para ser un simple <em>nudge</em>, la intervención debe poder evitarse de forma fácil y barata. Colocar la fruta a la altura de los ojos es un <em>nudge</em>, prohibir la comida basura no lo es.<a href="#fn66" class="footnote-ref" id="fnref66" role="doc-noteref"><sup>66</sup></a></p>
+<p>Su fundamento es el paternalismo libertario. Una política es paternalista si se elige con el objetivo de influir en las decisiones de los afectados de forma que mejore su situación, y es libertaria si no hay coacción y cada uno conserva la libertad de elegir otra cosa&nbsp;<span class="citation" data-cites="4_ThalerSunstein2003">(<a href="#ref-4_ThalerSunstein2003" role="doc-biblioref">Thaler y Sunstein 2003, 175</a>)</span>. El argumento central es que algún grado de paternalismo es inevitable, porque quien diseña una política tiene que decidir qué ocurre si el individuo no elige, es decir, fijar una opción por defecto&nbsp;<span class="citation" data-cites="4_ThalerSunstein2003">(<a href="#ref-4_ThalerSunstein2003" role="doc-biblioref">Thaler y Sunstein 2003, 176</a>)</span>. En palabras de los autores, ninguna ley natural establece que, si el trabajador no dice nada, el 0 % de su salario vaya a un plan de pensiones&nbsp;<span class="citation" data-cites="4_ThalerSunstein2003">(<a href="#ref-4_ThalerSunstein2003" role="doc-biblioref">Thaler y Sunstein 2003, 177</a>)</span>.<a href="#fn67" class="footnote-ref" id="fnref67" role="doc-noteref"><sup>67</sup></a></p>
+</section>
+<section id="la-evidencia-el-poder-de-la-opción-por-defecto" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="la-evidencia-el-poder-de-la-opción-por-defecto">La evidencia: el poder de la opción por defecto</h5>
+<ul>
+<li><p>Afiliación automática. &nbsp;<span class="citation" data-cites="4_MadrianShea2001">Madrian y Shea (<a href="#ref-4_MadrianShea2001" role="doc-biblioref">2001</a>)</span> estudiaron una empresa estadounidense que pasó a afiliar automáticamente a sus nuevos empleados a su plan de pensiones, con libertad para darse de baja. La afiliación inicial saltó del 49 % al 86 %&nbsp;<span class="citation" data-cites="4_ThalerSunstein2003">(<a href="#ref-4_ThalerSunstein2003" role="doc-biblioref">Thaler y Sunstein 2003, 177</a>)</span>.</p></li>
+<li><p><em>Save More Tomorrow</em>. &nbsp;<span class="citation" data-cites="4_ThalerBenartzi2004">Thaler y Benartzi (<a href="#ref-4_ThalerBenartzi2004" role="doc-biblioref">2004</a>)</span> diseñaron un plan en el que los trabajadores se comprometen por adelantado a destinar al ahorro una parte de sus futuras subidas salariales. El 78 % de quienes recibieron la oferta se adhirió, el 80 % de ellos permaneció en el plan hasta la cuarta subida y su tasa de ahorro media pasó del 3,5 % al 13,6 % en 40 meses&nbsp;<span class="citation" data-cites="4_ThalerBenartzi2004">(<a href="#ref-4_ThalerBenartzi2004" role="doc-biblioref">Thaler y Benartzi 2004, S164</a>)</span>.<a href="#fn68" class="footnote-ref" id="fnref68" role="doc-noteref"><sup>68</sup></a></p></li>
+<li><p>Donación de órganos. &nbsp;<span class="citation" data-cites="4_JohnsonGoldstein2003">Johnson y Goldstein (<a href="#ref-4_JohnsonGoldstein2003" role="doc-biblioref">2003</a>)</span> compararon países europeos con consentimiento explícito, en los que hay que apuntarse para ser donante, con países de consentimiento presunto, en los que hay que borrarse. El consentimiento efectivo iba del 4,25 % de Dinamarca al 27,5 % de los Países Bajos en el primer grupo, frente a valores entre el 85,9 % de Suecia y el 99,98 % de Austria en el segundo, casi 60 puntos de diferencia&nbsp;<span class="citation" data-cites="4_JohnsonGoldstein2003">(<a href="#ref-4_JohnsonGoldstein2003" role="doc-biblioref">Johnson y Goldstein 2003, 1338-39</a>)</span>. España, líder mundial en donación de fallecidos, muestra a la vez el alcance y el límite de este resultado. Tiene consentimiento presunto desde 1979, pero esa ley ha quedado inactiva, porque en la práctica siempre se pregunta a la familia y su decisión es definitiva. Entre 1979 y 1989 ni la tasa de donación ni la de negativas cambiaron apenas respecto a otros países europeos. El despegue llegó con el sistema nacional de donación organizado a partir de 1989, que redujo las negativas de en torno al 30-40 % a cerca del 15 %&nbsp;<span class="citation" data-cites="4_FabreMurphyMatesanz2010">(<a href="#ref-4_FabreMurphyMatesanz2010" role="doc-biblioref">Fabre et&nbsp;al. 2010, 922</a>)</span>.<a href="#fn69" class="footnote-ref" id="fnref69" role="doc-noteref"><sup>69</sup></a></p></li>
+<li><p>Ahorro para la jubilación en Dinamarca. Con registros daneses, &nbsp;<span class="citation" data-cites="4_Chettyetal2014">Chetty et&nbsp;al. (<a href="#ref-4_Chettyetal2014" role="doc-biblioref">2014</a>)</span> estimaron que cada dólar de subvención fiscal al ahorro para la jubilación solo aumentaba el ahorro total en un céntimo, mientras que las aportaciones automáticas lo elevaban de forma sustancial. La razón es que solo un 15 % de los individuos son ahorradores activos, que responden a la subvención trasladando ahorro de unas cuentas a otras, y el 85 % restante son pasivos, insensibles a la subvención pero muy influidos por lo que se aporta automáticamente en su nombre&nbsp;<span class="citation" data-cites="4_Chettyetal2014">(<a href="#ref-4_Chettyetal2014" role="doc-biblioref">Chetty et&nbsp;al. 2014, 1141</a>)</span>.</p></li>
+</ul>
+</section>
+<section id="las-unidades-de-nudge" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="las-unidades-de-nudge">Las unidades de <em>nudge</em></h5>
+<p>La idea pasó pronto a la administración:</p>
+<ul>
+<li><p>El Reino Unido creó en julio de 2010 el <em>Behavioural Insights Team</em>, un equipo de ocho personas en la Oficina del Gabinete, con vínculos estrechos con Thaler&nbsp;<span class="citation" data-cites="4_BIT2011">(<a href="#ref-4_BIT2011" role="doc-biblioref">Behavioural Insights Team 2011, 3-4</a>)</span>.</p></li>
+<li><p>En Estados Unidos, la Orden Ejecutiva 13707, de 15 de septiembre de 2015, animó a las agencias federales a identificar políticas y programas en los que aplicar las ciencias del comportamiento pudiera mejorar sustancialmente el bienestar público y la eficacia del gasto, y formalizó el <em>Social and Behavioral Sciences Team</em> para asesorarlas&nbsp;<span class="citation" data-cites="4_EO13707">(<a href="#ref-4_EO13707" role="doc-biblioref">Executive Office of the President 2015, 56365-66</a>)</span>.</p></li>
+<li><p>La OCDE dedicó en 2017 un informe a 112 casos de 60 organismos públicos de 23 países y concluyó que las ciencias del comportamiento ya no podían verse como una moda pasajera&nbsp;<span class="citation" data-cites="4_OECD2017">(<a href="#ref-4_OECD2017" role="doc-biblioref">OECD 2017, 3</a> y 13)</span>. En 2023 contaba más de 300 instituciones que las aplicaban a la política pública en 63 países, más de 200 de ellas dentro de los gobiernos de 56 países&nbsp;<span class="citation" data-cites="4_OECDOPSI2023">(<a href="#ref-4_OECDOPSI2023" role="doc-biblioref">Hubble y Varazzani 2023</a>)</span>.</p></li>
+<li><p>En España no existe una unidad estatal. La CNMC constató en 2025 que la economía conductual se aplica “aún de forma limitada” en el ámbito público, con experiencias como la de la Agencia Tributaria desde su Plan Estratégico 2020-2023, y recomendó crear unidades de economía conductual, empezando por una en la Administración General del Estado&nbsp;<span class="citation" data-cites="4_CNMC2025">(<a href="#ref-4_CNMC2025" role="doc-biblioref">CNMC 2025, 44</a> y 109)</span>.</p></li>
+</ul>
+</section>
+<section id="límites-y-críticas" class="level5 unnumbered">
+<h5 class="unnumbered anchored" data-anchor-id="límites-y-críticas">Límites y críticas</h5>
+<ul>
+<li><p>Efectos menores a gran escala. &nbsp;<span class="citation" data-cites="4_DellaVignaLinos2022">DellaVigna y Linos (<a href="#ref-4_DellaVignaLinos2022" role="doc-biblioref">2022</a>)</span> reunieron 126 ensayos aleatorios con 23 millones de personas, incluidos todos los de dos de las mayores unidades de <em>nudge</em> de Estados Unidos. En los artículos académicos el efecto medio era de 8,7 puntos, un 33,4 % sobre el grupo de control, mientras que en las unidades de <em>nudge</em> era de 1,4 puntos, un 8,0 %. La publicación selectiva de los resultados favorables explicaba en torno al 70 % de la diferencia&nbsp;<span class="citation" data-cites="4_DellaVignaLinos2022">(<a href="#ref-4_DellaVignaLinos2022" role="doc-biblioref">DellaVigna y Linos 2022, 81</a>)</span>.</p></li>
+<li><p>Sesgo de publicación. &nbsp;<span class="citation" data-cites="4_Mertensetal2022">Mertens et&nbsp;al. (<a href="#ref-4_Mertensetal2022" role="doc-biblioref">2022</a>)</span> obtuvieron, con más de 200 estudios, un efecto de tamaño pequeño a mediano, con una <span class="math inline">\(d\)</span> de Cohen, el tamaño del efecto medido en desviaciones típicas, de 0,45. &nbsp;<span class="citation" data-cites="4_Maieretal2022">Maier et&nbsp;al. (<a href="#ref-4_Maieretal2022" role="doc-biblioref">2022</a>)</span> mostraron que, al corregir el sesgo de publicación, ese efecto caía a 0,04 y no quedaba evidencia de eficacia.<a href="#fn70" class="footnote-ref" id="fnref70" role="doc-noteref"><sup>70</sup></a></p></li>
+<li><p>Crítica conceptual. &nbsp;<span class="citation" data-cites="4_Glaeser2006">Glaeser (<a href="#ref-4_Glaeser2006" role="doc-biblioref">2006</a>)</span> advirtió de que la racionalidad limitada afecta también a quien regula, y que los consumidores tienen más incentivos que los funcionarios para corregir sus propios errores, por lo que reconocer los límites de la cognición puede reforzar el argumento a favor de un Estado limitado. Sugden y otros autores criticaron, además, que el paternalismo libertario se aparta de la soberanía del consumidor&nbsp;<span class="citation" data-cites="4_NobelCommittee2017">(<a href="#ref-4_NobelCommittee2017" role="doc-biblioref">Committee for the Prize in Economic Sciences in Memory of Alfred Nobel 2017, 16</a>)</span>.</p></li>
+</ul>
+<p>En suma, el <em>nudge</em> no sustituye a los instrumentos clásicos de la política económica, como los impuestos, las subvenciones o la regulación, sino que los complementa allí donde la inercia y la atención limitada pesan más que los precios, como ilustra el caso danés del ahorro para la jubilación.</p>
 <!-- caja-glosario-tema: generada por construir_web.py -->
 <div class="caja-glosario-tema" role="note" aria-label="Términos del glosario de este tema">
 <p class="caja-glosario-titulo">Términos del glosario de este tema</p>
@@ -1784,6 +1822,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 <!-- /caja-glosario-tema -->
+</section>
 </section>
 </section>
 <section id="bibliografía" class="level2 unnumbered">
@@ -1810,11 +1849,26 @@ Bansal, Ravi, y Amir Yaron. 2004. <span>«Risks for the Long Run: A Potential Re
 <div id="ref-4_Barten1964" class="csl-entry" role="listitem">
 Barten, Anton P. 1964. <span>«Consumer Demand Functions under Conditions of Almost Additive Preferences»</span>. <em>Econometrica</em> 32 (1/2): 1-38.
 </div>
+<div id="ref-4_BIT2011" class="csl-entry" role="listitem">
+Behavioural Insights Team. 2011. <em>Behavioural Insights Team. Annual Update 2010–11</em>. Cabinet Office.
+</div>
 <div id="ref-4_Bernoulli1738/1954" class="csl-entry" role="listitem">
 Bernoulli, Daniel. 1738/1954. <span>«<span>Exposition of a New Theory on the Measurement of Risk</span>»</span>. <em>Econometrica</em> 22 (1): 23-36. <a href="https://doi.org/10.2307/1909829">https://doi.org/10.2307/1909829</a>.
 </div>
+<div id="ref-4_Chettyetal2014" class="csl-entry" role="listitem">
+Chetty, Raj, John N. Friedman, Søren Leth-Petersen, Torben Heien Nielsen, y Tore Olsen. 2014. <span>«Active vs. Passive Decisions and Crowd-Out in Retirement Savings Accounts: Evidence from <span>Denmark</span>»</span>. <em>Quarterly Journal of Economics</em> 129 (3): 1141-219.
+</div>
+<div id="ref-4_CNMC2025" class="csl-entry" role="listitem">
+CNMC. 2025. <em>Estudio sobre la econom<span>í</span>a conductual para una regulaci<span>ó</span>n y supervisi<span>ó</span>n eficientes</em>. E/CNMC/002/23. Comisi<span>ó</span>n Nacional de los Mercados y la Competencia.
+</div>
+<div id="ref-4_NobelCommittee2017" class="csl-entry" role="listitem">
+Committee for the Prize in Economic Sciences in Memory of Alfred Nobel. 2017. <em>Richard H. Thaler: Integrating Economics with Psychology. Scientific Background on the Sveriges Riksbank Prize in Economic Sciences in Memory of Alfred Nobel 2017</em>. Royal Swedish Academy of Sciences.
+</div>
 <div id="ref-4_DeatonMuellbauer1980" class="csl-entry" role="listitem">
 Deaton, Angus, y John Muellbauer. 1980. <span>«An Almost Ideal Demand System»</span>. <em>The American Economic Review</em> 70 (3): 312-26.
+</div>
+<div id="ref-4_DellaVignaLinos2022" class="csl-entry" role="listitem">
+DellaVigna, Stefano, y Elizabeth Linos. 2022. <span>«<span>RCTs</span> to Scale: Comprehensive Evidence from Two Nudge Units»</span>. <em>Econometrica</em> 90 (1): 81-116.
 </div>
 <div id="ref-4_Ellsberg1961" class="csl-entry" role="listitem">
 Ellsberg, Daniel. 1961. <span>«Risk, Ambiguity, and the Savage Axioms»</span>. <em>Quarterly Journal of Economics</em> 75 (4): 643-69.
@@ -1825,14 +1879,32 @@ Epstein, Larry G., y Stanley E. Zin. 1989. <span>«Substitution, Risk Aversion, 
 <div id="ref-4_EpsteinZin1991" class="csl-entry" role="listitem">
 Epstein, Larry G., y Stanley E. Zin. 1991. <span>«Substitution, Risk Aversion, and the Temporal Behavior of Consumption and Asset Returns: An Empirical Analysis»</span>. <em>Journal of Political Economy</em> 99 (2): 263-86.
 </div>
+<div id="ref-4_EO13707" class="csl-entry" role="listitem">
+Executive Office of the President. 2015. <em>Executive Order 13707 of September 15, 2015: Using Behavioral Science Insights to Better Serve the American People</em>. Federal Register, 80(181): 56365–56367.
+</div>
+<div id="ref-4_FabreMurphyMatesanz2010" class="csl-entry" role="listitem">
+Fabre, John, Paul Murphy, y Rafael Matesanz. 2010. <span>«Presumed Consent: A Distraction in the Quest for Increasing Rates of Organ Donation»</span>. <em>BMJ</em> 341: 922-24.
+</div>
 <div id="ref-4_FriedmanSavage1948" class="csl-entry" role="listitem">
 Friedman, Milton, y Leonard J. Savage. 1948. <span>«The Utility Analysis of Choices Involving Risk»</span>. <em>Journal of Political Economy</em> 56 (4): 279-304.
+</div>
+<div id="ref-4_Glaeser2006" class="csl-entry" role="listitem">
+Glaeser, Edward L. 2006. <span>«Paternalism and Psychology»</span>. <em>University of Chicago Law Review</em> 73 (1): 133-56.
 </div>
 <div id="ref-4_Hicks1934" class="csl-entry" role="listitem">
 Hicks, J. R., y R. G. D. Allen. 1934. <span>«<span>A Reconsideration of the Theory of Value. Part II. A Mathematical Theory of Individual Demand Functions</span>»</span>. <em>Economica</em> 1 (2): 196-219. <a href="https://doi.org/10.2307/2548574">https://doi.org/10.2307/2548574</a>.
 </div>
+<div id="ref-4_OECDOPSI2023" class="csl-entry" role="listitem">
+Hubble, Cale, y Chiara Varazzani. 2023. <em>Mapping Behavioural Insights</em>. OECD Observatory of Public Sector Innovation, 10 de mayo de 2023.
+</div>
 <div id="ref-4_HurwiczUzawa1971" class="csl-entry" role="listitem">
 Hurwicz, Leonid, y Hirofumi Uzawa. 1971. <span>«On the Integrability of Demand Functions»</span>. En <em>Preferences, Utility, and Demand</em>, editado por John S. Chipman, Leonid Hurwicz, Marcel K. Richter, y Hugo F. Sonnenschein. Harcourt Brace Jovanovich.
+</div>
+<div id="ref-4_Ley30_1979" class="csl-entry" role="listitem">
+Jefatura del Estado. 1979. <em>Ley 30/1979, de 27 de octubre, sobre extracci<span>ó</span>n y trasplante de <span>ó</span>rganos</em>. BOE n.º 266, de 6 de noviembre de 1979.
+</div>
+<div id="ref-4_JohnsonGoldstein2003" class="csl-entry" role="listitem">
+Johnson, Eric J., y Daniel Goldstein. 2003. <span>«Do Defaults Save Lives?»</span> <em>Science</em> 302 (5649): 1338-39.
 </div>
 <div id="ref-4_KahnemanTversky1979" class="csl-entry" role="listitem">
 Kahneman, Daniel, y Amos Tversky. 1979. <span>«Prospect Theory: An Analysis of Decision under Risk»</span>. <em>Econometrica</em> 47 (2): 263-91.
@@ -1843,14 +1915,32 @@ Knight, Frank Hyneman. 1921. <em><span>Risk, Uncertainty and Profit</span></em>.
 <div id="ref-4_Lintner1965" class="csl-entry" role="listitem">
 Lintner, John. 1965. <span>«The Valuation of Risk Assets and the Selection of Risky Investments in Stock Portfolios and Capital Budgets»</span>. <em>The Review of Economics and Statistics</em> 47 (1): 13-37.
 </div>
+<div id="ref-4_MadrianShea2001" class="csl-entry" role="listitem">
+Madrian, Brigitte C., y Dennis F. Shea. 2001. <span>«The Power of Suggestion: Inertia in 401(k) Participation and Savings Behavior»</span>. <em>Quarterly Journal of Economics</em> 116 (4): 1149-87.
+</div>
+<div id="ref-4_Maieretal2022" class="csl-entry" role="listitem">
+Maier, Maximilian, František Bartoš, T. D. Stanley, David R. Shanks, Adam J. L. Harris, y Eric-Jan Wagenmakers. 2022. <span>«No Evidence for Nudging after Adjusting for Publication Bias»</span>. <em>Proceedings of the National Academy of Sciences</em> 119 (31): e2200300119.
+</div>
 <div id="ref-4_Markowitz1952b" class="csl-entry" role="listitem">
 Markowitz, Harry. 1952a. <span>«Portfolio Selection»</span>. <em>The Journal of Finance</em> 7 (1): 77-91.
 </div>
 <div id="ref-4_Markowitz1952" class="csl-entry" role="listitem">
 Markowitz, Harry. 1952b. <span>«The Utility of Wealth»</span>. <em>Journal of Political Economy</em> 60 (2): 151-58.
 </div>
+<div id="ref-4_Mertensetal2022" class="csl-entry" role="listitem">
+Mertens, Stephanie, Mario Herberz, Ulf J. J. Hahnel, y Tobias Brosch. 2022. <span>«The Effectiveness of Nudging: A Meta-Analysis of Choice Architecture Interventions across Behavioral Domains»</span>. <em>Proceedings of the National Academy of Sciences</em> 119 (1): e2107346118.
+</div>
+<div id="ref-4_Moncloa2026ONT" class="csl-entry" role="listitem">
+Ministerio de Sanidad. 2026. <em>Espa<span>ñ</span>a vuelve a superar los 6.300 trasplantes en 2025</em>. Nota de prensa, 16 de enero de 2026.
+</div>
+<div id="ref-4_RD1723_2012" class="csl-entry" role="listitem">
+Ministerio de Sanidad, Servicios Sociales e Igualdad. 2012. <em>Real Decreto 1723/2012, de 28 de diciembre, por el que se regulan las actividades de obtenci<span>ó</span>n, utilizaci<span>ó</span>n cl<span>í</span>nica y coordinaci<span>ó</span>n territorial de los <span>ó</span>rganos humanos destinados al trasplante</em>. BOE n.º 313, de 29 de diciembre de 2012.
+</div>
 <div id="ref-4_Nicholson2017" class="csl-entry" role="listitem">
 Nicholson, Walter, y Christopher M. Snyder. 2017. <em><span>Microeconomic Theory: Basic Principles and Extensions</span></em>. Cengage Learning.
+</div>
+<div id="ref-4_OECD2017" class="csl-entry" role="listitem">
+OECD. 2017. <em>Behavioural Insights and Public Policy: Lessons from Around the World</em>. OECD Publishing.
 </div>
 <div id="ref-4_VanOordt2018" class="csl-entry" role="listitem">
 Oordt, Marius van. 2018. <span>«Zero-Rating versus Cash Transfers under the VAT»</span>. <em>Fiscal Studies</em> 39 (3): 489-515.
@@ -1863,6 +1953,9 @@ Rothschild, Michael, y Joseph E. Stiglitz. 1970. <span>«Increasing Risk: I. A D
 </div>
 <div id="ref-4_Roy1947" class="csl-entry" role="listitem">
 Roy, Rene. 1947. <span>«La distribution du revenu entre les divers biens»</span>. <em>Econometrica</em> 15 (3): 205-25. <a href="https://doi.org/10.2307/1905479">https://doi.org/10.2307/1905479</a>.
+</div>
+<div id="ref-4_Nobel2017" class="csl-entry" role="listitem">
+Royal Swedish Academy of Sciences. 2017. <em>The Prize in Economic Sciences 2017. Press Release</em>. Nota de prensa, 9 de octubre de 2017.
 </div>
 <div id="ref-4_Rubinstein2019" class="csl-entry" role="listitem">
 Rubinstein, Ariel. 2019. <em>Lecture Notes in Microeconomic Theory: The Economic Agent</em>. Open access edition.
@@ -1881,6 +1974,15 @@ Slutsky, Eugene. 1915. <span>«Sulla teoria del bilancio del consumatore»</span
 </div>
 <div id="ref-4_Stone1954" class="csl-entry" role="listitem">
 Stone, Richard. 1954. <span>«Linear Expenditure Systems and Demand Analysis: An Application to the Pattern of British Demand»</span>. <em>The Economic Journal</em> 64 (255): 511-27.
+</div>
+<div id="ref-4_ThalerBenartzi2004" class="csl-entry" role="listitem">
+Thaler, Richard H., y Shlomo Benartzi. 2004. <span>«Save More Tomorrow: Using Behavioral Economics to Increase Employee Saving»</span>. <em>Journal of Political Economy</em> 112 (S1): S164-87.
+</div>
+<div id="ref-4_ThalerSunstein2003" class="csl-entry" role="listitem">
+Thaler, Richard H., y Cass R. Sunstein. 2003. <span>«Libertarian Paternalism»</span>. <em>American Economic Review</em> 93 (2): 175-79.
+</div>
+<div id="ref-4_ThalerSunstein2008" class="csl-entry" role="listitem">
+Thaler, Richard H., y Cass R. Sunstein. 2008. <em>Nudge: Improving Decisions about Health, Wealth, and Happiness</em>. Yale University Press.
 </div>
 <div id="ref-4_Theil1965" class="csl-entry" role="listitem">
 Theil, Henri. 1965. <span>«The Information Approach to Demand Analysis»</span>. <em>Econometrica</em> 33 (1): 67-87.
@@ -2007,10 +2109,16 @@ Von Neumann, John, y Oskar Morgenstern. 1944. <em><span>Theory of Games and Econ
 <li id="fn58"><p>El axioma de independencia de Von Neumann-Morgenstern opera sobre probabilidades objetivas; la paradoja de Ellsberg surge precisamente de la ausencia de estas, por lo que su violación se formula con más precisión sobre el axioma del elemento seguro de Savage (1954).<a href="#fnref58" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn59"><p>Concretamente, Allais (1953) mostró que la mayoría de los individuos prefiere la lotería A (100% de probabilidad de 1 millón de euros) a la B (89% de 1 millón, 10% de 5 millones, 1% de nada), pero al mismo tiempo prefiere la lotería D (10% de 5 millones, 90% de nada) a la C (11% de 1 millón, 89% de nada) –pese a que C y D se obtienen restando la misma probabilidad (0,89) a A y B respectivamente, lo que debería mantener el orden de preferencia si se cumpliera el axioma de independencia–.<a href="#fnref59" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn60"><p>Una manifestación directa de esta asimetría es el efecto dotación (endowment effect): los individuos exigen, a cambio de desprenderse de algo que ya poseen, una cantidad de dinero mayor de la que estarían dispuestos a pagar por adquirirlo, pese a tratarse del mismo bien.<a href="#fnref60" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn61"><p>Esta familia de criterios tiene un reflejo directo en la economía del bienestar: el criterio maximin es precisamente la base de la función de bienestar social de Rawls, mientras que la agregación mediante utilidad esperada –análoga al criterio de Laplace, pero con ponderaciones propias de cada estado en lugar de equiprobabilidad– sustenta la función de bienestar social utilitarista de Harsanyi.<a href="#fnref61" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn62"><p>El binomio media-varianza es, además, exactamente óptimo –no una mera aproximación– bajo utilidad cuadrática, según se ha señalado en el Apéndice 4.A.5.<a href="#fnref62" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn63"><p>La normalización con el factor <span class="math inline">\(\left(1-\beta\right)\)</span> en el término de consumo corriente procede de <span class="citation" data-cites="4_EpsteinZin1991">Epstein y Zin (<a href="#ref-4_EpsteinZin1991" role="doc-biblioref">1991</a>)</span>, el trabajo empírico companion del artículo teórico de 1989.<a href="#fnref63" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn64"><p>Sustituyendo esta utilidad en la utilidad esperada sobre los dos estados contingentes se obtiene <span class="math inline">\(EU=p\cdot\ln(w_{1})+(1-p)\cdot\ln(w_{2})\)</span>, que es formalmente una Cobb-Douglas con cuotas <span class="math inline">\(p\)</span> y <span class="math inline">\(1-p\)</span> sobre las riquezas contingentes: de ahí que dé soluciones tan simples en los modelos de seguro y cartera, al repartir la riqueza entre estados manteniendo una cuota constante –sin que ello implique ausencia de efecto sustitución, que sigue presente, solo compensado exactamente por el efecto renta–.<a href="#fnref64" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn61"><p>El apartado 4.A.8 del Apéndice desarrolla la economía del comportamiento y su principal aplicación a la política pública, el <em>nudge</em> de Richard Thaler.<a href="#fnref61" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn62"><p>Esta familia de criterios tiene un reflejo directo en la economía del bienestar: el criterio maximin es precisamente la base de la función de bienestar social de Rawls, mientras que la agregación mediante utilidad esperada –análoga al criterio de Laplace, pero con ponderaciones propias de cada estado en lugar de equiprobabilidad– sustenta la función de bienestar social utilitarista de Harsanyi.<a href="#fnref62" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn63"><p>El binomio media-varianza es, además, exactamente óptimo –no una mera aproximación– bajo utilidad cuadrática, según se ha señalado en el Apéndice 4.A.5.<a href="#fnref63" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn64"><p>La normalización con el factor <span class="math inline">\(\left(1-\beta\right)\)</span> en el término de consumo corriente procede de <span class="citation" data-cites="4_EpsteinZin1991">Epstein y Zin (<a href="#ref-4_EpsteinZin1991" role="doc-biblioref">1991</a>)</span>, el trabajo empírico companion del artículo teórico de 1989.<a href="#fnref64" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn65"><p>Sustituyendo esta utilidad en la utilidad esperada sobre los dos estados contingentes se obtiene <span class="math inline">\(EU=p\cdot\ln(w_{1})+(1-p)\cdot\ln(w_{2})\)</span>, que es formalmente una Cobb-Douglas con cuotas <span class="math inline">\(p\)</span> y <span class="math inline">\(1-p\)</span> sobre las riquezas contingentes: de ahí que dé soluciones tan simples en los modelos de seguro y cartera, al repartir la riqueza entre estados manteniendo una cuota constante –sin que ello implique ausencia de efecto sustitución, que sigue presente, solo compensado exactamente por el efecto renta–.<a href="#fnref65" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn66"><p>La intuición es que el mismo menú puede presentarse de muchas formas y ninguna es neutral. Quien organiza ese contexto, el arquitecto de la elección, influye en lo que se elige aunque no prohíba nada&nbsp;<span class="citation" data-cites="4_ThalerSunstein2008">(<a href="#ref-4_ThalerSunstein2008" role="doc-biblioref">Thaler y Sunstein 2008</a>)</span>.<a href="#fnref66" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn67"><p>La intuición es que un formulario siempre tiene que traer alguna casilla marcada de antemano, y marcar “no” también es una decisión que condiciona lo que harán quienes no lo lean con atención.<a href="#fnref67" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn68"><p>El diseño combina varios sesgos. La decisión se toma con antelación, el aumento del ahorro coincide con la subida salarial, de modo que el trabajador nunca ve bajar su nómina y no lo percibe como una pérdida, y la escalada es automática, con lo que la inercia juega a favor del ahorro. El programa influyó en la <em>Pension Protection Act</em> aprobada por el Congreso de Estados Unidos en 2006&nbsp;<span class="citation" data-cites="4_NobelCommittee2017">(<a href="#ref-4_NobelCommittee2017" role="doc-biblioref">Committee for the Prize in Economic Sciences in Memory of Alfred Nobel 2017, 15</a>)</span>.<a href="#fnref68" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn69"><p>La Ley 30/1979 permite la extracción de órganos de fallecidos salvo que hubieran dejado constancia expresa de su oposición&nbsp;<span class="citation" data-cites="4_Ley30_1979">(<a href="#ref-4_Ley30_1979" role="doc-biblioref">Jefatura del Estado 1979</a> art. 5.2)</span>. La norma vigente obliga a consultar su voluntad a través de la familia&nbsp;<span class="citation" data-cites="4_RD1723_2012">(<a href="#ref-4_RD1723_2012" role="doc-biblioref">Ministerio de Sanidad, Servicios Sociales e Igualdad 2012</a> art. 9.1)</span>. En 2025 España registró 51,9 donantes fallecidos por millón de habitantes&nbsp;<span class="citation" data-cites="4_Moncloa2026ONT">(<a href="#ref-4_Moncloa2026ONT" role="doc-biblioref">Ministerio de Sanidad 2026</a>)</span>.<a href="#fnref69" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn70"><p>La intuición es que, si solo se publican los experimentos que salen bien, la media de lo publicado sobrestima el efecto real, igual que una media de notas calculada solo con los aprobados.<a href="#fnref70" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 
