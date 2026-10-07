@@ -477,9 +477,9 @@
       {
        "codigo": "3.B.5",
        "titulo": "Teorías de la demanda de dinero. Implicaciones de política económica.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/05-tema-b5.html"
       },
       {
        "codigo": "3.B.6",
