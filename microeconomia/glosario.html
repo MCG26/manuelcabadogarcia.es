@@ -320,9 +320,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-4b88239f84a6856dc53c6157ba6e6b50.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-950373a8d538f7e345be92163859ef87.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-c3ddb39ff1309e70c16b55beb9ff902f.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-950373a8d538f7e345be92163859ef87.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -975,6 +975,40 @@ window.Quarto = {
 
   });
 
+  // Enlace a la app "Oposicion TCEE · DCE" de Victor: icono en la esquina izquierda
+
+  // de la barra de pestanas (Manuel, 2026-10-08)
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var barra = document.querySelector('#quarto-header .navbar-container');
+
+    if (!barra || barra.querySelector('.enlace-app')) { return; }
+
+    var a = document.createElement('a');
+
+    a.className = 'enlace-app';
+
+    a.href = 'https://www.victorgutierrezmarcos.es/app/index.html';
+
+    a.target = '_blank';
+
+    a.rel = 'noopener';
+
+    a.title = 'App Oposición TCEE · DCE: cantes, temario y test en el móvil';
+
+    a.setAttribute('aria-label', 'App Oposición TCEE · DCE (se abre en una pestaña nueva)');
+
+    a.innerHTML = '<img src="/app-oposicion.svg" alt="" width="34" height="34">' +
+
+                  '<span class="enlace-app-texto">App<br>TCEE · DCE</span>';
+
+    barra.style.position = 'relative';
+
+    barra.insertBefore(a, barra.firstChild);
+
+  });
+
 </script>
 
 
@@ -1273,8 +1307,8 @@ window.Quarto = {
 <div id="g-coste-de-oportunidad" class="glosario-termino">
 <p><strong>Coste de oportunidad</strong> Lo que se deja de ganar al elegir una opción en lugar de la mejor alternativa disponible. En la empresa, es el rendimiento que obtendrían sus recursos en su mejor uso alternativo, e incluirlo es lo que distingue el coste económico del coste contable. <a href="06-tema-a6.html" class="glosario-tema" title="Introducción">Tema 6</a></p>
 </div>
-<div id="g-coste-de-transporte" class="glosario-termino">
-<p><strong>Coste de transporte</strong> En los modelos de diferenciación espacial, coste en que incurre el consumidor al desplazarse hasta una variedad, que refleja la heterogeneidad de sus gustos. <a href="10-tema-a10.html" class="glosario-tema" title="Supuestos (modelo de Hotelling)">Tema 10</a></p>
+<div id="g-coste-de-transporte-diferenciacion-espacial" class="glosario-termino">
+<p><strong>Coste de transporte (diferenciación espacial)</strong> En los modelos de diferenciación espacial, coste en que incurre el consumidor al desplazarse hasta una variedad, que refleja la heterogeneidad de sus gustos. <a href="10-tema-a10.html" class="glosario-tema" title="Supuestos (modelo de Hotelling)">Tema 10</a></p>
 </div>
 <div id="g-coste-marginal" class="glosario-termino">
 <p><strong>Coste marginal</strong> Lo que cuesta producir una unidad más. Técnicamente, es la derivada del coste total respecto a la producción y, a corto plazo, es igual al precio del factor variable dividido por su productividad marginal. <a href="06-tema-a6.html" class="glosario-tema" title="Análisis temporal de la función de costes">Tema 6</a></p>

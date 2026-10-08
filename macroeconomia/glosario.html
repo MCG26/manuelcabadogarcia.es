@@ -320,9 +320,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-4b88239f84a6856dc53c6157ba6e6b50.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-57023bad32ea1ee8e4dc92879893e2b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-950373a8d538f7e345be92163859ef87.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-c3ddb39ff1309e70c16b55beb9ff902f.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-950373a8d538f7e345be92163859ef87.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -362,35 +362,6 @@ ul.task-list li input[type="checkbox"] {
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="styles/custom.css">
 <meta property="og:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
@@ -975,6 +946,40 @@ window.Quarto = {
 
   });
 
+  // Enlace a la app "Oposicion TCEE · DCE" de Victor: icono en la esquina izquierda
+
+  // de la barra de pestanas (Manuel, 2026-10-08)
+
+  document.addEventListener('DOMContentLoaded', function () {
+
+    var barra = document.querySelector('#quarto-header .navbar-container');
+
+    if (!barra || barra.querySelector('.enlace-app')) { return; }
+
+    var a = document.createElement('a');
+
+    a.className = 'enlace-app';
+
+    a.href = 'https://www.victorgutierrezmarcos.es/app/index.html';
+
+    a.target = '_blank';
+
+    a.rel = 'noopener';
+
+    a.title = 'App Oposición TCEE · DCE: cantes, temario y test en el móvil';
+
+    a.setAttribute('aria-label', 'App Oposición TCEE · DCE (se abre en una pestaña nueva)');
+
+    a.innerHTML = '<img src="/app-oposicion.svg" alt="" width="34" height="34">' +
+
+                  '<span class="enlace-app-texto">App<br>TCEE · DCE</span>';
+
+    barra.style.position = 'relative';
+
+    barra.insertBefore(a, barra.firstChild);
+
+  });
+
 </script>
 
 
@@ -1055,10 +1060,10 @@ window.Quarto = {
 <p><strong>Coste de entrada hundido</strong> Coste que una empresa paga una sola vez para entrar en un mercado y que no recupera si sale. Técnicamente, en el modelo de Melitz se paga antes de conocer la productividad, que se sortea después. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-coste-de-transporte-de-tipo-iceberg" class="glosario-termino">
-<p><strong>Coste de transporte de tipo iceberg</strong> Coste de transporte que consume una parte del propio bien enviado, en lugar de un pago aparte. Técnicamente, para que llegue una unidad hay que enviar <span class="math inline">\(\tau\)</span> &gt; 1 unidades y las <span class="math inline">\(\tau\)</span> <span class="math inline">\(-\)</span> 1 restantes se pierden por el camino. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Coste de transporte de tipo iceberg</strong> Coste de transporte que consume una parte del propio bien enviado, en lugar de un pago aparte. Técnicamente, para que llegue una unidad hay que enviar más de una, y la diferencia se pierde por el camino. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-coste-fijo-de-exportacion" class="glosario-termino">
-<p><strong>Coste fijo de exportación</strong> Gasto que una empresa debe afrontar en cada periodo para vender en el extranjero, además del coste de producir. Técnicamente, hace que solo exporten las empresas cuya productividad supera la productividad de corte de exportación. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Coste fijo de exportación</strong> Gasto fijo que una empresa debe afrontar para vender en el extranjero, además del coste de producir. Técnicamente, en el modelo de Melitz es una inversión inicial que se expresa como un pago fijo por periodo, y hace que solo exporten las empresas cuya productividad supera la productividad de corte de exportación. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-costes-de-corretaje" class="glosario-termino">
 <p><strong>Costes de corretaje</strong> Lo que cuesta cada vez que hay que convertir bonos en dinero. Técnicamente, son los costes fijos de esa conversión, que crecen con el número de operaciones y por eso reducen la conveniencia de mantener pocos saldos. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo transacción: modelo de inventarios">Tema 5</a></p>
@@ -1133,7 +1138,7 @@ window.Quarto = {
 <p><strong>Efecto reasignación</strong> Traspaso de recursos de las empresas menos productivas a las más productivas. Técnicamente, tras abrirse al comercio las exportadoras ganan cuota de mercado y la productividad agregada del sector aumenta. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-efecto-seleccion" class="glosario-termino">
-<p><strong>Efecto selección</strong> Salida del mercado de las empresas menos productivas cuando aumenta la competencia. Técnicamente, al abrirse al comercio sube la productividad de corte, las empresas menos productivas dejan de producir y la productividad media del sector aumenta. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Efecto selección</strong> Salida del mercado de las empresas menos productivas tras la apertura al comercio. Técnicamente, en el modelo de Melitz las exportadoras y los nuevos entrantes elevan el salario real, sube la productividad de corte y las empresas menos productivas dejan de producir, con lo que aumenta la productividad media del sector. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-efecto-trinquete-consumo" class="glosario-termino">
 <p><strong>Efecto trinquete (consumo)</strong> Resistencia de los hogares a recortar su consumo cuando baja la renta. Técnicamente, el consumo depende del nivel más alto alcanzado en el pasado, de modo que ante una caída de la renta se reduce el ahorro y no el consumo, y la propensión media a consumir aumenta a corto plazo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
@@ -1172,10 +1177,10 @@ window.Quarto = {
 <section id="letra-f" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-f">F</h2>
 <div id="g-fuerzas-centrifugas" class="glosario-termino">
-<p><strong>Fuerzas centrífugas</strong> Fuerzas que dispersan la actividad económica. Técnicamente, actúan en sentido opuesto a las centrípetas, como las economías de escala externas negativas y las externalidades negativas. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Fuerzas centrífugas</strong> Fuerzas que dispersan la actividad económica. Técnicamente, en el modelo de Krugman la principal es la demanda de los factores inmóviles, como los agricultores, a la que se suman la congestión y el encarecimiento del suelo. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-fuerzas-centripetas" class="glosario-termino">
-<p><strong>Fuerzas centrípetas</strong> Fuerzas que concentran la actividad económica en un lugar. Técnicamente, son las economías de escala externas y las ventajas de un mercado grande, como la aparición de proveedores especializados. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Fuerzas centrípetas</strong> Fuerzas que concentran la actividad económica en un lugar. Técnicamente, en el modelo de Krugman las empresas buscan el mercado más grande y los trabajadores el lugar con más variedades, en una causación circular reforzada por las economías de escala. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-funcion-de-consumo" class="glosario-termino">
 <p><strong>Función de consumo</strong> Relación que indica cuánto gastan los hogares según la renta de que disponen. Técnicamente, expresa el consumo agregado en función de la renta disponible, y en la versión keynesiana lineal es la suma de un consumo autónomo y de una fracción constante de esa renta, la propensión marginal a consumir. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
@@ -1220,7 +1225,7 @@ window.Quarto = {
 <section id="letra-m" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-m">M</h2>
 <div id="g-modelo-centro-periferia" class="glosario-termino">
-<p><strong>Modelo centro-periferia</strong> Modelo en el que una región puede acabar concentrando la industria y otra la agricultura. Técnicamente, es el modelo de Krugman de dos regiones y dos sectores en el que la agricultura es fija y las empresas manufactureras eligen dónde producir, según el peso de las fuerzas centrípetas y centrífugas. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Modelo centro-periferia</strong> Modelo en el que una región puede acabar concentrando la industria y otra la agricultura. Técnicamente, es el modelo de Krugman de dos regiones y dos sectores en el que la industria se concentra cuando los costes de transporte son bajos, las economías de escala fuertes y el peso de la industria elevado, y se reparte en caso contrario. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-modelo-de-busqueda-dinero" class="glosario-termino">
 <p><strong>Modelo de búsqueda (dinero)</strong> Modelo en el que el dinero existe porque facilita encontrar con quién intercambiar. Técnicamente, el dinero se demanda si aumenta la probabilidad de emparejamiento frente al trueque, y puede haber equilibrios con dinero, sin dinero o mixtos. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: modelos de búsqueda">Tema 5</a></p>
@@ -1370,7 +1375,7 @@ window.Quarto = {
 <p><strong>Teoría del ciclo vital</strong> Idea de que cada persona planifica su consumo pensando en toda su vida y no en la renta de cada año. Técnicamente, Ando, Brumberg y Modigliani suponen que el consumo es una proporción de los recursos de toda la vida, de modo que se ahorra en la etapa activa, de renta alta, y se desahorra en la jubilación. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría del ciclo vital">Tema 3</a></p>
 </div>
 <div id="g-test-de-mill-y-bastable" class="glosario-termino">
-<p><strong>Test de Mill y Bastable</strong> Condiciones que debe cumplir la protección de una industria naciente. Técnicamente, según Mill la industria debe madurar y sostenerse sin protección, y según Bastable los beneficios netos acumulados deben superar los costes acumulados de la protección. <span class="glosario-tema">Tema 15</span></p>
+<p><strong>Test de Mill y Bastable</strong> Condiciones que debe cumplir la protección de una industria naciente. Técnicamente, según Mill la industria debe madurar y sostenerse sin protección, y según Bastable el valor actual de las ganancias futuras debe superar el de los costes de la protección. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-tipo-de-interes-critico" class="glosario-termino">
 <p><strong>Tipo de interés crítico</strong> Nivel de tipo de interés que cada persona considera normal. Técnicamente, es el valor subjetivo hacia el que cada agente espera que revierta el tipo de mercado, y según esté el tipo de mercado por encima o por debajo prefiere bonos o dinero. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
