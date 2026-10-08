@@ -547,9 +547,9 @@
       {
        "codigo": "3.B.15",
        "titulo": "Teoría del comercio internacional (II): nueva teoría del comercio internacional. Especial referencia a la competencia imperfecta, los rendimientos crecientes y la heterogeneidad empresarial.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/15-tema-b15.html"
       },
       {
        "codigo": "3.B.16",
