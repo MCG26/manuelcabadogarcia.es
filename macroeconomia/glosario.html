@@ -39,13 +39,58 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
   #cortina .c-num { color: #a6f7d2; text-shadow: 0 0 8px rgba(62,230,168,.7), 0 0 20px rgba(62,230,168,.35); }
   #cortina .c-etq { color: #e6e0d2; }
 }
+/* Lanzamiento (kyudo, elegido por Manuel el 2026-10-08): al llegar a 0 las olas se
+   mueven, una flecha sale de la esquina inferior izquierda, da en la diana, el
+   candado cae y la cortina sube dejando ver la web */
+#cortina { --c-acento: #7a1f4b; transition: transform 1.1s cubic-bezier(.7, 0, .25, 1); }
+#cortina.c-sube { transform: translateY(-105%); }
+@media (prefers-color-scheme: dark) { #cortina { --c-acento: #3ee6a8; } }
+#cortina .c-cuerpo.c-olas-vivas { animation: c-olas 1.4s linear infinite; }
+@keyframes c-olas { from { background-position: 0 0; } to { background-position: -96px 0; } }
+#cortina .c-cuenta { transition: opacity .35s, transform .35s; }
+#cortina .c-cuenta.c-fuera { opacity: 0; transform: scale(.85); }
+#cortina .c-escena { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  pointer-events: none; }
+#cortina .c-diana { width: min(280px, 60vw); height: min(280px, 60vw); position: relative; opacity: 0; transform: scale(.4);
+  transition: opacity .35s, transform .45s cubic-bezier(.2, 1.6, .4, 1); }
+#cortina .c-diana svg.c-anillos { width: 100%; height: 100%; display: block; }
+#cortina .c-diana { flex: 0 0 auto; aspect-ratio: 1; }
+#cortina .c-diana.c-visible { opacity: 1; transform: scale(1); }
+#cortina .c-diana.c-golpe { animation: c-golpe .35s ease-out; }
+@keyframes c-golpe { 30% { transform: scale(.94) rotate(-2deg); } 60% { transform: scale(1.03) rotate(1deg); } }
+#cortina .c-diana.c-adios { transition: opacity .5s; opacity: 0; }
+#cortina .c-candado { position: absolute; left: 50%; top: 50%; width: 26%; margin: -18% 0 0 -13%; }
+#cortina .c-candado .c-arco { transform-origin: 70% 100%; transition: transform .25s; }
+#cortina .c-candado.c-roto .c-arco { transform: translateY(-14px) rotate(25deg); }
+#cortina .c-candado.c-cae { animation: c-cae 1s cubic-bezier(.5, 0, .9, .5) forwards; }
+@keyframes c-cae { to { transform: translate(60px, 75vh) rotate(160deg); opacity: .2; } }
+#cortina .c-onda { position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px; border-radius: 50%;
+  border: 3px solid var(--c-acento); opacity: 0; }
+#cortina .c-onda.c-sale { animation: c-onda .6s ease-out; }
+@keyframes c-onda { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(14); } }
+#cortina .c-flecha { position: absolute; left: 50%; top: 50%; opacity: 0; }
+#cortina .c-flecha svg { display: block; width: min(300px, 64vw); height: auto; margin: -15px 0 0 calc(-1 * min(300px, 64vw));
+  transform: rotate(-32deg); transform-origin: 100% 50%; }
+@media (prefers-reduced-motion: reduce) {
+  #cortina, #cortina * { animation: none !important; transition: none !important; }
+}
 </style>
 <script>
 (function () {
   var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
+  // Lanzamiento: lunes 12 de octubre de 2026, 11:00 en Madrid. Para probarlo:
+  // ?prueba-lanzamiento=N pone el lanzamiento N segundos despues de cargar la pagina
+  var LANZAMIENTO = Date.parse('2026-10-12T09:00:00Z'), desfase = 0, prueba = false;
+  try {
+    var mp = /[?&]prueba-lanzamiento=(\d+)/.exec(location.search);
+    // solo en local: en la web publicada no puede abrir la cortina antes de hora
+    if (mp && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { LANZAMIENTO = Date.now() + 1000 * parseInt(mp[1], 10); prueba = true; }
+  } catch (e) {}
+  // Pasada la hora, la web se ve sin cortina
+  if (!prueba && Date.now() >= LANZAMIENTO) { return; }
   var abierta = false;
   try { abierta = localStorage.getItem(CLAVE) === H_TECLADO; } catch (e) {}
-  if (abierta) { return; }
+  if (abierta && !prueba) { return; }
   document.documentElement.classList.add('cortina');
   // SHA-256 propio (texto ASCII): crypto.subtle solo existe en paginas https, y la
   // cortina tiene que funcionar tambien por http (p. ej. antes de tener el certificado)
@@ -144,21 +189,23 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
       ['dias', 'horas', 'minutos', 'segundos'].map(function (u) {
         return '<div class="c-bloque"><span class="c-num" data-u="' + u + '">--</span><span class="c-etq">' +
           {dias: 'días', horas: 'horas', minutos: 'minutos', segundos: 'segundos'}[u] + '</span></div>';
-      }).join('') + '</div><div class="c-pista" aria-hidden="true"></div></div>';
+      }).join('') + '</div><div class="c-pista" aria-hidden="true"></div></div>' + escena();
     tituloReal = document.title;
     document.title = 'Próximamente';
     document.body.appendChild(c);
     iniciarCuenta();
   });
   // Hora oficial: la del servidor (cabecera Date), no la del ordenador del visitante
-  var LANZAMIENTO = Date.parse('2026-10-12T09:00:00Z'), desfase = 0;
+  var lanzado = false;
   function iniciarCuenta() {
-    try {
-      fetch(location.href, {method: 'HEAD', cache: 'no-store'}).then(function (r) {
-        var d = Date.parse(r.headers.get('Date'));
-        if (!isNaN(d)) { desfase = d - Date.now(); }
-      }).catch(function () {});
-    } catch (e) {}
+    if (!prueba) {
+      try {
+        fetch(location.href, {method: 'HEAD', cache: 'no-store'}).then(function (r) {
+          var d = Date.parse(r.headers.get('Date'));
+          if (!isNaN(d)) { desfase = d - Date.now(); }
+        }).catch(function () {});
+      } catch (e) {}
+    }
     function dos(n) { return (n < 10 ? '0' : '') + n; }
     function pintar() {
       var falta = Math.max(0, LANZAMIENTO - (Date.now() + desfase)), s = Math.floor(falta / 1000);
@@ -167,9 +214,62 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
       Object.keys(v).forEach(function (u) {
         var e = document.querySelector('#cortina .c-num[data-u="' + u + '"]'); if (e) { e.textContent = v[u]; }
       });
+      if (falta === 0) { if (!lanzado) { lanzado = true; lanzar(); } return; }
       if (document.getElementById('cortina')) { setTimeout(pintar, 1000 - (Date.now() + desfase) % 1000); }
     }
     pintar();
+  }
+  // Diana de kyudo (kasumi-mato), candado y flecha con plumas de halcon
+  function escena() {
+    var anillos = [[140, '#2b2a28'], [128, '#f7f4ec'], [100, '#2b2a28'], [88, '#f7f4ec'], [66, '#2b2a28'],
+                   [56, '#f7f4ec'], [36, '#2b2a28'], [26, '#f7f4ec']].map(function (a) {
+      return '<circle cx="140" cy="140" r="' + a[0] + '" fill="' + a[1] + '"/>';
+    }).join('');
+    var rayas = [6, 22, 38].map(function (x) {
+      return '<rect x="' + x + '" y="3" width="6" height="24" fill="#2b2a28" opacity=".85"/>';
+    }).join('');
+    return '<div class="c-escena" aria-hidden="true"><div class="c-diana">' +
+      '<svg class="c-anillos" viewBox="0 0 280 280">' + anillos + '</svg>' +
+      '<svg class="c-candado" viewBox="0 0 74 92">' +
+        '<path class="c-arco" d="M19 44 V28 a18 18 0 0 1 36 0 V44" fill="none" stroke="#2b2a28" stroke-width="8" stroke-linecap="round"/>' +
+        '<rect x="6" y="40" width="62" height="48" rx="8" fill="var(--c-acento)" stroke="#2b2a28" stroke-width="3"/>' +
+        '<circle cx="37" cy="60" r="6" fill="#f7f4ec"/><rect x="34" y="62" width="6" height="14" rx="2" fill="#f7f4ec"/></svg>' +
+      '<div class="c-onda"></div></div>' +
+      '<div class="c-flecha"><svg viewBox="0 0 300 30">' +
+        '<polygon points="0,2 60,13 60,15 0,15" fill="#f7f4ec" stroke="#2b2a28" stroke-width="1"/>' +
+        '<polygon points="0,28 60,17 60,15 0,15" fill="#f7f4ec" stroke="#2b2a28" stroke-width="1"/>' + rayas +
+        '<rect x="56" y="13" width="222" height="4" rx="2" fill="#c8a46e" stroke="#7d6640" stroke-width=".6"/>' +
+        '<rect x="60" y="12" width="4" height="6" fill="var(--c-acento)"/>' +
+        '<polygon points="276,11 300,15 276,19" fill="#7a7a80"/></svg></div></div>';
+  }
+  function lanzar() {
+    var c = document.getElementById('cortina'); if (!c) { return; }
+    function q(s) { return c.querySelector(s); }
+    function paso(ms, f) { setTimeout(f, ms); }
+    var VUELO = 420;
+    q('.c-cuerpo').classList.add('c-olas-vivas');                  // las olas se mueven
+    paso(250, function () { q('.c-cuenta').classList.add('c-fuera'); });
+    paso(650, function () { q('.c-diana').classList.add('c-visible'); });
+    paso(1400, function () {                                         // sale la flecha
+      var f = q('.c-flecha'); f.style.opacity = 1;
+      if (f.animate) {
+        f.animate([{transform: 'translate(-60vw, 37.5vw)'}, {transform: 'translate(0, 0)'}],
+                  {duration: VUELO, easing: 'cubic-bezier(.35,0,.9,.6)', fill: 'forwards'});
+      }
+    });
+    paso(1400 + VUELO, function () {                                 // impacto
+      q('.c-diana').classList.add('c-golpe'); q('.c-onda').classList.add('c-sale');
+      q('.c-candado').classList.add('c-roto');
+    });
+    paso(1400 + VUELO + 350, function () { q('.c-candado').classList.add('c-cae'); });
+    paso(1400 + VUELO + 1100, function () {                          // se abre la web
+      q('.c-diana').classList.add('c-adios'); q('.c-flecha').style.transition = 'opacity .5s';
+      q('.c-flecha').style.opacity = 0;
+      if (tituloReal) { document.title = tituloReal; }
+      document.documentElement.classList.remove('cortina');
+      c.classList.add('c-sube');
+    });
+    paso(1400 + VUELO + 2300, function () { c.remove(); });
   }
 })();
 </script>
@@ -179,7 +279,7 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Manuel Cabado García">
-<meta name="description" content="Glosario de 80 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta name="description" content="Glosario de 111 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 
 <title>Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales</title>
 <style>
@@ -262,17 +362,46 @@ ul.task-list li input[type="checkbox"] {
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles/custom.css">
 <meta property="og:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
-<meta property="og:description" content="Glosario de 80 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta property="og:description" content="Glosario de 111 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 <meta property="og:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
 <meta property="og:site_name" content="Macroeconomía y Economía Internacional">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image:height" content="630">
 <meta property="og:image:width" content="1200">
 <meta name="twitter:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
-<meta name="twitter:description" content="Glosario de 80 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta name="twitter:description" content="Glosario de 111 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 <meta name="twitter:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image-height" content="630">
@@ -870,8 +999,8 @@ ul.task-list li input[type="checkbox"] {
 
 <!-- generado por construir_web.py a partir del glosario de LyX: no editar a mano -->
 <div class="glosario-herramientas">
-  <input type="search" id="glosario-buscar" placeholder="Buscar entre los 80 términos…" aria-label="Buscar en el glosario" autocomplete="off">
-  <p class="glosario-cuenta" id="glosario-cuenta">80 términos</p>
+  <input type="search" id="glosario-buscar" placeholder="Buscar entre los 111 términos…" aria-label="Buscar en el glosario" autocomplete="off">
+  <p class="glosario-cuenta" id="glosario-cuenta">111 términos</p>
   <nav class="glosario-abecedario" aria-label="Letras"><a href="#letra-a">A</a> <a href="#letra-b">B</a> <a href="#letra-c">C</a> <a href="#letra-d">D</a> <a href="#letra-e">E</a> <a href="#letra-f">F</a> <a href="#letra-h">H</a> <a href="#letra-i">I</a> <a href="#letra-l">L</a> <a href="#letra-m">M</a> <a href="#letra-n">N</a> <a href="#letra-p">P</a> <a href="#letra-q">Q</a> <a href="#letra-r">R</a> <a href="#letra-s">S</a> <a href="#letra-t">T</a> <a href="#letra-v">V</a></nav>
 </div>
 <div class="glosario">
@@ -882,6 +1011,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-ahorro-precautorio" class="glosario-termino">
 <p><strong>Ahorro precautorio</strong> Ahorro que se hace por si vienen mal dadas. Técnicamente, es el ahorro adicional que genera la incertidumbre sobre la renta futura, reforzado por la posibilidad de restricciones de liquidez, y hace que la senda de consumo sea creciente aunque el tipo de interés iguale la tasa de descuento. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Exceso de suavidad">Tema 3</a></p>
+</div>
+<div id="g-argumento-de-la-industria-naciente" class="glosario-termino">
+<p><strong>Argumento de la industria naciente</strong> Idea de que conviene proteger durante un tiempo a una industria joven hasta que sea competitiva. Técnicamente, se apoya en economías de escala externas o dinámicas y debe superar los tests de Mill y de Bastable. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-aversion-al-riesgo" class="glosario-termino">
 <p><strong>Aversión al riesgo</strong> Preferencia por un resultado seguro frente a una apuesta incierta con el mismo rendimiento esperado. Técnicamente, en el modelo de cartera se traduce en curvas de indiferencia convexas entre rendimiento y riesgo. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo especulación: modelo de cartera">Tema 5</a></p>
@@ -895,6 +1027,18 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-c" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-c">C</h2>
+<div id="g-cadena-global-de-valor" class="glosario-termino">
+<p><strong>Cadena global de valor</strong> Producción de un bien repartida en etapas que se realizan en países distintos. Técnicamente, las empresas fragmentan el proceso, desde el diseño hasta la distribución, y localizan cada etapa en un país diferente, de modo que los bienes cruzan fronteras varias veces. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-ciclo-de-vida-del-producto" class="glosario-termino">
+<p><strong>Ciclo de vida del producto</strong> Recorrido de un producto desde que se inventa hasta que se estandariza, que cambia el país donde se fabrica. Técnicamente, en el modelo de Vernon hay una etapa inicial en el país innovador, otra de madurez con producción en otros países desarrollados y otra de estandarización con producción en países en desarrollo. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-comercio-interindustrial" class="glosario-termino">
+<p><strong>Comercio interindustrial</strong> Intercambio de productos de industrias distintas, como aceite por automóviles. Técnicamente, cada país exporta bienes de unas industrias e importa los de otras, y se explica sobre todo por la ventaja comparativa. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-comercio-intraindustrial" class="glosario-termino">
+<p><strong>Comercio intraindustrial</strong> Que un país venda y compre al exterior bienes de la misma industria, por ejemplo queso por queso. Técnicamente, es la exportación e importación simultáneas de bienes de una misma industria, y se mide con el índice de Grubel y Lloyd. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-condicion-de-no-juego-de-ponzi" class="glosario-termino">
 <p><strong>Condición de no juego de Ponzi</strong> Restricción que impide endeudarse indefinidamente para pagar las deudas anteriores. Técnicamente, exige que el valor actual de la deuda de un agente no sea positivo en el límite cuando el horizonte tiende a infinito, de modo que se cumpla su restricción presupuestaria intertemporal. Es una condición de viabilidad, que imponen los prestamistas, mientras que la de transversalidad es de optimalidad, porque el propio agente no quiere dejar riqueza sin consumir. Juntas implican que el valor actual de los activos en el límite es exactamente cero. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
 </div>
@@ -906,6 +1050,15 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-contabilidad-mental" class="glosario-termino">
 <p><strong>Contabilidad mental</strong> Costumbre de repartir el dinero en cuentas mentales separadas, como la de las vacaciones o la de la hipoteca. Técnicamente, según Thaler, los agentes evalúan cada decisión por su efecto sobre una cuenta concreta y no sobre el conjunto de sus activos. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Exceso de sensibilidad">Tema 3</a></p>
+</div>
+<div id="g-coste-de-entrada-hundido" class="glosario-termino">
+<p><strong>Coste de entrada hundido</strong> Coste que una empresa paga una sola vez para entrar en un mercado y que no recupera si sale. Técnicamente, en el modelo de Melitz se paga antes de conocer la productividad, que se sortea después. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-coste-de-transporte-de-tipo-iceberg" class="glosario-termino">
+<p><strong>Coste de transporte de tipo iceberg</strong> Coste de transporte que consume una parte del propio bien enviado, en lugar de un pago aparte. Técnicamente, para que llegue una unidad hay que enviar <span class="math inline">\(\tau\)</span> &gt; 1 unidades y las <span class="math inline">\(\tau\)</span> <span class="math inline">\(-\)</span> 1 restantes se pierden por el camino. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-coste-fijo-de-exportacion" class="glosario-termino">
+<p><strong>Coste fijo de exportación</strong> Gasto que una empresa debe afrontar en cada periodo para vender en el extranjero, además del coste de producir. Técnicamente, hace que solo exporten las empresas cuya productividad supera la productividad de corte de exportación. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-costes-de-corretaje" class="glosario-termino">
 <p><strong>Costes de corretaje</strong> Lo que cuesta cada vez que hay que convertir bonos en dinero. Técnicamente, son los costes fijos de esa conversión, que crecen con el número de operaciones y por eso reducen la conveniencia de mantener pocos saldos. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo transacción: modelo de inventarios">Tema 5</a></p>
@@ -928,6 +1081,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-descuento-cuasi-hiperbolico" class="glosario-termino">
 <p><strong>Descuento cuasi-hiperbólico</strong> Forma de valorar el futuro en la que se es muy impaciente con lo inmediato y paciente con lo lejano. Técnicamente, propuesto por Laibson, multiplica toda la utilidad futura por un factor menor que 1, el sesgo hacia el presente, además del descuento exponencial de cada período. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
 </div>
+<div id="g-desfase-tecnologico" class="glosario-termino">
+<p><strong>Desfase tecnológico</strong> Tiempo que tarda una innovación de un país en llegar a otro. Técnicamente, en el modelo de Posner hay un desfase de imitación, hasta que el resto de países incorpora la tecnología, y un desfase de demanda, hasta que surge demanda en el exterior, y hay comercio cuando el primero es mayor que el segundo. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-dicotomia-clasica" class="glosario-termino">
 <p><strong>Dicotomía clásica</strong> Separación entre lo que ocurre con las cantidades reales y lo que ocurre con los precios. Técnicamente, las variables reales se determinan sin intervención de las nominales, que solo fijan el nivel de precios. <a href="05-tema-b5.html" class="glosario-tema" title="Teoría cuantitativa del dinero">Tema 5</a></p>
 </div>
@@ -939,6 +1095,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-doble-coincidencia-de-deseos" class="glosario-termino">
 <p><strong>Doble coincidencia de deseos</strong> Dificultad del trueque, que exige encontrar a alguien que tenga lo que uno quiere y quiera a la vez lo que uno ofrece. Técnicamente, el dinero la resuelve al servir de medio de cambio aceptado por todos. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: el dinero en la función de utilidad">Tema 5</a></p>
+</div>
+<div id="g-dumping-reciproco" class="glosario-termino">
+<p><strong>Dumping recíproco</strong> Situación en la que dos empresas se invaden mutuamente el mercado y venden al exterior a un precio neto menor que en casa. Técnicamente, con costes de transporte cada empresa obtiene en sus ventas exteriores un precio neto de transporte menor que en su mercado, aunque el consumidor pague en cada mercado el mismo precio a ambas. <span class="glosario-tema">Tema 15</span></p>
 </div>
 </section>
 <section id="letra-e" class="level2 unnumbered glosario-letra">
@@ -955,14 +1114,35 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-ecuacion-de-fisher" class="glosario-termino">
 <p><strong>Ecuación de Fisher</strong> Relación entre el tipo de interés nominal y el real. Técnicamente, el tipo nominal es aproximadamente igual al tipo real más la inflación esperada, de modo que el coste de oportunidad de mantener dinero es el tipo nominal. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes (nota de notación)">Tema 5</a></p>
 </div>
+<div id="g-ecuacion-de-gravedad" class="glosario-termino">
+<p><strong>Ecuación de gravedad</strong> Relación según la cual el comercio entre dos países crece con su tamaño y cae con la distancia. Técnicamente, el comercio bilateral es proporcional al producto de los PIB e inversamente proporcional a una función de la distancia y de otros costes de comercio. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-efecto-demostracion" class="glosario-termino">
 <p><strong>Efecto demostración</strong> Tendencia a gastar para no quedarse atrás respecto de los vecinos. Técnicamente, los hogares de renta baja tienen una propensión media a consumir mayor porque tratan de emular el consumo de los de renta más alta, lo que explica la propensión media decreciente en los datos de sección cruzada. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
+</div>
+<div id="g-efecto-escala" class="glosario-termino">
+<p><strong>Efecto escala</strong> Caída del coste medio de cada empresa por producir más cuando el mercado se amplía. Técnicamente, tras abrirse al comercio cada empresa que sigue produciendo vende más y reduce su coste medio, aunque su beneficio siga siendo cero. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-efecto-frontera" class="glosario-termino">
+<p><strong>Efecto frontera</strong> Menor comercio que produce el hecho de que dos regiones estén separadas por una frontera nacional. Técnicamente, es la caída del comercio entre países frente al comercio entre regiones de un mismo país, a igualdad de tamaño y distancia, y se estima entre un 20 y un 50 % entre países industrializados. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-efecto-mercado-interno" class="glosario-termino">
+<p><strong>Efecto mercado interno</strong> Tendencia de las empresas a instalarse en el país con mayor demanda de su producto. Técnicamente, con economías de escala y costes de transporte, el país con mayor demanda de un bien lo produce más que proporcionalmente y se convierte en exportador neto. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-efecto-reasignacion" class="glosario-termino">
+<p><strong>Efecto reasignación</strong> Traspaso de recursos de las empresas menos productivas a las más productivas. Técnicamente, tras abrirse al comercio las exportadoras ganan cuota de mercado y la productividad agregada del sector aumenta. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-efecto-seleccion" class="glosario-termino">
+<p><strong>Efecto selección</strong> Salida del mercado de las empresas menos productivas cuando aumenta la competencia. Técnicamente, al abrirse al comercio sube la productividad de corte, las empresas menos productivas dejan de producir y la productividad media del sector aumenta. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-efecto-trinquete-consumo" class="glosario-termino">
 <p><strong>Efecto trinquete (consumo)</strong> Resistencia de los hogares a recortar su consumo cuando baja la renta. Técnicamente, el consumo depende del nivel más alto alcanzado en el pasado, de modo que ante una caída de la renta se reduce el ahorro y no el consumo, y la propensión media a consumir aumenta a corto plazo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
 </div>
 <div id="g-efectos-sustitucion-y-renta-del-tipo-de-interes-demanda-de-dinero" class="glosario-termino">
 <p><strong>Efectos sustitución y renta del tipo de interés (demanda de dinero)</strong> Dos fuerzas que mueven en sentido contrario la tenencia de dinero cuando sube el tipo de interés. Técnicamente, en el modelo de cartera el efecto sustitución reduce el dinero porque mantenerlo sale más caro, y el efecto renta puede aumentarlo, porque la mejora del rendimiento por unidad de riesgo permite ganar seguridad. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo especulación: modelo de cartera">Tema 5</a></p>
+</div>
+<div id="g-empresa-born-global" class="glosario-termino">
+<p><strong>Empresa born-global</strong> Empresa que vende en el extranjero casi desde que nace. Técnicamente, es una organización empresarial que desde su creación busca una ventaja competitiva significativa del uso de recursos y la venta de productos en múltiples países. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-enigma-del-consumo" class="glosario-termino">
 <p><strong>Enigma del consumo</strong> Contradicción entre lo que muestran los datos de consumo a corto y a largo plazo. Técnicamente, es el hallazgo de Kuznets de que en series largas la propensión media a consumir se mantiene estable e igual a la marginal, mientras que en datos de sección cruzada y en series cortas decrece con la renta, como predecía Keynes. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes > Evidencia empírica">Tema 3</a></p>
@@ -991,12 +1171,21 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-f" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-f">F</h2>
+<div id="g-fuerzas-centrifugas" class="glosario-termino">
+<p><strong>Fuerzas centrífugas</strong> Fuerzas que dispersan la actividad económica. Técnicamente, actúan en sentido opuesto a las centrípetas, como las economías de escala externas negativas y las externalidades negativas. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-fuerzas-centripetas" class="glosario-termino">
+<p><strong>Fuerzas centrípetas</strong> Fuerzas que concentran la actividad económica en un lugar. Técnicamente, son las economías de escala externas y las ventajas de un mercado grande, como la aparición de proveedores especializados. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-funcion-de-consumo" class="glosario-termino">
 <p><strong>Función de consumo</strong> Relación que indica cuánto gastan los hogares según la renta de que disponen. Técnicamente, expresa el consumo agregado en función de la renta disponible, y en la versión keynesiana lineal es la suma de un consumo autónomo y de una fracción constante de esa renta, la propensión marginal a consumir. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
 </div>
 </section>
 <section id="letra-h" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-h">H</h2>
+<div id="g-heterogeneidad-empresarial" class="glosario-termino">
+<p><strong>Heterogeneidad empresarial</strong> Diferencias de productividad entre empresas de un mismo sector. Técnicamente, cada empresa sortea su productividad tras pagar un coste de entrada, y solo las más productivas pueden exportar. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-hogar-hand-to-mouth" class="glosario-termino">
 <p><strong>Hogar hand-to-mouth</strong> Hogar que gasta en cada período lo que ingresa, sin colchón de ahorro disponible. Técnicamente, consume toda su renta corriente, por lo que no sigue la renta permanente (hogar no ricardiano), y en su versión pobre carece de riqueza de cualquier clase. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
 </div>
@@ -1012,6 +1201,15 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-inconsistencia-dinamica-de-las-preferencias" class="glosario-termino">
 <p><strong>Inconsistencia dinámica de las preferencias</strong> Cambio de planes que se produce solo porque pasa el tiempo, como quien decide ahorrar a partir del mes que viene y, llegado el mes, lo vuelve a aplazar. Técnicamente, ocurre cuando el plan óptimo trazado hoy deja de serlo en el futuro sin que llegue información nueva, y genera problemas de autocontrol. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
 </div>
+<div id="g-indice-de-balassa-comercio-intraindustrial" class="glosario-termino">
+<p><strong>Índice de Balassa (comercio intraindustrial)</strong> Medida de cuánto del comercio de un país no es intraindustrial. Técnicamente, es el valor absoluto de exportaciones menos importaciones de una industria dividido por su suma, entre 0 si son iguales y 1 si solo se exporta o solo se importa. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-indice-de-balassa-ventaja-comparativa-revelada" class="glosario-termino">
+<p><strong>Índice de Balassa (ventaja comparativa revelada)</strong> Medida de en qué productos se especializa un país. Técnicamente, compara la cuota de un producto en las exportaciones del país con su cuota en las exportaciones mundiales y mide especialización, no comercio intraindustrial. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-indice-de-grubel-y-lloyd" class="glosario-termino">
+<p><strong>Índice de Grubel y Lloyd</strong> Medida, de 0 a 100, de cuánto del comercio de un país es intraindustrial. Técnicamente, es uno menos el valor absoluto de exportaciones menos importaciones dividido por su suma, por cien, y para el total se pondera por el peso de cada industria. <span class="glosario-tema">Tema 15</span></p>
+</div>
 </section>
 <section id="letra-l" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-l">L</h2>
@@ -1021,6 +1219,9 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-m" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-m">M</h2>
+<div id="g-modelo-centro-periferia" class="glosario-termino">
+<p><strong>Modelo centro-periferia</strong> Modelo en el que una región puede acabar concentrando la industria y otra la agricultura. Técnicamente, es el modelo de Krugman de dos regiones y dos sectores en el que la agricultura es fija y las empresas manufactureras eligen dónde producir, según el peso de las fuerzas centrípetas y centrífugas. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-modelo-de-busqueda-dinero" class="glosario-termino">
 <p><strong>Modelo de búsqueda (dinero)</strong> Modelo en el que el dinero existe porque facilita encontrar con quién intercambiar. Técnicamente, el dinero se demanda si aumenta la probabilidad de emparejamiento frente al trueque, y puede haber equilibrios con dinero, sin dinero o mixtos. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: modelos de búsqueda">Tema 5</a></p>
 </div>
@@ -1045,6 +1246,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-modelo-de-tiempo-de-compra" class="glosario-termino">
 <p><strong>Modelo de tiempo de compra</strong> Modelo en el que el dinero se demanda porque ahorra tiempo al comprar, tiempo que se puede dedicar al ocio. Técnicamente, una tecnología de compra relaciona el tiempo dedicado a comprar con los saldos reales, y el dinero es un bien intermedio. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: modelos de tiempo de compra">Tema 5</a></p>
 </div>
+<div id="g-modelos-neotecnologicos" class="glosario-termino">
+<p><strong>Modelos neotecnológicos</strong> Modelos que explican el comercio por diferencias de tecnología entre países y por su difusión. Técnicamente, tratan la generación y transmisión de tecnología como variable endógena, de modo que la ventaja comparativa cambia con el tiempo. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-moneda-digital-de-banco-central-cbdc" class="glosario-termino">
 <p><strong>Moneda digital de banco central (CBDC)</strong> Dinero del banco central en formato electrónico, es decir, una versión digital del efectivo. El euro digital es el proyecto del BCE, y el riesgo para la demanda de dinero es que sustituya a los depósitos bancarios. <a href="05-tema-b5.html" class="glosario-tema" title="Implicaciones de política económica: efectivo y euro digital">Tema 5</a></p>
 </div>
@@ -1063,8 +1267,17 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-neutralidad-del-dinero" class="glosario-termino">
 <p><strong>Neutralidad del dinero</strong> El dinero actúa solo como un velo que cambia los precios y deja intacta la economía real. Técnicamente, las variaciones de la cantidad de dinero no afectan a las variables reales, como la producción o el empleo. <a href="05-tema-b5.html" class="glosario-tema" title="Apéndice 5.A.4. Neutralidad y superneutralidad">Tema 5</a></p>
 </div>
+<div id="g-novisima-teoria-del-comercio-internacional" class="glosario-termino">
+<p><strong>Novísima teoría del comercio internacional</strong> Teoría que explica el comercio a partir de las decisiones de empresas con distinta productividad. Técnicamente, incorpora la heterogeneidad empresarial, de modo que solo las más productivas exportan, y tiene como referencia el modelo de Melitz. <span class="glosario-tema">Tema 15</span></p>
+</div>
+<div id="g-nueva-geografia-economica" class="glosario-termino">
+<p><strong>Nueva geografía económica</strong> Rama de la economía que explica dónde se localiza la producción y por qué se concentra. Técnicamente, modeliza en equilibrio general la localización como resultado de las fuerzas centrípetas y centrífugas, los costes de transporte y las economías de escala. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-nueva-teoria-cuantitativa-del-dinero" class="glosario-termino">
 <p><strong>Nueva teoría cuantitativa del dinero</strong> Reformulación de Friedman que trata el dinero como un activo más y hace depender su demanda de la riqueza, medida por la renta permanente, y de la rentabilidad de los demás activos. Técnicamente, la demanda es proporcional a la renta permanente y mucho menos sensible al tipo de interés que en Keynes, por lo que es estable. <a href="05-tema-b5.html" class="glosario-tema" title="El monetarismo y la nueva teoría cuantitativa">Tema 5</a></p>
+</div>
+<div id="g-nueva-teoria-del-comercio-internacional" class="glosario-termino">
+<p><strong>Nueva teoría del comercio internacional</strong> Teoría que explica el comercio entre países parecidos con competencia imperfecta y rendimientos crecientes. Técnicamente, el comercio surge de las economías de escala y de la variedad, aunque los países no difieran en tecnología ni en dotaciones. <span class="glosario-tema">Tema 15</span></p>
 </div>
 </section>
 <section id="letra-p" class="level2 unnumbered glosario-letra">
@@ -1077,6 +1290,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-preferencia-por-la-liquidez" class="glosario-termino">
 <p><strong>Preferencia por la liquidez</strong> Deseo de conservar la riqueza en forma de dinero, que se puede gastar de inmediato, en lugar de en activos que rinden pero son menos líquidos. Técnicamente, en Keynes el tipo de interés es el precio que compensa renunciar a esa liquidez y se determina en el mercado monetario. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
+</div>
+<div id="g-productividad-de-corte" class="glosario-termino">
+<p><strong>Productividad de corte</strong> Productividad mínima necesaria para que una empresa cubra sus costes fijos. Técnicamente, la empresa con esa productividad obtiene beneficio cero y las que están por debajo salen del mercado, o no exportan si se trata de la de exportación. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-propension-marginal-a-consumir" class="glosario-termino">
 <p><strong>Propensión marginal a consumir</strong> Parte de cada euro adicional de renta que se destina a consumo. Técnicamente, es la variación del consumo ante un aumento unitario de la renta disponible, es decir, la pendiente de la función de consumo, que Keynes situó entre 0 y 1. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
@@ -1114,6 +1330,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-renta-transitoria" class="glosario-termino">
 <p><strong>Renta transitoria</strong> Parte de la renta que se debe a circunstancias pasajeras, como una prima puntual o un mal año. Técnicamente, en la teoría de Friedman es la diferencia entre la renta corriente y la permanente, tiene media nula, no está correlacionada con la renta permanente y apenas afecta al consumo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente > Modelo">Tema 3</a></p>
 </div>
+<div id="g-resistencia-multilateral" class="glosario-termino">
+<p><strong>Resistencia multilateral</strong> Coste medio de comerciar de un país con todos los demás, que condiciona su comercio con cada uno. Técnicamente, en la ecuación de gravedad con fundamento teórico el comercio bilateral depende de los costes bilaterales en relación con las resistencias multilaterales de los dos países. <span class="glosario-tema">Tema 15</span></p>
+</div>
 <div id="g-restriccion-de-liquidez" class="glosario-termino">
 <p><strong>Restricción de liquidez</strong> Imposibilidad de pedir prestado para gastar hoy lo que se ganará mañana. Técnicamente, es la incapacidad de un hogar para endeudarse contra su renta futura, o para hacerlo sin pagar más que el Gobierno, lo que le impide suavizar el consumo y hace que este siga a la renta corriente. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
 </div>
@@ -1149,6 +1368,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-teoria-del-ciclo-vital" class="glosario-termino">
 <p><strong>Teoría del ciclo vital</strong> Idea de que cada persona planifica su consumo pensando en toda su vida y no en la renta de cada año. Técnicamente, Ando, Brumberg y Modigliani suponen que el consumo es una proporción de los recursos de toda la vida, de modo que se ahorra en la etapa activa, de renta alta, y se desahorra en la jubilación. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría del ciclo vital">Tema 3</a></p>
+</div>
+<div id="g-test-de-mill-y-bastable" class="glosario-termino">
+<p><strong>Test de Mill y Bastable</strong> Condiciones que debe cumplir la protección de una industria naciente. Técnicamente, según Mill la industria debe madurar y sostenerse sin protección, y según Bastable los beneficios netos acumulados deben superar los costes acumulados de la protección. <span class="glosario-tema">Tema 15</span></p>
 </div>
 <div id="g-tipo-de-interes-critico" class="glosario-termino">
 <p><strong>Tipo de interés crítico</strong> Nivel de tipo de interés que cada persona considera normal. Técnicamente, es el valor subjetivo hacia el que cada agente espera que revierta el tipo de mercado, y según esté el tipo de mercado por encima o por debajo prefiere bonos o dinero. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
