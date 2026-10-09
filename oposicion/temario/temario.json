@@ -575,9 +575,9 @@
       {
        "codigo": "3.B.19",
        "titulo": "Balanza de Pagos: concepto, medición e interpretación.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/19-tema-b19.html"
       },
       {
        "codigo": "3.B.20",
