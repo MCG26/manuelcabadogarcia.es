@@ -470,9 +470,9 @@
       {
        "codigo": "3.B.4",
        "titulo": "Teorías de la inversión en bienes de equipo. Incertidumbre e irreversibilidad de la inversión. Implicaciones de política económica.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/04-tema-b4.html"
       },
       {
        "codigo": "3.B.5",
