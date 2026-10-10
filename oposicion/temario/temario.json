@@ -596,9 +596,9 @@
       {
        "codigo": "3.B.22",
        "titulo": "Teoría de la integración monetaria.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/22-tema-b22.html"
       }
      ]
     }
