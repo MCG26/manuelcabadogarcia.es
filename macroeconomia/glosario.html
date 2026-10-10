@@ -279,7 +279,7 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Manuel Cabado García">
-<meta name="description" content="Glosario de 263 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta name="description" content="Glosario de 416 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 
 <title>Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales</title>
 <style>
@@ -320,9 +320,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-c3ec209f2e3d3157a62c50f4b85450b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-f7b17267c351010578a1e7f63855561c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-c3ec209f2e3d3157a62c50f4b85450b8.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-0ba9257c87ed5d6800a277c318834fc6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-1c36d351d4ec91ba3a4b8f50ecf203ad.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-0ba9257c87ed5d6800a277c318834fc6.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -362,17 +362,46 @@ ul.task-list li input[type="checkbox"] {
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-bold.woff2" as="font" type="font/woff2" crossorigin="">
 <link rel="preload" href="site_libs/bootstrap/fuentes/lmroman10-italic.woff2" as="font" type="font/woff2" crossorigin="">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles/custom.css">
 <meta property="og:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
-<meta property="og:description" content="Glosario de 263 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta property="og:description" content="Glosario de 416 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 <meta property="og:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
 <meta property="og:site_name" content="Macroeconomía y Economía Internacional">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image:height" content="630">
 <meta property="og:image:width" content="1200">
 <meta name="twitter:title" content="Glosario de macroeconomía y economía internacional | Apuntes Diplomados Comerciales">
-<meta name="twitter:description" content="Glosario de 263 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
+<meta name="twitter:description" content="Glosario de 416 términos de macroeconomía y economía internacional para la oposición a Diplomados Comerciales del Estado, con enlace al tema de cada uno.">
 <meta name="twitter:image" content="https://manuelcabadogarcia.es/macroeconomia/compartir.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image-height" content="630">
@@ -687,8 +716,8 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./13-tema-b13-pendiente.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Teorías del crecimiento económico.</span></span></a>
+  <a href="./13-tema-b13.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Teorías del crecimiento económico. ✎</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -1004,8 +1033,8 @@ ul.task-list li input[type="checkbox"] {
 
 <!-- generado por construir_web.py a partir del glosario de LyX: no editar a mano -->
 <div class="glosario-herramientas">
-  <input type="search" id="glosario-buscar" placeholder="Buscar entre los 263 términos…" aria-label="Buscar en el glosario" autocomplete="off">
-  <p class="glosario-cuenta" id="glosario-cuenta">263 términos</p>
+  <input type="search" id="glosario-buscar" placeholder="Buscar entre los 416 términos…" aria-label="Buscar en el glosario" autocomplete="off">
+  <p class="glosario-cuenta" id="glosario-cuenta">416 términos</p>
   <nav class="glosario-abecedario" aria-label="Letras"><a href="#letra-a">A</a> <a href="#letra-b">B</a> <a href="#letra-c">C</a> <a href="#letra-d">D</a> <a href="#letra-e">E</a> <a href="#letra-f">F</a> <a href="#letra-g">G</a> <a href="#letra-h">H</a> <a href="#letra-i">I</a> <a href="#letra-l">L</a> <a href="#letra-m">M</a> <a href="#letra-n">N</a> <a href="#letra-o">O</a> <a href="#letra-p">P</a> <a href="#letra-q">Q</a> <a href="#letra-r">R</a> <a href="#letra-s">S</a> <a href="#letra-t">T</a> <a href="#letra-u">U</a> <a href="#letra-v">V</a></nav>
 </div>
 <div class="glosario">
@@ -1016,6 +1045,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-abundancia-relativa-de-un-factor" class="glosario-termino">
 <p><strong>Abundancia relativa de un factor</strong> Un país es abundante en un factor si dispone de más cantidad relativa de él que otro país o si, antes de comerciar, ese factor le resulta relativamente más barato. Técnicamente, la definición física compara las ratios capital-trabajo de los dos países y la definición en precios compara el cociente entre el salario y la remuneración del capital en autarquía. Ambas coinciden si no hay sesgos de demanda. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-acelerador-financiero" class="glosario-termino">
+<p><strong>Acelerador financiero</strong> Mecanismo por el que los problemas de financiación agrandan las caídas de la inversión en una recesión. Técnicamente, en el modelo de Bernanke, Gertler y Gilchrist, la prima de financiación externa depende inversamente del patrimonio neto del prestatario, que es procíclico, por lo que la prima es contracíclica y amplifica las oscilaciones. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-acelerador-flexible" class="glosario-termino">
 <p><strong>Acelerador flexible</strong> Versión del acelerador en la que las empresas cierran poco a poco la distancia entre el capital que tienen y el que desean. Técnicamente, la inversión neta depende de una media ponderada de las variaciones pasadas de la producción, con pesos decrecientes, lo que equivale a cubrir en cada periodo solo una fracción de la brecha con el capital deseado. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría del acelerador flexible">Tema 4</a></p>
@@ -1032,6 +1064,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-activos-varados" class="glosario-termino">
 <p><strong>Activos varados</strong> Instalaciones que pierden su valor antes de terminar su vida útil porque cambian la regulación, los precios o la tecnología. Técnicamente, son inversiones irreversibles, como las centrales de combustibles fósiles ante la transición energética, cuyo rendimiento cae por debajo del previsto al invertir. También se conocen como stranded assets. <a href="04-tema-b4.html" class="glosario-tema" title="Apéndice 4.A.9">Tema 4</a></p>
 </div>
+<div id="g-agente-representativo" class="glosario-termino">
+<p><strong>Agente representativo</strong> Un único agente cuyas decisiones se toman como las de toda la economía. Técnicamente, simplificación que agrega a los individuos en un solo optimizador, lo que evita analizar la heterogeneidad y los problemas de agregación. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-agregados-monetarios" class="glosario-termino">
 <p><strong>Agregados monetarios</strong> Medidas de la cantidad de dinero que agrupan activos según su grado de liquidez. Técnicamente, M1 es el más estricto, con rendimiento nominal nulo o muy bajo, y M3 es un agregado más amplio, que incluye otros activos líquidos y es el que sigue el BCE. <a href="05-tema-b5.html" class="glosario-tema" title="Introducción">Tema 5</a></p>
 </div>
@@ -1040,6 +1075,18 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-animal-spirits" class="glosario-termino">
 <p><strong>Animal spirits</strong> Impulso espontáneo de los empresarios a actuar en lugar de esperar, que no sale de un cálculo de probabilidades. Técnicamente, en la función de inversión keynesiana es el componente autónomo y muy volátil que recoge las expectativas de los empresarios sobre los rendimientos futuros. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría de Keynes de la demanda de inversión">Tema 4</a></p>
+</div>
+<div id="g-arancel-exterior-comun" class="glosario-termino">
+<p><strong>Arancel exterior común</strong> El mismo impuesto sobre las importaciones de países de fuera que cobran todos los miembros de una unión aduanera. Técnicamente, es el arancel que la unión aplica de forma unificada a terceros países, y es lo que distingue a la unión aduanera del área de libre comercio. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-arancel-optimo" class="glosario-termino">
+<p><strong>Arancel óptimo</strong> Arancel con el que un país grande consigue pagar menos por lo que importa, a costa del resto del mundo. Técnicamente, es el que hace tangente la curva de indiferencia comercial del país a la curva de oferta neta del resto del mundo, y mejora su relación real de intercambio aunque reduzca el comercio. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-area-de-comercio-preferencial" class="glosario-termino">
+<p><strong>Área de comercio preferencial</strong> Acuerdo por el que unos países se rebajan aranceles solo en algunos productos. Técnicamente, es la fase más débil de la integración y consiste en un sistema de preferencias aduaneras para determinados productos de determinados países. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-area-de-libre-comercio" class="glosario-termino">
+<p><strong>Área de libre comercio</strong> Grupo de países que no se cobran aranceles entre sí, pero cada uno mantiene los suyos frente al resto. Técnicamente, es la fase de la integración en la que se eliminan por completo los aranceles entre los miembros sin que exista un arancel común frente a terceros. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-area-monetaria-optima-amo" class="glosario-termino">
 <p><strong>Área monetaria óptima (AMO)</strong> Conjunto de países o regiones para el que compensa compartir moneda. Técnicamente, es aquel en el que los beneficios de una moneda común superan los costes de renunciar a la política monetaria y cambiaria propias, lo que exige suficiente simetría de los shocks y flexibilidad de los mercados. <a href="22-tema-b22.html" class="glosario-tema" title="Teoría de las Áreas Óptimas">Tema 22</a></p>
@@ -1062,6 +1109,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-balanza-de-pagos" class="glosario-termino">
 <p><strong>Balanza de pagos</strong> Registro de las operaciones de un país con el resto del mundo en un período. Técnicamente, estado estadístico que resume por partida doble las transacciones entre residentes y no residentes, agrupadas en cuenta corriente, cuenta de capital y cuenta financiera. <a href="19-tema-b19.html" class="glosario-tema" title="Concepto">Tema 19</a></p>
 </div>
+<div id="g-balanza-de-pagos-cabeza-abajo" class="glosario-termino">
+<p><strong>Balanza de pagos cabeza abajo</strong> Forma de interpretar la balanza de pagos que parte de las decisiones financieras y toma el saldo de la cuenta corriente como su resultado. Técnicamente, enfoque en el que los desequilibrios se originan en la cuenta financiera y los de las demás balanzas son su contrapartida contable. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-balanza-fundamental" class="glosario-termino">
 <p><strong>Balanza fundamental</strong> Saldo que mide la posición exterior de un país sin los movimientos de capital más volátiles. Técnicamente, suma de la cuenta corriente y de los flujos netos de capital a largo plazo. También se llama balanza básica. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.4">Tema 19</a></p>
 </div>
@@ -1077,6 +1127,12 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-bien-frontera" class="glosario-termino">
 <p><strong>Bien frontera</strong> Bien que separa los que produce un país de los que produce el otro. Técnicamente, es el bien cuyo coste comparativo coincide con el salario relativo de equilibrio, de modo que a cada salario relativo le corresponde un único bien frontera. <span class="glosario-tema">Tema 14</span></p>
 </div>
+<div id="g-bien-no-rival" class="glosario-termino">
+<p><strong>Bien no rival</strong> Bien que pueden usar muchos a la vez sin que se agote, como una idea. Técnicamente, su uso por un agente no reduce la cantidad disponible para los demás, de modo que, una vez pagado el coste fijo de crearlo, reproducirlo apenas cuesta, y quien lo produce necesita algún poder de mercado para recuperar la inversión. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: modelo de Romer">Tema 13</a></p>
+</div>
+<div id="g-brecha-de-produccion-output-gap" class="glosario-termino">
+<p><strong>Brecha de producción (output gap)</strong> Diferencia entre lo que produce la economía y lo que produciría con pleno uso de sus recursos. Técnicamente, es la desviación del producto respecto de su nivel natural, que en el modelo neokeynesiano es el que habría con precios flexibles, y por eso es siempre nula si los precios se ajustan de inmediato. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-brecha-entre-ahorro-e-inversion" class="glosario-termino">
 <p><strong>Brecha entre ahorro e inversión</strong> Diferencia entre lo que un país ahorra y lo que invierte, que se refleja en su saldo con el exterior. Técnicamente, ahorro nacional menos formación bruta de capital, igual por identidad al saldo por cuenta corriente, y a la capacidad o necesidad de financiación si se le suma el saldo de la cuenta de capital. <a href="19-tema-b19.html" class="glosario-tema" title="Interpretación">Tema 19</a></p>
 </div>
@@ -1086,23 +1142,44 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-cadena-global-de-valor" class="glosario-termino">
 <p><strong>Cadena global de valor</strong> Producción de un bien repartida en etapas que se realizan en países distintos. Técnicamente, las empresas fragmentan el proceso, desde el diseño hasta la distribución, y localizan cada etapa en un país diferente, de modo que los bienes cruzan fronteras varias veces. <a href="15-tema-b15.html" class="glosario-tema" title="Cadenas globales de valor">Tema 15</a></p>
 </div>
+<div id="g-calibracion" class="glosario-termino">
+<p><strong>Calibración</strong> Forma de dar valores a un modelo usando datos externos en lugar de estimarlos con la serie que se quiere explicar. Técnicamente, los parámetros se fijan con información como las participaciones de los factores en la renta y, después, se simula el modelo y se comparan sus volatilidades y correlaciones con las de los datos. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-cambio-de-fortuna" class="glosario-termino">
+<p><strong>Cambio de fortuna</strong> Fenómeno por el que muchas colonias que eran ricas antes de la llegada de los europeos son hoy pobres, y al revés. Técnicamente, según Acemoglu, Johnson y Robinson, se debe a que en las colonias ricas se implantaron instituciones extractivas y en las pobres, inclusivas, algo que la geografía, casi constante en el tiempo, no puede explicar. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.10">Tema 13</a></p>
+</div>
 <div id="g-capacidad-o-necesidad-de-financiacion" class="glosario-termino">
 <p><strong>Capacidad o necesidad de financiación</strong> Cuánto presta un país al resto del mundo, o cuánto le pide prestado, en un período. Técnicamente, suma de los saldos de la cuenta corriente y de la cuenta de capital, que conceptualmente coincide con el saldo de la cuenta financiera, salvo errores y omisiones. <a href="19-tema-b19.html" class="glosario-tema" title="Estructura de la balanza de pagos">Tema 19</a></p>
 </div>
 <div id="g-capital-putty-clay" class="glosario-termino">
 <p><strong>Capital putty-clay</strong> Capital que permite elegir la técnica antes de instalarse, pero no después. Técnicamente, antes de invertir pueden escogerse distintas combinaciones de capital, trabajo y energía, y una vez instalado esa combinación queda fija durante toda su vida útil, de modo que la economía solo se adapta a los cambios de precios al renovar su capital. <a href="04-tema-b4.html" class="glosario-tema" title="Apéndice 4.A.9">Tema 4</a></p>
 </div>
+<div id="g-carga-de-la-deuda-exterior" class="glosario-termino">
+<p><strong>Carga de la deuda exterior</strong> Esfuerzo anual que supone mantener estable la deuda exterior respecto a la producción. Técnicamente, la expresión (r-g)·(-B/Y), superávit comercial en porcentaje del PIB que estabiliza la ratio de deuda exterior. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-ciclo-de-vida-del-producto" class="glosario-termino">
 <p><strong>Ciclo de vida del producto</strong> Recorrido de un producto desde que se inventa hasta que se estandariza, que cambia el país donde se fabrica. Técnicamente, en el modelo de Vernon hay una etapa inicial en el país innovador, otra de madurez con producción en otros países desarrollados y otra de estandarización con producción en países en desarrollo. <a href="15-tema-b15.html" class="glosario-tema" title="La teoría del ciclo de vida del producto">Tema 15</a></p>
 </div>
+<div id="g-ciclo-economico" class="glosario-termino">
+<p><strong>Ciclo económico</strong> Alternancia de periodos en que la economía crece más de lo normal y otros en que crece menos o se contrae. Técnicamente, es el conjunto de fluctuaciones recurrentes, aunque no periódicas, de la actividad agregada en torno a su tendencia de crecimiento, que afectan a muchas variables a la vez y duran más de un año. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-ciclo-financiero" class="glosario-termino">
+<p><strong>Ciclo financiero</strong> Fluctuaciones del crédito y de los precios de los activos, más largas que las del ciclo económico, que pueden desembocar en crisis. Técnicamente, según Borio, son interacciones que se refuerzan a sí mismas entre percepciones de valor y riesgo, actitud ante el riesgo y restricciones de financiación, con una duración media de unos 16 años en siete países industrializados. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-cif" class="glosario-termino">
 <p><strong>CIF</strong> Valor de una mercancía que incluye el coste, el seguro y el flete hasta el puerto de destino. Técnicamente, valoración en la frontera del país importador que usan las estadísticas de aduanas para las importaciones. <a href="19-tema-b19.html" class="glosario-tema" title="Medición, métodos de valoración">Tema 19</a></p>
+</div>
+<div id="g-clausula-de-nacion-mas-favorecida" class="glosario-termino">
+<p><strong>Cláusula de nación más favorecida</strong> Compromiso de dar a todos los socios comerciales el mejor trato que se dé a uno cualquiera. Técnicamente, es el principio de no discriminación de la OMC por el que un país extiende a todos sus miembros las ventajas arancelarias que concede a cualquiera, y del que son excepción las uniones aduaneras y las áreas de libre comercio. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-clausula-de-no-rescate-union-monetaria" class="glosario-termino">
 <p><strong>Cláusula de no rescate (unión monetaria)</strong> Prohibición de que la Unión o un Estado miembro asuman las deudas de otro. Técnicamente, el artículo 125 del Tratado de Funcionamiento de la Unión Europea la recoge para evitar el riesgo moral de un Estado deficitario. <a href="22-tema-b22.html" class="glosario-tema" title="La política fiscal en una unión monetaria">Tema 22</a></p>
 </div>
 <div id="g-clausula-nacional-de-escape" class="glosario-termino">
 <p><strong>Cláusula nacional de escape</strong> Permiso para que un Estado se aparte de su senda de gasto ante circunstancias excepcionales. Técnicamente, el Consejo la activa a petición del Estado cuando un hecho ajeno a su control afecta mucho a sus finanzas públicas, siempre que no ponga en peligro la sostenibilidad a medio plazo, y desde 2025 se usa de forma coordinada para el gasto en defensa. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.7">Tema 22</a></p>
+</div>
+<div id="g-colchon-de-capital-anticiclico" class="glosario-termino">
+<p><strong>Colchón de capital anticíclico</strong> Capital adicional que se exige a los bancos en las épocas buenas para que puedan usarlo en las malas. Técnicamente, es un instrumento macroprudencial de Basilea III que en España fija el Banco de España a partir de indicadores de riesgo sistémico cíclico, como la brecha de crédito sobre PIB. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-comercio-interindustrial" class="glosario-termino">
 <p><strong>Comercio interindustrial</strong> Intercambio de productos de industrias distintas, como aceite por automóviles. Técnicamente, cada país exporta bienes de unas industrias e importa los de otras, y se explica sobre todo por la ventaja comparativa. <a href="15-tema-b15.html" class="glosario-tema" title="Apéndice 15.A.4">Tema 15</a></p>
@@ -1113,6 +1190,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-concurso-de-belleza-de-keynes" class="glosario-termino">
 <p><strong>Concurso de belleza de Keynes</strong> Imagen de Keynes para describir a los inversores que intentan adivinar lo que pensarán los demás en lugar del valor real de los activos. Técnicamente, en un concurso en el que gana quien acierta la candidata más votada, cada participante elige la que cree que elegirán los demás, de modo que los precios reflejan la opinión media sobre la opinión media. <a href="04-tema-b4.html" class="glosario-tema" title="Apéndice 4.A.8">Tema 4</a></p>
 </div>
+<div id="g-condicion-de-inversion-optima" class="glosario-termino">
+<p><strong>Condición de inversión óptima</strong> Regla que fija cuánto capital conviene acumular. Técnicamente, la inversión se amplía hasta que la productividad marginal del capital iguala al tipo de interés mundial. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-condicion-de-marshall-lerner" class="glosario-termino">
 <p><strong>Condición de Marshall-Lerner</strong> Condición sobre la sensibilidad de las importaciones a los precios que asegura que un cambio del precio relativo corrige un desequilibrio comercial. Técnicamente, exige que la suma de los valores absolutos de las elasticidades-precio de las demandas de importaciones de los dos países sea mayor que la unidad, lo que hace estable el equilibrio de trueque y, partiendo de balanza equilibrada, garantiza que una devaluación mejore la balanza comercial. <span class="glosario-tema">Tema 14</span></p>
 </div>
@@ -1122,8 +1202,14 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-condicion-de-transversalidad" class="glosario-termino">
 <p><strong>Condición de transversalidad</strong> Condición que exige que, al final del horizonte de planificación, no quede riqueza de valor sin aprovechar. Técnicamente, en un problema de optimización dinámica de horizonte infinito, es la condición de optimalidad que obliga a que el valor actual de los activos o del capital, valorado a su precio sombra, tienda a cero cuando el tiempo tiende a infinito. Descarta así las sendas explosivas, que se alejan cada vez más del estado estacionario, como las que acumulan riqueza o capital sin consumirlos nunca, y, junto con la ecuación de Euler y la condición de no juego de Ponzi, selecciona la única senda estable. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
 </div>
+<div id="g-condiciones-de-inada" class="glosario-termino">
+<p><strong>Condiciones de Inada</strong> Requisitos de comportamiento de la función de producción que garantizan que el capital resulta indispensable y que su rendimiento acaba agotándose. Técnicamente, la productividad marginal de un factor tiende a infinito cuando su cantidad tiende a cero y tiende a cero cuando su cantidad tiende a infinito. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: supuestos">Tema 13</a></p>
+</div>
 <div id="g-constante-de-cambridge" class="glosario-termino">
 <p><strong>Constante de Cambridge</strong> Fracción de su renta nominal que las personas desean tener en forma de dinero. Técnicamente, es el parámetro de proporcionalidad entre la demanda de dinero y la renta nominal, y es el inverso de la velocidad de circulación respecto a la renta. <a href="05-tema-b5.html" class="glosario-tema" title="Teoría cuantitativa del dinero: el enfoque de Cambridge">Tema 5</a></p>
+</div>
+<div id="g-contabilidad-del-crecimiento" class="glosario-termino">
+<p><strong>Contabilidad del crecimiento</strong> Método que reparte el crecimiento de la producción entre lo que aportan más capital, más trabajo y el progreso técnico. Técnicamente, resta al crecimiento del producto las tasas de crecimiento del capital y del trabajo ponderadas por sus participaciones en la renta, y lo que queda es el residuo de Solow. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.6">Tema 13</a></p>
 </div>
 <div id="g-contabilidad-mental" class="glosario-termino">
 <p><strong>Contabilidad mental</strong> Costumbre de repartir el dinero en cuentas mentales separadas, como la de las vacaciones o la de la hipoteca. Técnicamente, según Thaler, los agentes evalúan cada decisión por su efecto sobre una cuenta concreta y no sobre el conjunto de sus activos. <a href="03-tema-b3.html" class="glosario-tema" title="Desarrollos recientes > Exceso de sensibilidad">Tema 3</a></p>
@@ -1133,6 +1219,18 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-convencion-keynes" class="glosario-termino">
 <p><strong>Convención (Keynes)</strong> Regla práctica con la que los inversores deciden cuando no pueden calcular el futuro. Técnicamente, consiste en suponer que la situación actual continuará salvo que haya razones concretas para esperar un cambio, lo que da estabilidad a las expectativas mientras se mantiene la confianza en ella, pero las expone a cambios bruscos cuando se rompe. <a href="04-tema-b4.html" class="glosario-tema" title="Apéndice 4.A.8">Tema 4</a></p>
+</div>
+<div id="g-convergencia-absoluta" class="glosario-termino">
+<p><strong>Convergencia absoluta</strong> Tendencia de los países pobres a crecer más deprisa que los ricos, sin tener en cuenta en qué más se diferencian. Técnicamente, es una relación negativa entre la tasa de crecimiento y la renta per cápita inicial sin controlar por ninguna otra variable, que el modelo de Solow solo predice si las economías comparten los mismos parámetros y, por tanto, el mismo estado estacionario. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: convergencia">Tema 13</a></p>
+</div>
+<div id="g-convergencia-beta" class="glosario-termino">
+<p><strong>Convergencia beta (<span class="math inline">\(\beta\)</span>)</strong> Idea de que los países con menos renta crecen más que los ricos. Técnicamente, es una relación inversa entre la tasa de crecimiento de la renta per cápita y su nivel inicial, que se contrasta con regresiones de corte transversal. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.7">Tema 13</a></p>
+</div>
+<div id="g-convergencia-condicional" class="glosario-termino">
+<p><strong>Convergencia condicional</strong> Tendencia de cada país a crecer más deprisa cuanto más lejos está de su propio nivel de equilibrio, que puede ser distinto del de los demás. Técnicamente, es la relación negativa entre el crecimiento y la renta inicial una vez controlados los determinantes del estado estacionario. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: convergencia">Tema 13</a></p>
+</div>
+<div id="g-convergencia-sigma" class="glosario-termino">
+<p><strong>Convergencia sigma (<span class="math inline">\(\sigma\)</span>)</strong> Idea de que las rentas de los distintos países se van pareciendo cada vez más entre sí. Técnicamente, es la reducción a lo largo del tiempo de la dispersión de la renta per cápita, que puede no darse aunque exista convergencia <span class="math inline">\(\beta\)</span>. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.7">Tema 13</a></p>
 </div>
 <div id="g-coste-de-entrada-hundido" class="glosario-termino">
 <p><strong>Coste de entrada hundido</strong> Coste que una empresa paga una sola vez para entrar en un mercado y que no recupera si sale. Técnicamente, en el modelo de Melitz se paga antes de conocer la productividad, que se sortea después. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de Melitz">Tema 15</a></p>
@@ -1155,14 +1253,29 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-costes-de-corretaje" class="glosario-termino">
 <p><strong>Costes de corretaje</strong> Lo que cuesta cada vez que hay que convertir bonos en dinero. Técnicamente, son los costes fijos de esa conversión, que crecen con el número de operaciones y por eso reducen la conveniencia de mantener pocos saldos. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo transacción: modelo de inventarios">Tema 5</a></p>
 </div>
+<div id="g-costes-de-menu" class="glosario-termino">
+<p><strong>Costes de menú</strong> Pequeños gastos que supone a una empresa cambiar sus precios. Técnicamente, aunque el coste sea pequeño, no ajustar el precio supone una pérdida privada de segundo orden pero una pérdida de primer orden para la economía, a través de la demanda agregada, por lo que costes pequeños pueden explicar grandes fluctuaciones. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-cota-inferior-efectiva-del-tipo-de-interes" class="glosario-termino">
 <p><strong>Cota inferior efectiva del tipo de interés</strong> Nivel por debajo del cual el banco central ya no puede bajar los tipos sin que la gente se refugie en el efectivo. Técnicamente, existe porque el efectivo ofrece un rendimiento nominal nulo, aunque no coincide exactamente con cero y los tipos pueden ser algo negativos. <a href="05-tema-b5.html" class="glosario-tema" title="Implicaciones de política económica: trampa de la liquidez, cota inferior y tipos negativos">Tema 5</a></p>
+</div>
+<div id="g-creacion-de-comercio" class="glosario-termino">
+<p><strong>Creación de comercio</strong> Que un país pase a comprar a un socio, más barato, lo que antes producía él mismo más caro. Técnicamente, es la sustitución de producción nacional más cara por importaciones más baratas de un socio de la unión, y mejora el bienestar. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-crecimiento-extensivo-e-intensivo" class="glosario-termino">
+<p><strong>Crecimiento extensivo e intensivo</strong> El extensivo procede de que trabaje una parte mayor de la población, y el intensivo, de que cada trabajador produzca más. Técnicamente, resultan de descomponer el PIB per cápita en el producto de la tasa de empleo sobre la población por la productividad del trabajo, y solo el segundo componente puede crecer de forma sostenida. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.6">Tema 13</a></p>
 </div>
 <div id="g-credibilidad-de-la-politica-monetaria" class="glosario-termino">
 <p><strong>Credibilidad de la política monetaria</strong> Confianza de los agentes en que la autoridad monetaria cumplirá lo que anuncia. Técnicamente, la discreción carece de ella porque la autoridad tiene incentivo a sorprender con inflación, y los agentes lo anticipan. <a href="22-tema-b22.html" class="glosario-tema" title="Credibilidad">Tema 22</a></p>
 </div>
+<div id="g-credito-interno" class="glosario-termino">
+<p><strong>Crédito interno</strong> Dinero que el banco central crea concediendo crédito dentro del país. Técnicamente, componente de la base monetaria que se suma a las reservas internacionales y es el instrumento con el que la autoridad monetaria controla la oferta de dinero. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-criterios-de-convergencia" class="glosario-termino">
 <p><strong>Criterios de convergencia</strong> Condiciones que debe cumplir un país de la Unión Europea para adoptar el euro. Técnicamente, son la estabilidad de precios, la sostenibilidad de las finanzas públicas, la estabilidad del tipo de cambio dentro del mecanismo de cambios y la convergencia de los tipos de interés a largo plazo, desarrolladas en los protocolos del Tratado. <a href="22-tema-b22.html" class="glosario-tema" title="Diferenciales de inflación">Tema 22</a></p>
+</div>
+<div id="g-critica-de-lucas" class="glosario-termino">
+<p><strong>Crítica de Lucas</strong> Advertencia de que los modelos con relaciones fijas no sirven para predecir los efectos de un cambio de política, porque la gente cambia su conducta. Técnicamente, los parámetros de los modelos de la síntesis neoclásica no son estables, ya que los agentes, al actuar racionalmente, modifican las decisiones sobre las que se estimaron cuando cambia la política. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-cuenta-corriente" class="glosario-termino">
 <p><strong>Cuenta corriente</strong> Parte de la balanza que recoge lo que un país ingresa y paga al exterior por bienes, servicios, rentas y transferencias corrientes. Técnicamente, cuenta que agrupa los saldos de bienes y servicios, renta primaria y renta secundaria, y cuyo saldo es la diferencia entre el ahorro nacional y la inversión. <a href="19-tema-b19.html" class="glosario-tema" title="Estructura de la balanza de pagos">Tema 19</a></p>
@@ -1179,8 +1292,17 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-curva-de-oferta-neta" class="glosario-termino">
 <p><strong>Curva de oferta neta</strong> Muestra cuánto quiere importar un país y cuánto está dispuesto a exportar para cada relación real de intercambio. Técnicamente, es el lugar geométrico de los pares de exportaciones e importaciones del país, cada uno de ellos asociado a la relación real de intercambio que da la pendiente de la recta que lo une con el origen. También se denomina curva de demanda recíproca o, simplemente, curva de oferta. <span class="glosario-tema">Tema 14</span></p>
 </div>
+<div id="g-curva-de-phillips-neokeynesiana" class="glosario-termino">
+<p><strong>Curva de Phillips neokeynesiana</strong> Relación según la cual la inflación de hoy depende de la que se espera y de lo recalentada que esté la economía. Técnicamente, es la ecuación de oferta del modelo, que sale de la optimización de las empresas con precios a la Calvo, e incluye expectativas de inflación futura, el output gap y shocks de costes. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-curva-del-elefante" class="glosario-termino">
+<p><strong>Curva del elefante</strong> Gráfico que muestra qué grupos de la población mundial ganaron más renta con la globalización. Técnicamente, representa el crecimiento de la renta real por percentiles de la distribución mundial entre 1988 y 2008, con una joroba cerca de la mediana, un tramo casi plano entre los percentiles 75 y 90 y una subida en el 1 % más rico. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-curva-gg" class="glosario-termino">
 <p><strong>Curva GG</strong> Curva que muestra lo que gana un país al fijar su tipo de cambio según lo integrado que esté con el área. Técnicamente, mide la ganancia de eficiencia monetaria, que crece con el grado de integración económica. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.6">Tema 22</a></p>
+</div>
+<div id="g-curva-j" class="glosario-termino">
+<p><strong>Curva J</strong> Trayectoria del saldo comercial tras una devaluación, que primero empeora y después mejora. Técnicamente, resulta de que los precios se ajustan de inmediato mientras que las cantidades, por los contratos vigentes y la inercia de los hábitos, lo hacen con retraso. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-curva-ll" class="glosario-termino">
 <p><strong>Curva LL</strong> Curva que muestra lo que pierde en estabilidad un país al fijar su tipo de cambio según lo integrado que esté con el área. Técnicamente, mide la pérdida de estabilidad económica, que decrece con el grado de integración. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.6">Tema 22</a></p>
@@ -1206,11 +1328,23 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-derivado-financiero" class="glosario-termino">
 <p><strong>Derivado financiero</strong> Contrato cuyo valor depende del precio de otro activo y que sirve para cubrir riesgos, especular o hacer arbitraje. Técnicamente, instrumento financiero vinculado a un activo subyacente, valorado a precio de mercado o a valor razonable. <a href="19-tema-b19.html" class="glosario-tema" title="Cuenta financiera">Tema 19</a></p>
 </div>
+<div id="g-desapalancamiento" class="glosario-termino">
+<p><strong>Desapalancamiento</strong> Reducción de las deudas de hogares y empresas. Técnicamente, tras caer el precio de los activos, los agentes venden activos para reducir su deuda, lo que deprime aún más sus precios y crea una espiral descendente. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-descuento-cuasi-hiperbolico" class="glosario-termino">
 <p><strong>Descuento cuasi-hiperbólico</strong> Forma de valorar el futuro en la que se es muy impaciente con lo inmediato y paciente con lo lejano. Técnicamente, propuesto por Laibson, multiplica toda la utilidad futura por un factor menor que 1, el sesgo hacia el presente, además del descuento exponencial de cada período. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
 </div>
 <div id="g-desfase-tecnologico" class="glosario-termino">
 <p><strong>Desfase tecnológico</strong> Tiempo que tarda una innovación de un país en llegar a otro. Técnicamente, en el modelo de Posner hay un desfase de imitación, hasta que el resto de países incorpora la tecnología, y un desfase de demanda, hasta que surge demanda en el exterior, y hay comercio cuando el primero es mayor que el segundo. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de desfase tecnológico">Tema 15</a></p>
+</div>
+<div id="g-destruccion-creativa" class="glosario-termino">
+<p><strong>Destrucción creativa</strong> Proceso por el que cada innovación crea un producto mejor y a la vez hace desaparecer los antiguos. Técnicamente, en el modelo de Aghion y Howitt una innovación eleva la calidad del bien intermedio, desplaza al monopolista anterior y le arrebata su beneficio. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.4">Tema 13</a></p>
+</div>
+<div id="g-desviacion-de-comercio" class="glosario-termino">
+<p><strong>Desviación de comercio</strong> Que un país deje de comprar al productor más barato del mundo para comprar a un socio más caro, solo porque al socio no se le cobra arancel. Técnicamente, es la sustitución de importaciones del resto del mundo por importaciones más caras de un socio de la unión, y reduce el bienestar. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-deuda-denominada-en-divisa" class="glosario-termino">
+<p><strong>Deuda denominada en divisa</strong> Deuda que se debe pagar en una moneda distinta de la propia. Técnicamente, pasivo cuyo valor en moneda nacional aumenta con la depreciación, de modo que deteriora la sostenibilidad y expone al país al riesgo de tipo de cambio. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-deuda-externa" class="glosario-termino">
 <p><strong>Deuda externa</strong> La parte de lo que se debe al exterior que hay que devolver o remunerar. Técnicamente, pasivos externos que exigen pagar principal o intereses, como préstamos, depósitos y valores de deuda, y que excluyen las participaciones de capital y los derivados. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.11">Tema 19</a></p>
@@ -1224,11 +1358,23 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-dicotomia-clasica" class="glosario-termino">
 <p><strong>Dicotomía clásica</strong> Separación entre lo que ocurre con las cantidades reales y lo que ocurre con los precios. Técnicamente, las variables reales se determinan sin intervención de las nominales, que solo fijan el nivel de precios. <a href="05-tema-b5.html" class="glosario-tema" title="Teoría cuantitativa del dinero">Tema 5</a></p>
 </div>
+<div id="g-diferencial-entre-tipo-de-interes-y-crecimiento-r-g" class="glosario-termino">
+<p><strong>Diferencial entre tipo de interés y crecimiento (r-g)</strong> Diferencia entre lo que cuesta la deuda y lo que crece la economía, que decide si la deuda pesa cada vez más o menos. Técnicamente, si r&gt;g la ratio de deuda exterior solo se estabiliza con superávit comercial y la dinámica es inestable, y si g&gt;r converge incluso con déficit. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-dinamica-de-la-deuda-exterior" class="glosario-termino">
+<p><strong>Dinámica de la deuda exterior</strong> Evolución en el tiempo de la deuda exterior en proporción al PIB. Técnicamente, ecuación en diferencias de la ratio b que depende del saldo comercial en porcentaje del PIB y del cociente (1+r)/(1+g), estable solo si g&gt;r. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-dinamica-de-transicion" class="glosario-termino">
+<p><strong>Dinámica de transición</strong> Trayecto que sigue la economía hasta llegar a su senda de largo plazo, durante el cual crece a un ritmo distinto del definitivo. Técnicamente, es la evolución de las tasas de crecimiento fuera del estado estacionario o de la senda de crecimiento equilibrado, que existe en los modelos de Solow, Sobelow y Lucas-Uzawa pero no en el modelo AK. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: primera generación">Tema 13</a></p>
+</div>
 <div id="g-dinero-electronico" class="glosario-termino">
 <p><strong>Dinero electrónico</strong> Dinero que existe solo como anotación contable y se paga mediante transferencias de fondos, por ejemplo con tarjeta o aplicación. Técnicamente, es dinero porque la sociedad le reconoce el valor nominal y es suficientemente líquido como medio de cambio. <a href="05-tema-b5.html" class="glosario-tema" title="Apéndice 5.A.5. Una economía sin dinero en efectivo">Tema 5</a></p>
 </div>
 <div id="g-dinero-en-la-funcion-de-utilidad-miu" class="glosario-termino">
 <p><strong>Dinero en la función de utilidad (MIU)</strong> Modelo que supone que tener dinero da satisfacción directa a quien lo posee. Técnicamente, los saldos reales entran junto al consumo en la función de utilidad del agente, y su demanda depende positivamente del consumo y negativamente del tipo de interés nominal. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: el dinero en la función de utilidad">Tema 5</a></p>
+</div>
+<div id="g-divina-coincidencia" class="glosario-termino">
+<p><strong>Divina coincidencia</strong> Situación en la que el banco central no tiene que elegir entre controlar la inflación y estabilizar la actividad. Técnicamente, en el modelo canónico, sin imperfecciones reales relevantes, fijar el tipo de interés de modo que replique al tipo natural estabiliza a la vez inflación y output gap. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-doble-coincidencia-de-deseos" class="glosario-termino">
 <p><strong>Doble coincidencia de deseos</strong> Dificultad del trueque, que exige encontrar a alguien que tenga lo que uno quiere y quiera a la vez lo que uno ofrece. Técnicamente, el dinero la resuelve al servir de medio de cambio aceptado por todos. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: el dinero en la función de utilidad">Tema 5</a></p>
@@ -1257,14 +1403,29 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-ecuacion-de-gravedad" class="glosario-termino">
 <p><strong>Ecuación de gravedad</strong> Relación según la cual el comercio entre dos países crece con su tamaño y cae con la distancia. Técnicamente, el comercio bilateral es proporcional al producto de los PIB e inversamente proporcional a una función de la distancia y de otros costes de comercio. <a href="15-tema-b15.html" class="glosario-tema" title="Modelos de gravedad">Tema 15</a></p>
 </div>
+<div id="g-ecuacion-fundamental-de-solow" class="glosario-termino">
+<p><strong>Ecuación fundamental de Solow</strong> Ecuación que resume cómo evoluciona el capital de cada habitante: aumenta cuando se invierte más de lo necesario para reponer el que se desgasta y equipar a los nuevos habitantes. Técnicamente, es la ecuación diferencial que iguala la variación del capital per cápita a la inversión efectiva, s·f(k), menos la inversión de mantenimiento, (n+<span class="math inline">\(\delta\)</span>)k. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: dinámica y equilibrio">Tema 13</a></p>
+</div>
+<div id="g-efecto-asignacion" class="glosario-termino">
+<p><strong>Efecto asignación</strong> Mejora de bienestar que se logra invirtiendo donde el capital rinde más. Técnicamente, ganancia derivada de acceder al capital internacional al tipo de interés mundial y elegir un nivel de producción más eficiente. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-efecto-composicion-gourinchas-y-rey" class="glosario-termino">
+<p><strong>Efecto composición (Gourinchas y Rey)</strong> Parte del diferencial de rentabilidad que se debe a que el país se endeuda en activos seguros e invierte en activos más arriesgados. Técnicamente, diferencia entre las ponderaciones de renta variable, inversión directa y deuda en los activos y en los pasivos exteriores, que genera rentabilidad media distinta. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-efecto-demostracion" class="glosario-termino">
 <p><strong>Efecto demostración</strong> Tendencia a gastar para no quedarse atrás respecto de los vecinos. Técnicamente, los hogares de renta baja tienen una propensión media a consumir mayor porque tratan de emular el consumo de los de renta más alta, lo que explica la propensión media decreciente en los datos de sección cruzada. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
 </div>
 <div id="g-efecto-escala" class="glosario-termino">
 <p><strong>Efecto escala</strong> Caída del coste medio de cada empresa por producir más cuando el mercado se amplía. Técnicamente, tras abrirse al comercio cada empresa que sigue produciendo vende más y reduce su coste medio, aunque su beneficio siga siendo cero. <a href="15-tema-b15.html" class="glosario-tema" title="Competencia monopolística: número de variedades y efectos">Tema 15</a></p>
 </div>
+<div id="g-efecto-escala-poblacion-y-crecimiento" class="glosario-termino">
+<p><strong>Efecto escala (población y crecimiento)</strong> Resultado de algunos modelos según el cual un país más poblado crece más deprisa. Técnicamente, la tasa de crecimiento depende del tamaño de la población, algo que la evidencia reciente contradice. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno">Tema 13</a></p>
+</div>
 <div id="g-efecto-frontera" class="glosario-termino">
 <p><strong>Efecto frontera</strong> Menor comercio que produce el hecho de que dos regiones estén separadas por una frontera nacional. Técnicamente, es la caída del comercio entre países frente al comercio entre regiones de un mismo país, a igualdad de tamaño y distancia, y se estima entre un 20 y un 50 % entre países industrializados. <a href="15-tema-b15.html" class="glosario-tema" title="Modelos de gravedad">Tema 15</a></p>
+</div>
+<div id="g-efecto-keynes" class="glosario-termino">
+<p><strong>Efecto Keynes</strong> Subida del tipo de interés que se produce cuando el aumento de precios deja menos dinero real en la economía. Técnicamente, la reducción de los saldos reales eleva el tipo de interés y reduce la inversión, y con ella la absorción. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-efecto-magnificacion" class="glosario-termino">
 <p><strong>Efecto magnificación</strong> Respuesta más que proporcional de las retribuciones de los factores, o de las producciones, ante cambios en los precios de los bienes o en las dotaciones. Técnicamente, en el modelo de dos bienes y dos factores, el factor usado intensivamente en el bien que se encarece gana más que la subida del precio y el otro pierde, y análogamente con las dotaciones y las producciones. <span class="glosario-tema">Tema 14</span></p>
@@ -1272,17 +1433,38 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-efecto-mercado-interno" class="glosario-termino">
 <p><strong>Efecto mercado interno</strong> Tendencia de las empresas a instalarse en el país con mayor demanda de su producto. Técnicamente, con economías de escala y costes de transporte, el país con mayor demanda de un bien lo produce más que proporcionalmente y se convierte en exportador neto. <a href="15-tema-b15.html" class="glosario-tema" title="Home-market effect">Tema 15</a></p>
 </div>
+<div id="g-efecto-pigou" class="glosario-termino">
+<p><strong>Efecto Pigou</strong> Reducción del consumo que se produce cuando los precios más altos hacen valer menos la riqueza en dinero. Técnicamente, la caída de los saldos reales, que forman parte de la riqueza, lleva a ahorrar más para recomponerla y reduce el consumo y la absorción. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-efecto-precio-de-una-devaluacion" class="glosario-termino">
+<p><strong>Efecto precio de una devaluación</strong> Encarecimiento de lo que se compra al exterior y abaratamiento de lo que se le vende, medido en moneda extranjera. Técnicamente, es el empeoramiento de la relación de intercambio que reduce el valor de las exportaciones en divisas y eleva el de cada unidad importada, y actúa en contra del saldo comercial. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-efecto-reasignacion" class="glosario-termino">
 <p><strong>Efecto reasignación</strong> Traspaso de recursos de las empresas menos productivas a las más productivas. Técnicamente, tras abrirse al comercio las exportadoras ganan cuota de mercado y la productividad agregada del sector aumenta. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de Melitz: efectos">Tema 15</a></p>
 </div>
+<div id="g-efecto-reduccion-de-costes" class="glosario-termino">
+<p><strong>Efecto reducción de costes</strong> Abaratamiento que logra una empresa al vender a todo el mercado de la unión. Técnicamente, es el aumento de bienestar que se produce cuando, con economías de escala, la unión aduanera amplía el mercado y reduce el coste medio de producción. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-efecto-rentabilidad-gourinchas-y-rey" class="glosario-termino">
+<p><strong>Efecto rentabilidad (Gourinchas y Rey)</strong> Parte del diferencial de rentabilidad que se debe a que, con el mismo tipo de activo, el país gana más fuera de lo que paga. Técnicamente, diferencia entre el rendimiento de activos y pasivos dentro de cada clase de activo, una vez fijados los pesos de cada clase. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-efecto-seleccion" class="glosario-termino">
 <p><strong>Efecto selección</strong> Salida del mercado de las empresas menos productivas tras la apertura al comercio. Técnicamente, en el modelo de Melitz las exportadoras y los nuevos entrantes elevan el salario real, sube la productividad de corte y las empresas menos productivas dejan de producir, con lo que aumenta la productividad media del sector. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de Melitz: efectos">Tema 15</a></p>
+</div>
+<div id="g-efecto-supresion-de-comercio" class="glosario-termino">
+<p><strong>Efecto supresión de comercio</strong> Pérdida que aparece cuando la protección de la unión permite sobrevivir a empresas que sin ella serían desplazadas por la producción del resto del mundo. Técnicamente, es el efecto negativo que se da, con economías de escala, cuando la unión aduanera permite crear empresas que solo se mantienen gracias a su protección. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-efecto-trinquete-consumo" class="glosario-termino">
 <p><strong>Efecto trinquete (consumo)</strong> Resistencia de los hogares a recortar su consumo cuando baja la renta. Técnicamente, el consumo depende del nivel más alto alcanzado en el pasado, de modo que ante una caída de la renta se reduce el ahorro y no el consumo, y la propensión media a consumir aumenta a corto plazo. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta relativa de Duesenberry > Modelo">Tema 3</a></p>
 </div>
 <div id="g-efecto-valoracion" class="glosario-termino">
 <p><strong>Efecto valoración</strong> Cambio en el valor de lo que se tiene o se debe por variar los precios o los tipos de cambio, sin que nadie compre o venda. Técnicamente, revalorización de activos y pasivos financieros por cambios de precios de mercado y de tipos de cambio. <a href="19-tema-b19.html" class="glosario-tema" title="Estructura de la balanza de pagos">Tema 19</a></p>
+</div>
+<div id="g-efecto-volumen-de-una-devaluacion" class="glosario-termino">
+<p><strong>Efecto volumen de una devaluación</strong> Cambio en las cantidades comerciadas que provoca el nuevo nivel de precios: se importa menos y se exporta más. Técnicamente, es la variación de las cantidades demandadas ante el cambio del precio relativo, que mejora el saldo comercial y depende de las elasticidades. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-efectos-estaticos-y-dinamicos-de-la-integracion" class="glosario-termino">
+<p><strong>Efectos estáticos y dinámicos de la integración</strong> Los estáticos son el cambio de bienestar por reasignar los recursos que ya existen, y los dinámicos el cambio en lo que la economía puede producir con el tiempo. Técnicamente, los estáticos miden el cambio de bienestar al reasignar los recursos existentes tras la unión, como la creación y la desviación de comercio, y los dinámicos recogen cómo la unión modifica la productividad o la acumulación de factores. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-efectos-sustitucion-y-renta-del-tipo-de-interes-demanda-de-dinero" class="glosario-termino">
 <p><strong>Efectos sustitución y renta del tipo de interés (demanda de dinero)</strong> Dos fuerzas que mueven en sentido contrario la tenencia de dinero cuando sube el tipo de interés. Técnicamente, en el modelo de cartera el efecto sustitución reduce el dinero porque mantenerlo sale más caro, y el efecto renta puede aumentarlo, porque la mejora del rendimiento por unidad de riesgo permite ganar seguridad. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo especulación: modelo de cartera">Tema 5</a></p>
@@ -1293,17 +1475,32 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-eficiencia-marginal-del-capital" class="glosario-termino">
 <p><strong>Eficiencia marginal del capital</strong> Rentabilidad que un empresario espera obtener de un bien de capital nuevo. Técnicamente, es la tasa de descuento que iguala el valor actual de los rendimientos esperados de ese bien con su precio de oferta, y conviene invertir mientras supere el tipo de interés. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría de Keynes de la demanda de inversión">Tema 4</a></p>
 </div>
+<div id="g-elasticidad-de-sustitucion-intertemporal" class="glosario-termino">
+<p><strong>Elasticidad de sustitución intertemporal</strong> Disposición de un hogar a trasladar consumo de un periodo a otro cuando cambia la rentabilidad del ahorro. Técnicamente, es el cambio porcentual de la razón de consumos entre dos periodos ante un cambio porcentual del tipo de interés, y con utilidad CES es el inverso de <span class="math inline">\(\sigma\)</span>. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Ramsey-Cass-Koopmans">Tema 13</a></p>
+</div>
 <div id="g-empresa-born-global" class="glosario-termino">
 <p><strong>Empresa born-global</strong> Empresa que vende en el extranjero casi desde que nace. Técnicamente, es una organización empresarial que desde su creación busca una ventaja competitiva significativa del uso de recursos y la venta de productos en múltiples países. <a href="15-tema-b15.html" class="glosario-tema" title="Apéndice 15.A.2">Tema 15</a></p>
 </div>
 <div id="g-endogeneidad-de-los-criterios-de-area-monetaria-optima" class="glosario-termino">
 <p><strong>Endogeneidad de los criterios de área monetaria óptima</strong> Idea de que un país puede cumplir las condiciones para compartir moneda después de entrar en la unión, aunque no las cumpliera antes. Técnicamente, Frankel y Rose mostraron que los países con más comercio bilateral tienen ciclos más correlacionados, de modo que la unión, al aumentar el comercio, acerca los ciclos y los criterios se satisfacen a posteriori. <a href="22-tema-b22.html" class="glosario-tema" title="Beneficios dinámicos">Tema 22</a></p>
 </div>
+<div id="g-enfoque-de-cartera-de-la-balanza-de-pagos" class="glosario-termino">
+<p><strong>Enfoque de cartera de la balanza de pagos</strong> Teoría que explica los flujos de capital por cómo los inversores reparten su riqueza entre activos. Técnicamente, modelo con dinero, bonos nacionales y bonos extranjeros que son sustitutos imperfectos y en el que el reajuste de las carteras genera flujos de reservas. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-enfoque-de-hoja-de-balance" class="glosario-termino">
 <p><strong>Enfoque de hoja de balance</strong> Análisis de la vulnerabilidad de un país a partir de lo que tiene y debe, y no solo de sus flujos. Técnicamente, examina los descalces de plazos, monedas y estructura de capital de los balances sectoriales y de la posición exterior. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.8">Tema 19</a></p>
 </div>
+<div id="g-enfoque-de-las-elasticidades" class="glosario-termino">
+<p><strong>Enfoque de las elasticidades</strong> Teoría que estudia si una devaluación mejora la balanza comercial según lo que reaccionen las cantidades a los precios. Técnicamente, analiza en equilibrio parcial, con precios fijos y recursos ociosos, las condiciones sobre las elasticidades de las demandas de exportaciones e importaciones para que una devaluación mejore el saldo comercial. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-enfoque-flujo-especie" class="glosario-termino">
+<p><strong>Enfoque flujo-especie</strong> Teoría según la cual los desequilibrios exteriores se corrigen solos, porque el oro que sale o entra del país cambia sus precios. Técnicamente, es el mecanismo de ajuste de Hume bajo patrón oro: el saldo de la balanza provoca flujos de oro que modifican la oferta monetaria y, por la teoría cuantitativa, el nivel de precios, la competitividad y, con ella, el propio saldo. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-enfoque-intertemporal-de-la-cuenta-corriente" class="glosario-termino">
 <p><strong>Enfoque intertemporal de la cuenta corriente</strong> Visión que interpreta la cuenta corriente como el resultado de decisiones de ahorro e inversión a lo largo del tiempo. Técnicamente, el saldo exterior permite suavizar el consumo e invertir donde el capital es más productivo, de modo que un déficit puede ser óptimo si la deuda resultante es sostenible. <a href="19-tema-b19.html" class="glosario-tema" title="Interpretación">Tema 19</a></p>
+</div>
+<div id="g-enfoque-monetario-de-la-balanza-de-pagos" class="glosario-termino">
+<p><strong>Enfoque monetario de la balanza de pagos</strong> Teoría que explica el saldo exterior como consecuencia de que la cantidad de dinero que desea la gente no coincide con la que hay. Técnicamente, con tipo de cambio fijo, el saldo de la balanza de pagos es la variación de reservas, igual a la variación de la demanda de dinero menos la del crédito interno. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-enigma-del-consumo" class="glosario-termino">
 <p><strong>Enigma del consumo</strong> Contradicción entre lo que muestran los datos de consumo a corto y a largo plazo. Técnicamente, es el hallazgo de Kuznets de que en series largas la propensión media a consumir se mantiene estable e igual a la marginal, mientras que en datos de sección cruzada y en series cortas decrece con la renta, como predecía Keynes. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes > Evidencia empírica">Tema 3</a></p>
@@ -1314,11 +1511,20 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-errores-y-omisiones" class="glosario-termino">
 <p><strong>Errores y omisiones</strong> Diferencia que queda entre las cuentas porque los datos nunca son perfectos. Técnicamente, saldo residual igual al saldo de la cuenta financiera menos la suma de las cuentas corriente y de capital. <a href="19-tema-b19.html" class="glosario-tema" title="Estructura de la balanza de pagos">Tema 19</a></p>
 </div>
+<div id="g-eslabones-debiles" class="glosario-termino">
+<p><strong>Eslabones débiles</strong> Idea de que una producción que necesita muchas tareas queda limitada por la que peor se hace, como una cadena por su eslabón más débil. Técnicamente, las tareas se combinan con una elasticidad de sustitución menor que uno, de modo que automatizar algunas apenas eleva el producto mientras queden otras sin automatizar. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.13">Tema 13</a></p>
+</div>
 <div id="g-especializacion-completa" class="glosario-termino">
 <p><strong>Especialización completa</strong> Que un país produzca un solo bien. Técnicamente, la especialización es completa cuando el país produce únicamente un bien, como ocurre con tecnología lineal, e incompleta cuando produce los dos, lo que sucede normalmente si el coste de oportunidad crece con la producción. <span class="glosario-tema">Tema 14</span></p>
 </div>
+<div id="g-especializacion-perversa" class="glosario-termino">
+<p><strong>Especialización perversa</strong> Que la producción de la unión se concentre en el país menos eficiente. Técnicamente, aparece con economías de escala cuando las demandas de los países son distintas y el país con el mercado mayor, aunque sea menos eficiente, captura todo el mercado de la unión, con lo que se genera ineficiencia productiva. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-esquema-de-ponzi" class="glosario-termino">
 <p><strong>Esquema de Ponzi</strong> Forma de financiarse que paga las deudas antiguas con deuda nueva, de modo que la deuda nunca llega a devolverse. Técnicamente, es una senda en la que un agente, un banco o un Estado refinancia indefinidamente su deuda y sus intereses, de forma que el valor actual de su deuda no tiende a cero. Debe su nombre a Charles Ponzi, que en los años veinte pagaba a los primeros inversores con el dinero de los nuevos, y Minsky llama financiación Ponzi a la de quien necesita endeudarse más incluso para pagar los intereses. <a href="03-tema-b3.html" class="glosario-tema" title="Modelo de la renta normal">Tema 3</a></p>
+</div>
+<div id="g-estado-estacionario" class="glosario-termino">
+<p><strong>Estado estacionario</strong> Situación a la que tiende la economía y en la que las magnitudes dejan de cambiar su ritmo de crecimiento. Técnicamente, es la posición en la que las variables crecen a tasas constantes, que en el modelo de Solow sin progreso técnico son nulas para las variables per cápita. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: supuestos">Tema 13</a></p>
 </div>
 <div id="g-estancamiento-secular" class="glosario-termino">
 <p><strong>Estancamiento secular</strong> Situación en la que una economía crece poco durante muchos años, no por un bache pasajero. Técnicamente, es un período prolongado de crecimiento bajo que abarca varios ciclos y que, en su versión de demanda, se debe a que el ahorro deseado de pleno empleo supera a la inversión y el tipo de interés real que los igualaría es inalcanzable. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.4">Tema 3</a></p>
@@ -1338,6 +1544,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-expectativas-racionales" class="glosario-termino">
 <p><strong>Expectativas racionales</strong> Forma de prever el futuro usando toda la información disponible sin equivocarse de forma sistemática. Técnicamente, la expectativa coincide con la esperanza matemática de la variable condicionada a la información disponible, de modo que los errores de previsión son puramente aleatorios. <a href="03-tema-b3.html" class="glosario-tema" title="Consumo e incertidumbre: la teoría del paseo aleatorio">Tema 3</a></p>
 </div>
+<div id="g-externalidad-del-capital-learning-by-doing" class="glosario-termino">
+<p><strong>Externalidad del capital (learning by doing)</strong> Mejora de la productividad de todas las empresas que resulta de que alguna invierte, sin que esta reciba compensación. Técnicamente, es un efecto desbordamiento del capital que puede compensar los rendimientos decrecientes y, si es suficientemente grande, sostener el crecimiento. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: externalidades del capital">Tema 13</a></p>
+</div>
 </section>
 <section id="letra-f" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-f">F</h2>
@@ -1346,6 +1555,12 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-federalismo-fiscal-en-una-union-monetaria" class="glosario-termino">
 <p><strong>Federalismo fiscal (en una unión monetaria)</strong> Reparto de funciones fiscales entre un presupuesto común y los nacionales para que la unión funcione. Técnicamente, atiende tres funciones: la igualatoria, que redistribuye de regiones ricas a pobres, la estabilizadora, ante shocks simétricos, y la aseguradora, ante shocks asimétricos. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.1">Tema 22</a></p>
+</div>
+<div id="g-filo-de-la-navaja-harrod-domar" class="glosario-termino">
+<p><strong>Filo de la navaja (Harrod-Domar)</strong> Propiedad del modelo de Harrod y Domar según la cual el crecimiento equilibrado solo se da por casualidad. Técnicamente, requiere que s·A sea exactamente igual a <span class="math inline">\(\delta\)</span>+n, y en otro caso la economía acaba con paro creciente o con capital ocioso. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.1">Tema 13</a></p>
+</div>
+<div id="g-filtro-de-hodrick-y-prescott" class="glosario-termino">
+<p><strong>Filtro de Hodrick y Prescott</strong> Método estadístico para separar la tendencia de una serie de su parte cíclica. Técnicamente, elige la tendencia que minimiza la distancia a la serie más <span class="math inline">\(\lambda\)</span> veces las variaciones de su tasa de crecimiento, y el analista fija <span class="math inline">\(\lambda\)</span>, que con datos trimestrales suele valer 1600. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-fob" class="glosario-termino">
 <p><strong>FOB</strong> Precio de una mercancía puesta a bordo del barco, sin el transporte ni el seguro posteriores. Técnicamente, valoración en la frontera del país exportador que excluye fletes y seguros más allá de ese punto, recomendada por el MBP6 para exportaciones e importaciones. <a href="19-tema-b19.html" class="glosario-tema" title="Medición">Tema 19</a></p>
@@ -1368,6 +1583,9 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-g" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-g">G</h2>
+<div id="g-gasto-publico-productivo" class="glosario-termino">
+<p><strong>Gasto público productivo</strong> Gasto del Estado que eleva la producción privada, pero que se financia con impuestos que restan renta disponible y ahorro. Técnicamente, en el modelo de Barro el crecimiento es una función en forma de U invertida del tipo impositivo y se maximiza cuando este iguala la elasticidad de la producción respecto al gasto público, 1-<span class="math inline">\(\alpha\)</span>. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: gasto público y crecimiento">Tema 13</a></p>
+</div>
 <div id="g-gobierno-duro-y-gobierno-blando" class="glosario-termino">
 <p><strong>Gobierno duro y gobierno blando</strong> Forma de distinguir a los gobiernos según lo que más les preocupa, la inflación o el paro. Técnicamente, el gobierno duro da un peso alto a la inflación en su función de pérdida y el blando un peso bajo, por lo que el primero tiene menos sesgo inflacionista. <a href="22-tema-b22.html" class="glosario-tema" title="Credibilidad">Tema 22</a></p>
 </div>
@@ -1380,11 +1598,20 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-hamiltoniano" class="glosario-termino">
 <p><strong>Hamiltoniano</strong> Herramienta para resolver problemas de optimización en tiempo continuo, equivalente al lagrangiano. Técnicamente, suma el beneficio instantáneo y el valor, a su precio sombra, de la variación de la variable de estado, y puede expresarse en valor actual, descontado al momento inicial, o en valor corriente, valorado en cada momento. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo sin costes de ajuste">Tema 4</a></p>
 </div>
+<div id="g-hechos-estilizados-de-kaldor" class="glosario-termino">
+<p><strong>Hechos estilizados de Kaldor</strong> Conjunto de regularidades empíricas de las economías avanzadas que una teoría del crecimiento debería reproducir. Técnicamente, son seis: crecimiento sostenido del producto y del capital por trabajador, ratio capital-producto estable, participaciones de las rentas estables, rentabilidad del capital estable y diferencias de crecimiento entre países. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.5">Tema 13</a></p>
+</div>
+<div id="g-hechos-estilizados-del-ciclo" class="glosario-termino">
+<p><strong>Hechos estilizados del ciclo</strong> Regularidades que se repiten en los datos del ciclo de muchos países. Técnicamente, son las pautas de volatilidad, persistencia y correlación de los componentes cíclicos de las macromagnitudes respecto del PIB, por ejemplo que la inversión es unas tres veces más volátil que el producto, y son lo que toda teoría del ciclo debe explicar. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-heterogeneidad-empresarial" class="glosario-termino">
 <p><strong>Heterogeneidad empresarial</strong> Diferencias de productividad entre empresas de un mismo sector. Técnicamente, cada empresa sortea su productividad tras pagar un coste de entrada, y solo las más productivas pueden exportar. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de Melitz">Tema 15</a></p>
 </div>
 <div id="g-hipotesis-de-especializacion-krugman" class="glosario-termino">
 <p><strong>Hipótesis de especialización (Krugman)</strong> Idea de que la integración hace a las regiones más diferentes en lugar de más parecidas. Técnicamente, con economías de escala la integración concentra cada industria en pocas regiones, de modo que las perturbaciones sectoriales se vuelven regionales y la unión monetaria resulta más costosa. <a href="22-tema-b22.html" class="glosario-tema" title="Beneficios dinámicos">Tema 22</a></p>
+</div>
+<div id="g-hipotesis-de-la-inestabilidad-financiera-minsky" class="glosario-termino">
+<p><strong>Hipótesis de la inestabilidad financiera (Minsky)</strong> Idea de que una economía capitalista que funciona bien acaba creando las condiciones de su propia crisis. Técnicamente, según Minsky, la estabilidad prolongada fomenta el endeudamiento y el riesgo, y las crisis tienen un origen endógeno aunque un shock externo pueda precipitarlas. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-hogar-hand-to-mouth" class="glosario-termino">
 <p><strong>Hogar hand-to-mouth</strong> Hogar que gasta en cada período lo que ingresa, sin colchón de ahorro disponible. Técnicamente, consume toda su renta corriente, por lo que no sigue la renta permanente (hogar no ricardiano), y en su versión pobre carece de riqueza de cualquier clase. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
@@ -1398,8 +1625,14 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-i" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-i">I</h2>
+<div id="g-ilusion-monetaria" class="glosario-termino">
+<p><strong>Ilusión monetaria</strong> Error de quien se fija en las cifras nominales y no en lo que realmente puede comprar. Técnicamente, comportamiento por el que el gasto de los agentes depende de variables nominales y no solo de las reales. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-impuesto-inflacionario" class="glosario-termino">
 <p><strong>Impuesto inflacionario</strong> Pérdida de poder adquisitivo que la inflación impone a quien mantiene dinero. Técnicamente, es el producto de la tasa de inflación por los saldos reales, y coincide con el señoreaje en el estado estacionario sin crecimiento real. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: modelos de generaciones solapadas">Tema 5</a></p>
+</div>
+<div id="g-impulso-del-ciclo" class="glosario-termino">
+<p><strong>Impulso (del ciclo)</strong> Perturbación que pone en marcha una fluctuación. Técnicamente, es el shock, de origen real o nominal, que aparta a la economía de su senda de crecimiento, y se distingue de los mecanismos que lo propagan y hacen que dure. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-inconsistencia-dinamica-de-las-preferencias" class="glosario-termino">
 <p><strong>Inconsistencia dinámica de las preferencias</strong> Cambio de planes que se produce solo porque pasa el tiempo, como quien decide ahorrar a partir del mes que viene y, llegado el mes, lo vuelve a aplazar. Técnicamente, ocurre cuando el plan óptimo trazado hoy deja de serlo en el futuro sin que llegue información nueva, y genera problemas de autocontrol. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.2">Tema 3</a></p>
@@ -1413,8 +1646,20 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-indice-de-grubel-y-lloyd" class="glosario-termino">
 <p><strong>Índice de Grubel y Lloyd</strong> Medida, de 0 a 100, de cuánto del comercio de un país es intraindustrial. Técnicamente, es uno menos el valor absoluto de exportaciones menos importaciones dividido por su suma, por cien, y para el total se pondera por el peso de cada industria. <a href="15-tema-b15.html" class="glosario-tema" title="Evidencia empírica">Tema 15</a></p>
 </div>
+<div id="g-indice-de-theil" class="glosario-termino">
+<p><strong>Índice de Theil</strong> Medida de desigualdad que se puede separar en la desigualdad dentro de los países y entre ellos. Técnicamente, permite descomponer la desigualdad mundial en un componente de clase, dentro de cada país, y un componente de localización, entre las rentas medias de los países. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-ineficiencia-dinamica" class="glosario-termino">
+<p><strong>Ineficiencia dinámica</strong> Situación en la que se ahorra tanto que se podría vivir mejor consumiendo más hoy sin renunciar a nada mañana. Técnicamente, es la posición con un capital superior al de la regla de oro, en la que una reducción de la tasa de ahorro aumentaría el consumo en todos los periodos. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: la regla de oro">Tema 13</a></p>
+</div>
+<div id="g-instituciones-inclusivas-y-extractivas" class="glosario-termino">
+<p><strong>Instituciones inclusivas y extractivas</strong> Las inclusivas reparten oportunidades y protegen los derechos de la mayoría, y las extractivas concentran el poder y la riqueza en una élite. Técnicamente, según Acemoglu y Robinson, las primeras sostienen la inversión y la innovación y por ello el crecimiento duradero, y las segundas solo pueden dar crecimiento a corto plazo. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.10">Tema 13</a></p>
+</div>
 <div id="g-instrumento-de-proteccion-de-la-transmision-tpi" class="glosario-termino">
 <p><strong>Instrumento de Protección de la Transmisión (TPI)</strong> Compras de deuda pública del Banco Central Europeo ante tensiones de mercado injustificadas. Técnicamente, compra valores del sector público de uno a diez años, sin límite previo, en países con una deuda sostenible que cumplen el marco fiscal de la Unión, es decir, que no están en un procedimiento de déficit excesivo o, si lo están, no han incumplido las recomendaciones del Consejo. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.8">Tema 22</a></p>
+</div>
+<div id="g-integracion-economica" class="glosario-termino">
+<p><strong>Integración económica</strong> Que varios países se pongan de acuerdo para quitarse las barreras que los separan y funcionar cada vez más como un solo mercado. Técnicamente, es el proceso por el que un grupo de países elimina barreras económicas entre ellos, con fases que van desde las preferencias arancelarias hasta la unión monetaria. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-integracion-fiscal" class="glosario-termino">
 <p><strong>Integración fiscal</strong> Grado en que los países de una unión comparten sus presupuestos públicos. Técnicamente, consiste en centralizar parte del gasto y de los ingresos para que haya transferencias automáticas entre regiones que amortigüen los shocks asimétricos. <a href="22-tema-b22.html" class="glosario-tema" title="Integración fiscal">Tema 22</a></p>
@@ -1425,17 +1670,26 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-inversion-de-cartera" class="glosario-termino">
 <p><strong>Inversión de cartera</strong> Compra de acciones o bonos extranjeros para ganar rentabilidad, sin intención de controlar la empresa. Técnicamente, transacciones y posiciones en valores de deuda o de capital distintos de los de inversión directa o reservas. <a href="19-tema-b19.html" class="glosario-tema" title="Cuenta financiera">Tema 19</a></p>
 </div>
+<div id="g-inversion-de-mantenimiento" class="glosario-termino">
+<p><strong>Inversión de mantenimiento</strong> Parte de la inversión que se necesita solo para que cada trabajador no pierda capital. Técnicamente, es el término (n+<span class="math inline">\(\delta\)</span>)k de la ecuación fundamental, que repone el capital depreciado y dota de capital a los nuevos habitantes. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: dinámica y equilibrio">Tema 13</a></p>
+</div>
 <div id="g-inversion-de-reposicion" class="glosario-termino">
 <p><strong>Inversión de reposición</strong> Inversión que solo sustituye el capital que se desgasta. Técnicamente, es la parte de la inversión bruta que compensa la depreciación y mantiene constante el stock de capital. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo sin costes de ajuste">Tema 4</a></p>
 </div>
 <div id="g-inversion-directa" class="glosario-termino">
 <p><strong>Inversión directa</strong> Compra de una parte de una empresa de otro país con la intención de quedarse e influir en ella. Técnicamente, categoría funcional en la que un residente tiene el control o una influencia significativa en una empresa residente en otra economía, lo que se presume con al menos el 10 % del poder de voto. <a href="19-tema-b19.html" class="glosario-tema" title="Cuenta financiera">Tema 19</a></p>
 </div>
+<div id="g-inversion-extranjera-directa" class="glosario-termino">
+<p><strong>Inversión extranjera directa</strong> Que una empresa monte o compre un negocio en otro país para controlarlo y gestionarlo a largo plazo. Técnicamente, es la inversión de una empresa en otro país con la que adquiere un interés duradero y capacidad de control sobre la actividad, y se distingue de la inversión de cartera. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-inversion-neta" class="glosario-termino">
 <p><strong>Inversión neta</strong> Aumento del capital de una empresa o de un país durante un periodo. Técnicamente, es la variación del stock de capital, igual a la inversión bruta menos la depreciación. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo sin costes de ajuste">Tema 4</a></p>
 </div>
 <div id="g-irreversibilidad-de-la-inversion" class="glosario-termino">
 <p><strong>Irreversibilidad (de la inversión)</strong> Imposibilidad de recuperar lo invertido deshaciendo la inversión, porque el capital instalado no puede revenderse sin pérdida. Técnicamente, una parte del coste de la inversión es hundido, porque el capital suele ser específico de la empresa o del sector, y reducir el stock de capital resulta más caro que aumentarlo. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría de la inversión bajo incertidumbre">Tema 4</a></p>
+</div>
+<div id="g-is-dinamica" class="glosario-termino">
+<p><strong>IS dinámica</strong> Ecuación que relaciona la demanda de la economía con el tipo de interés real y con las expectativas. Técnicamente, es la ecuación de demanda del modelo, que sale de la optimización intertemporal de los hogares y liga el output gap con el tipo real, el output gap esperado, el tipo natural y el shock de demanda. <span class="glosario-tema">Tema 12</span></p>
 </div>
 </section>
 <section id="letra-l" class="level2 unnumbered glosario-letra">
@@ -1452,11 +1706,26 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-m" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-m">M</h2>
+<div id="g-malinversion-malinvestment" class="glosario-termino">
+<p><strong>Malinversión (malinvestment)</strong> Inversión que se financia con crédito fácil pero no responde a lo que de verdad quieren los consumidores. Técnicamente, es la inversión sin respaldo en el deseo de los consumidores de posponer su consumo, que la teoría austriaca considera la causa de la recesión posterior. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-mecanismo-europeo-de-estabilidad-mede" class="glosario-termino">
 <p><strong>Mecanismo Europeo de Estabilidad (MEDE)</strong> Fondo de rescate permanente de la zona euro. Técnicamente, presta con estricta condicionalidad a los miembros con problemas graves de financiación si es indispensable para la estabilidad financiera de la zona euro en su conjunto. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.8">Tema 22</a></p>
 </div>
+<div id="g-mercado-comun" class="glosario-termino">
+<p><strong>Mercado común</strong> Unión aduanera en la que además las personas, las empresas y el capital pueden moverse libremente entre los socios. Técnicamente, es una unión aduanera que incluye la libre circulación de los factores productivos. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-mercado-unico" class="glosario-termino">
+<p><strong>Mercado único</strong> Mercado común en el que además se quitan los obstáculos que, aun sin aranceles, frenan en la práctica el comercio. Técnicamente, es un mercado común en el que se eliminan las barreras técnicas, jurídicas y burocráticas que obstaculizan de hecho el comercio y la libre circulación de factores entre países. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-mercantilismo" class="glosario-termino">
 <p><strong>Mercantilismo</strong> Doctrina económica dominante entre los siglos XVI y XVIII que identificaba la riqueza de un país con los metales preciosos que poseía. Técnicamente, recomendaba superávits comerciales y protección para acumular oro y plata, y veía el comercio como un juego de suma cero. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-microfundamentacion" class="glosario-termino">
+<p><strong>Microfundamentación</strong> Construcción de las relaciones agregadas a partir de las decisiones de optimización de los agentes individuales. Técnicamente, requisito del análisis macroeconómico moderno, motivado por la crítica de Lucas, de que las ecuaciones de comportamiento se deriven de preferencias, tecnología y restricciones. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-modelo-ak" class="glosario-termino">
+<p><strong>Modelo AK</strong> Modelo en el que el capital, entendido en sentido amplio, no pierde productividad al acumularse, de modo que la economía crece para siempre. Técnicamente, es la función Y = A·K con rendimientos marginales constantes del capital, en la que la tasa de crecimiento es constante y positiva si s·A es mayor que n+<span class="math inline">\(\delta\)</span>. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: primera generación">Tema 13</a></p>
 </div>
 <div id="g-modelo-centro-periferia" class="glosario-termino">
 <p><strong>Modelo centro-periferia</strong> Modelo en el que una región puede acabar concentrando la industria y otra la agricultura. Técnicamente, es el modelo de Krugman de dos regiones y dos sectores en el que la industria se concentra cuando los costes de transporte son bajos, las economías de escala fuertes y el peso de la industria elevado, y se reparte en caso contrario. <a href="15-tema-b15.html" class="glosario-tema" title="Nueva geografía económica">Tema 15</a></p>
@@ -1479,6 +1748,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-modelo-de-costes-de-ruptura" class="glosario-termino">
 <p><strong>Modelo de costes de ruptura</strong> Modelo en el que el agente no sabe cuándo cobrará ni cuándo pagará y mantiene efectivo para no tener que vender bonos de urgencia. Técnicamente, los saldos de precaución son óptimos cuando el ahorro marginal en costes de corretaje iguala al coste de oportunidad de mantenerlos. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo precaución: modelo de costes de ruptura">Tema 5</a></p>
 </div>
+<div id="g-modelo-de-crecimiento-endogeno" class="glosario-termino">
+<p><strong>Modelo de crecimiento endógeno</strong> Modelo en el que el crecimiento de largo plazo nace de decisiones y características de la propia economía y no de un factor que se supone dado desde fuera. Técnicamente, genera una tasa de crecimiento positiva sin suponer que ninguna variable crezca de forma exógena. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno">Tema 13</a></p>
+</div>
 <div id="g-modelo-de-dornbusch-fischer-samuelson" class="glosario-termino">
 <p><strong>Modelo de Dornbusch-Fischer-Samuelson</strong> Modelo ricardiano con un continuo de bienes. Técnicamente, determina a la vez el salario relativo, el bien frontera que separa lo que produce cada país y la relación de intercambio, a partir de la tecnología, las dotaciones de trabajo y las preferencias. <span class="glosario-tema">Tema 14</span></p>
 </div>
@@ -1494,11 +1766,50 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-modelo-de-inventarios" class="glosario-termino">
 <p><strong>Modelo de inventarios</strong> Modelo que trata el dinero como una existencia que se repone, igual que las mercancías de un almacén. Técnicamente, el agente elige cuántas veces convertir bonos en dinero para minimizar la suma de los costes de corretaje y del coste de oportunidad de los saldos medios, y obtiene una demanda proporcional a la raíz cuadrada de la renta. <a href="05-tema-b5.html" class="glosario-tema" title="Motivo transacción: modelo de inventarios">Tema 5</a></p>
 </div>
+<div id="g-modelo-de-las-islas-de-lucas" class="glosario-termino">
+<p><strong>Modelo de las islas de Lucas</strong> Modelo en que cada productor solo ve el precio de su mercado y no sabe si la subida es propia o general. Técnicamente, con información incompleta, la producción se aparta de su nivel natural solo cuando la oferta monetaria sorprende, y el output gap rezagado aporta persistencia. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-modelo-de-lucas-uzawa" class="glosario-termino">
+<p><strong>Modelo de Lucas-Uzawa</strong> Modelo de crecimiento endógeno en el que la educación es el motor del crecimiento, porque el conocimiento de las personas puede acumularse sin límite. Técnicamente, tiene dos sectores, uno de bienes y otro educativo que produce capital humano solo con capital humano, y la economía crece a una tasa constante si la productividad del sector educativo supera la suma de la depreciación y la tasa de descuento. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: primera generación">Tema 13</a></p>
+</div>
+<div id="g-modelo-de-ramsey-cass-koopmans" class="glosario-termino">
+<p><strong>Modelo de Ramsey-Cass-Koopmans</strong> Versión del modelo de Solow en la que la tasa de ahorro la eligen hogares que planifican su consumo para toda la vida. Técnicamente, el ahorro sale de maximizar una utilidad intertemporal descontada sujeta a la restricción de recursos de la economía, y el estado estacionario cumple la regla de oro modificada, con un capital menor que el de la regla de oro. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Ramsey-Cass-Koopmans">Tema 13</a></p>
+</div>
+<div id="g-modelo-de-sobelow" class="glosario-termino">
+<p><strong>Modelo de Sobelow</strong> Modelo que mezcla Solow y Rebelo para obtener crecimiento sostenido y a la vez convergencia condicional. Técnicamente, la función Y = A·K + B·K<span class="math inline">\(\alpha\)</span>·L(1-<span class="math inline">\(\alpha\)</span>) incumple la condición de Inada por la derecha, porque el producto marginal del capital tiende a A y no a cero. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: primera generación">Tema 13</a></p>
+</div>
+<div id="g-modelo-de-solow-swan" class="glosario-termino">
+<p><strong>Modelo de Solow-Swan</strong> Modelo básico del crecimiento a largo plazo, en el que la economía ahorra una parte fija de su renta y acumula capital con rendimientos decrecientes. Técnicamente, con una función de producción neoclásica y tasas exógenas de ahorro, de crecimiento de la población y de progreso técnico, la economía converge a un estado estacionario en el que la renta per cápita solo crece al ritmo del progreso técnico. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow">Tema 13</a></p>
+</div>
 <div id="g-modelo-de-tiempo-de-compra" class="glosario-termino">
 <p><strong>Modelo de tiempo de compra</strong> Modelo en el que el dinero se demanda porque ahorra tiempo al comprar, tiempo que se puede dedicar al ocio. Técnicamente, una tecnología de compra relaciona el tiempo dedicado a comprar con los saldos reales, y el dinero es un bien intermedio. <a href="05-tema-b5.html" class="glosario-tema" title="Nuevos desarrollos: modelos de tiempo de compra">Tema 5</a></p>
 </div>
+<div id="g-modelo-de-variedades-de-productos" class="glosario-termino">
+<p><strong>Modelo de variedades de productos</strong> Modelo en el que el crecimiento procede de que la I+D crea bienes intermedios nuevos que se suman a los existentes. Técnicamente, la expansión del número de variedades evita que caiga la productividad marginal del capital y se financia con las rentas de monopolio que protegen las patentes. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: segunda generación">Tema 13</a></p>
+</div>
+<div id="g-modelo-del-tiron-plucking-model" class="glosario-termino">
+<p><strong>Modelo del tirón (plucking model)</strong> Idea de Friedman de que la economía tiene un techo de producción y las recesiones son caídas temporales desde él. Técnicamente, las recuperaciones son más fuertes cuanto más profunda fue la recesión, a diferencia de la visión en que el producto fluctúa simétricamente alrededor de una tendencia. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-modelo-dsge" class="glosario-termino">
+<p><strong>Modelo DSGE</strong> Modelo macroeconómico construido a partir de las decisiones de hogares y empresas que miran al futuro y sufren perturbaciones aleatorias. Técnicamente, es un modelo de equilibrio general, dinámico y estocástico, con agentes que optimizan de forma intertemporal y expectativas racionales, que utilizan hoy los bancos centrales. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-modelo-multiplicador-acelerador-de-samuelson" class="glosario-termino">
+<p><strong>Modelo multiplicador-acelerador de Samuelson</strong> Explicación del ciclo por la interacción entre el gasto que genera renta y la inversión que reacciona a los cambios del consumo. Técnicamente, con una inversión inducida proporcional a la variación del consumo, el multiplicador y el acelerador hacen que una perturbación de demanda genere oscilaciones de la renta. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-modelo-semiendogeno" class="glosario-termino">
+<p><strong>Modelo semiendógeno</strong> Modelo en el que las ideas nuevas son cada vez más difíciles de producir, de modo que la política económica no puede cambiar el crecimiento a largo plazo. Técnicamente, con rendimientos decrecientes en la producción de ideas, el crecimiento de largo plazo depende del crecimiento de la población y de parámetros tecnológicos, ambos exógenos, mientras que el tamaño de la población solo eleva el nivel de renta per cápita. <a href="13-tema-b13.html" class="glosario-tema" title="Crecimiento endógeno: segunda generación">Tema 13</a></p>
+</div>
+<div id="g-modelos-de-evaluacion-integrada-iam" class="glosario-termino">
+<p><strong>Modelos de evaluación integrada (IAM)</strong> Modelos que unen la física del clima y la economía para estimar el coste y el beneficio de las políticas climáticas. Técnicamente, combinan un bloque económico y otro físico-ambiental, y los más conocidos son DICE, PAGE y FUND. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.11">Tema 13</a></p>
+</div>
+<div id="g-modelos-hank" class="glosario-termino">
+<p><strong>Modelos HANK</strong> Modelos neokeynesianos en los que los hogares son distintos entre sí y no todos pueden endeudarse. Técnicamente, son modelos con agentes heterogéneos, riesgo de renta no asegurable y restricciones de endeudamiento, que permiten estudiar cómo la distribución de la renta y la riqueza afecta al ciclo y a la política económica. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-modelos-neotecnologicos" class="glosario-termino">
 <p><strong>Modelos neotecnológicos</strong> Modelos que explican el comercio por diferencias de tecnología entre países y por su difusión. Técnicamente, tratan la generación y transmisión de tecnología como variable endógena, de modo que la ventaja comparativa cambia con el tiempo. <a href="15-tema-b15.html" class="glosario-tema" title="Modelos neotecnológicos">Tema 15</a></p>
+</div>
+<div id="g-modelos-tank" class="glosario-termino">
+<p><strong>Modelos TANK</strong> Modelos con dos tipos de hogares: los que ahorran y los que consumen toda su renta corriente. Técnicamente, son modelos neokeynesianos con dos agentes (Two-Agent New Keynesian), versión simple de la heterogeneidad que desarrollan los HANK, en la que parte de los hogares no puede suavizar su consumo y por ello reacciona más a la renta corriente. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-moneda-digital-de-banco-central-cbdc" class="glosario-termino">
 <p><strong>Moneda digital de banco central (CBDC)</strong> Dinero del banco central en formato electrónico, es decir, una versión digital del efectivo. El euro digital es el proyecto del BCE, y el riesgo para la demanda de dinero es que sustituya a los depósitos bancarios. <a href="05-tema-b5.html" class="glosario-tema" title="Implicaciones de política económica: efectivo y euro digital">Tema 5</a></p>
@@ -1512,6 +1823,12 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-motivo-transaccion" class="glosario-termino">
 <p><strong>Motivo transacción</strong> Razón para tener dinero a mano porque los cobros y los pagos no coinciden en el tiempo. Técnicamente, es la demanda de dinero para hacer frente a los gastos corrientes, que depende positivamente de la renta. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
 </div>
+<div id="g-multilateralismo" class="glosario-termino">
+<p><strong>Multilateralismo</strong> Liberalizar el comercio entre todos los países por igual. Técnicamente, es la liberalización no discriminatoria entre todos los miembros de la OMC, basada en la cláusula de nación más favorecida. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-multiplicador-del-comercio-exterior" class="glosario-termino">
+<p><strong>Multiplicador del comercio exterior</strong> Efecto en cadena que tiene sobre la renta un aumento de la demanda exterior. Técnicamente, es el multiplicador keynesiano de una economía abierta, 1/(s+m), donde s es la propensión marginal a ahorrar y m la propensión marginal a importar, de modo que el saldo comercial mejora en s/(s+m) del aumento de las exportaciones autónomas. <span class="glosario-tema">Tema 20</span></p>
+</div>
 </section>
 <section id="letra-n" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-n">N</h2>
@@ -1524,8 +1841,14 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-novisima-teoria-del-comercio-internacional" class="glosario-termino">
 <p><strong>Novísima teoría del comercio internacional</strong> Teoría que explica el comercio a partir de las decisiones de empresas con distinta productividad. Técnicamente, incorpora la heterogeneidad empresarial, de modo que solo las más productivas exportan, y tiene como referencia el modelo de Melitz. <a href="15-tema-b15.html" class="glosario-tema" title="Novísima teoría del comercio internacional">Tema 15</a></p>
 </div>
+<div id="g-nueva-economia-keynesiana-nek" class="glosario-termino">
+<p><strong>Nueva economía keynesiana (NEK)</strong> Corriente que explica por qué la demanda y el dinero afectan a la producción partiendo de que precios y salarios se ajustan con dificultad. Técnicamente, acepta las expectativas racionales y la microfundamentación pero no la información perfecta ni el vaciado continuo de los mercados, y su segunda generación origina los DSGE neokeynesianos. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-nueva-geografia-economica" class="glosario-termino">
 <p><strong>Nueva geografía económica</strong> Rama de la economía que explica dónde se localiza la producción y por qué se concentra. Técnicamente, modeliza en equilibrio general la localización como resultado de las fuerzas centrípetas y centrífugas, los costes de transporte y las economías de escala. <a href="15-tema-b15.html" class="glosario-tema" title="Nueva geografía económica">Tema 15</a></p>
+</div>
+<div id="g-nueva-macroeconomia-clasica-nmc" class="glosario-termino">
+<p><strong>Nueva macroeconomía clásica (NMC)</strong> Corriente que explica el ciclo con agentes que optimizan, prevén bien el futuro y comercian en mercados que se vacían, pero ven la información de forma imperfecta. Técnicamente, combina expectativas racionales, microfundamentos y vaciado continuo de los mercados, y atribuye el ciclo a sorpresas monetarias que los agentes confunden con cambios de precios relativos. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-nueva-teoria-cuantitativa-del-dinero" class="glosario-termino">
 <p><strong>Nueva teoría cuantitativa del dinero</strong> Reformulación de Friedman que trata el dinero como un activo más y hace depender su demanda de la riqueza, medida por la renta permanente, y de la rentabilidad de los demás activos. Técnicamente, la demanda es proporcional a la renta permanente y mucho menos sensible al tipo de interés que en Keynes, por lo que es estable. <a href="05-tema-b5.html" class="glosario-tema" title="El monetarismo y la nueva teoría cuantitativa">Tema 5</a></p>
@@ -1536,6 +1859,9 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-o" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-o">O</h2>
+<div id="g-ondas-largas-de-kondratiev" class="glosario-termino">
+<p><strong>Ondas largas de Kondratiev</strong> Ciclos de varias décadas en la actividad económica. Técnicamente, propuestos por Kondratiev con una duración de 47 a 60 años, para él ligados a la reposición de los bienes de capital básicos y, según Schumpeter, a oleadas de innovaciones. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-opcion-real" class="glosario-termino">
 <p><strong>Opción real</strong> Posibilidad, pero no obligación, de tomar una decisión sobre un activo real, como invertir, esperar, ampliar o abandonar un proyecto. Técnicamente, se valora como una opción financiera, y su valor aumenta con la incertidumbre sobre los rendimientos del activo. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría de la inversión bajo incertidumbre">Tema 4</a></p>
 </div>
@@ -1560,8 +1886,17 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-paradoja-de-feldstein-horioka" class="glosario-termino">
 <p><strong>Paradoja de Feldstein-Horioka</strong> Observación de que los países invierten aproximadamente lo que ahorran, pese a la movilidad del capital. Técnicamente, elevada correlación entre las tasas de ahorro y de inversión nacionales, que contradice la idea de que el ahorro se dirige a las mejores oportunidades de inversión del mundo. <a href="19-tema-b19.html" class="glosario-tema" title="Interpretación">Tema 19</a></p>
 </div>
+<div id="g-paradoja-de-las-elasticidades" class="glosario-termino">
+<p><strong>Paradoja de las elasticidades</strong> Contradicción de que, si las elasticidades son bajas, una apreciación mejoraría la balanza comercial. Técnicamente, es la implicación, según la condición de Marshall-Lerner, de que cuando la suma de elasticidades es inferior a la unidad una devaluación empeora el saldo y una apreciación lo mejora. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-paradoja-de-leontief" class="glosario-termino">
 <p><strong>Paradoja de Leontief</strong> Resultado empírico contrario a la predicción del modelo de Heckscher-Ohlin. Técnicamente, con una tabla input-output de 1947, Leontief halló que en Estados Unidos, el país con más capital, las exportaciones usaban relativamente más trabajo que la producción nacional que sustituía a las importaciones. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-paradoja-de-lucas" class="glosario-termino">
+<p><strong>Paradoja de Lucas</strong> Observación de que el capital apenas fluye desde los países ricos hacia los pobres, pese a que allí debería rendir más. Técnicamente, contradice la predicción de rendimientos marginales decrecientes que atraerían inversión hacia economías con menos capital por trabajador. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: convergencia">Tema 13</a></p>
+</div>
+<div id="g-paridad-del-poder-adquisitivo-ppa" class="glosario-termino">
+<p><strong>Paridad del poder adquisitivo (PPA)</strong> Idea de que una misma cesta de bienes cuesta lo mismo en todos los países cuando se expresa en una misma moneda. Técnicamente, el tipo de cambio nominal es igual al cociente entre el nivel de precios interior y el exterior, de modo que el tipo de cambio real es constante. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-partida-doble" class="glosario-termino">
 <p><strong>Partida doble</strong> Regla de anotar cada operación dos veces, una como crédito y otra como débito, de modo que las cuentas cuadren. Técnicamente, sistema contable en el que cada transacción genera al menos dos asientos por el mismo importe, uno de crédito y otro de débito, de modo que la suma de todos los créditos iguala la de todos los débitos. <a href="19-tema-b19.html" class="glosario-tema" title="Medición">Tema 19</a></p>
@@ -1572,6 +1907,24 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-pasivos-externos" class="glosario-termino">
 <p><strong>Pasivos externos</strong> Todo lo que los residentes deben al exterior, tanto deudas como participaciones. Técnicamente, obligaciones financieras de los residentes frente a no residentes, tanto las que exigen pagos de principal o intereses como las que no. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.11">Tema 19</a></p>
 </div>
+<div id="g-patron-oro" class="glosario-termino">
+<p><strong>Patrón oro</strong> Sistema monetario en el que el valor de la moneda está ligado a una cantidad fija de oro. Técnicamente, régimen de tipo de cambio fijo con plena convertibilidad de la moneda en oro, en el que la oferta monetaria interna depende de las reservas de oro del banco central. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-peldanos-y-tropiezos-del-regionalismo" class="glosario-termino">
+<p><strong>Peldaños y tropiezos del regionalismo</strong> Pregunta de si los acuerdos regionales acercan o alejan del libre comercio mundial. Técnicamente, son las dos hipótesis que planteó Bhagwati, según las cuales los acuerdos regionales pueden ser peldaños (building blocks) o tropiezos (stumbling blocks) hacia el libre comercio mundial. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-persistencia-del-ciclo" class="glosario-termino">
+<p><strong>Persistencia (del ciclo)</strong> Lo que tarda en desaparecer el efecto de una perturbación. Técnicamente, es lo que explica la duración del ciclo y se mide con la autocorrelación de primer orden del componente cíclico, que en las variables macroeconómicas ronda 0,8. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-politica-macroprudencial" class="glosario-termino">
+<p><strong>Política macroprudencial</strong> Regulación del sistema financiero pensada para evitar crisis de conjunto y no solo la quiebra de cada banco. Técnicamente, es la orientación de la política prudencial que acumula colchones en las fases buenas, cuando crecen las vulnerabilidades financieras, para utilizarlos en las malas. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-politicas-de-reduccion-del-gasto" class="glosario-termino">
+<p><strong>Políticas de reducción del gasto</strong> Medidas que recortan el gasto total de la economía para que se importe menos. Técnicamente, políticas de demanda restrictivas que reducen la absorción cuando hay pleno empleo y no cabe aumentar la renta. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-politicas-de-reorientacion-del-gasto" class="glosario-termino">
+<p><strong>Políticas de reorientación del gasto</strong> Medidas que desvían el gasto de bienes extranjeros hacia bienes nacionales. Técnicamente, políticas que modifican los precios relativos, como la devaluación o los aranceles, para mejorar el saldo exterior sin reducir la absorción. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-posicion-de-inversion-internacional" class="glosario-termino">
 <p><strong>Posición de inversión internacional</strong> Fotografía, en una fecha, de lo que los residentes de un país tienen y deben frente al exterior. Técnicamente, estado de los activos financieros de los residentes frente a no residentes, incluido el oro en lingotes de reserva, y de sus pasivos frente a ellos, a una fecha determinada. <a href="19-tema-b19.html" class="glosario-tema" title="Posición de inversión internacional">Tema 19</a></p>
 </div>
@@ -1581,6 +1934,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-precio-sombra" class="glosario-termino">
 <p><strong>Precio sombra</strong> Valor que tiene para quien decide una unidad adicional de un recurso, aunque no se pague por ella en ningún mercado. Técnicamente, en el problema de inversión es la variable de coestado del hamiltoniano, que mide cuánto aumenta el valor de la empresa con una unidad más de capital, y en valor corriente coincide con la q marginal. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo sin costes de ajuste">Tema 4</a></p>
 </div>
+<div id="g-precios-escalonados-a-la-calvo" class="glosario-termino">
+<p><strong>Precios escalonados a la Calvo</strong> Forma de modelizar la rigidez de precios en la que, cada periodo, solo algunas empresas pueden cambiarlos. Técnicamente, solo una fracción aleatoria de empresas ajusta su precio en cada periodo y, cuando le toca, lo fija descontando que quizá no pueda volver a hacerlo, lo que da lugar a la curva de Phillips neokeynesiana. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-preferencia-por-la-liquidez" class="glosario-termino">
 <p><strong>Preferencia por la liquidez</strong> Deseo de conservar la riqueza en forma de dinero, que se puede gastar de inmediato, en lugar de en activos que rinden pero son menos líquidos. Técnicamente, en Keynes el tipo de interés es el precio que compensa renunciar a esa liquidez y se determina en el mercado monetario. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
 </div>
@@ -1589,6 +1945,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-prestamista-de-ultima-instancia" class="glosario-termino">
 <p><strong>Prestamista de última instancia</strong> Institución que presta a bancos o Estados solventes cuando nadie más quiere financiarlos. Técnicamente, es la función de un banco central que evita que una crisis de liquidez se convierta en una de solvencia, y en una unión monetaria solo puede cumplirla el banco central común. <a href="22-tema-b22.html" class="glosario-tema" title="Costes dinámicos">Tema 22</a></p>
+</div>
+<div id="g-prima-de-financiacion-externa" class="glosario-termino">
+<p><strong>Prima de financiación externa</strong> Sobrecoste de pedir prestado fuera de la empresa en lugar de usar fondos propios. Técnicamente, es la diferencia entre el coste de los fondos obtenidos fuera de la empresa y el coste de oportunidad de los fondos propios, y es menor cuanto mayor es el patrimonio neto del prestatario. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-prima-de-riesgo-de-la-deuda-soberana" class="glosario-termino">
 <p><strong>Prima de riesgo (de la deuda soberana)</strong> Rentabilidad adicional que exige el mercado por prestar a un Estado frente a otro más seguro. Técnicamente, es el diferencial entre el tipo de interés de su deuda y el de la referencia, y refleja el riesgo de impago y, en una unión monetaria, también el de salida y redenominación de la deuda en una nueva moneda. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.3">Tema 22</a></p>
@@ -1605,11 +1964,23 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-privilegio-exorbitante" class="glosario-termino">
 <p><strong>Privilegio exorbitante</strong> Ventaja de un país cuya moneda es la de reserva mundial. Técnicamente, diferencial positivo entre la rentabilidad que Estados Unidos obtiene de sus activos exteriores y la que paga por sus pasivos. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.6">Tema 19</a></p>
 </div>
+<div id="g-problema-de-liquidez" class="glosario-termino">
+<p><strong>Problema de liquidez</strong> Dificultad de pagar a corto plazo pese a poder pagar a largo plazo. Técnicamente, falta transitoria de financiación de un deudor solvente, distinta de la insolvencia, que no desaparece con más tiempo. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-procedimiento-de-desequilibrios-macroeconomicos" class="glosario-termino">
 <p><strong>Procedimiento de Desequilibrios Macroeconómicos</strong> Sistema de vigilancia de la Unión Europea para detectar y corregir los desequilibrios macroeconómicos de los Estados miembros. Técnicamente, procedimiento que se apoya en un cuadro de indicadores con umbrales, como una posición de inversión internacional neta no inferior a menos 35 % del PIB, para decidir qué países reciben un examen exhaustivo. <a href="19-tema-b19.html" class="glosario-tema" title="Apéndice 19.A.12">Tema 19</a></p>
 </div>
 <div id="g-productividad-de-corte" class="glosario-termino">
 <p><strong>Productividad de corte</strong> Productividad mínima necesaria para que una empresa cubra sus costes fijos. Técnicamente, la empresa con esa productividad obtiene beneficio cero y las que están por debajo salen del mercado, o no exportan si se trata de la de exportación. <a href="15-tema-b15.html" class="glosario-tema" title="Modelo de Melitz">Tema 15</a></p>
+</div>
+<div id="g-progreso-tecnico-neutral-en-el-sentido-de-harrod" class="glosario-termino">
+<p><strong>Progreso técnico neutral en el sentido de Harrod</strong> Tipo de mejora técnica que equivale a disponer de trabajadores más eficientes. Técnicamente, la tecnología multiplica al factor trabajo, Y = F(K, A·L), de modo que, con una relación capital-producto constante, no cambia el reparto de la renta, y es la única forma de progreso técnico compatible con una senda de crecimiento equilibrado con rendimientos constantes a escala. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: progreso tecnológico">Tema 13</a></p>
+</div>
+<div id="g-propagacion-del-ciclo" class="glosario-termino">
+<p><strong>Propagación (del ciclo)</strong> Manera en que una perturbación inicial se extiende al resto de la economía. Técnicamente, es el conjunto de relaciones, como el multiplicador, la sustitución intertemporal o las rigideces, que transmiten el impulso a muchas variables y generan comovimientos entre ellas. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-propension-marginal-a-absorber" class="glosario-termino">
+<p><strong>Propensión marginal a absorber</strong> Parte de cada euro adicional de renta que se gasta en consumo e inversión. Técnicamente, es el coeficiente c de la función de absorción A=A0+cY, suma de las propensiones marginales a consumir y a invertir. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-propension-marginal-a-consumir" class="glosario-termino">
 <p><strong>Propensión marginal a consumir</strong> Parte de cada euro adicional de renta que se destina a consumo. Técnicamente, es la variación del consumo ante un aumento unitario de la renta disponible, es decir, la pendiente de la función de consumo, que Keynes situó entre 0 y 1. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta absoluta de Keynes">Tema 3</a></p>
@@ -1622,6 +1993,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-pseudopanel" class="glosario-termino">
 <p><strong>Pseudopanel</strong> Forma de seguir a una generación a lo largo del tiempo aunque cada año se encueste a personas distintas. Técnicamente, agrupa los hogares de encuestas repetidas en cohortes definidas por una característica fija, como el año de nacimiento, y sigue la media de cada cohorte, sin desgaste muestral. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.8 (y 3.A.1)">Tema 3</a></p>
+</div>
+<div id="g-puzzle-de-la-asignacion" class="glosario-termino">
+<p><strong>Puzzle de la asignación</strong> Observación de que, entre los países en desarrollo, el capital va a los que menos crecen. Técnicamente, hallazgo de Gourinchas y Jeanne contrario a la predicción del modelo neoclásico, que se concilia con una cuña en el ahorro de los países de mayor crecimiento. <span class="glosario-tema">Tema 20</span></p>
 </div>
 </section>
 <section id="letra-q" class="level2 unnumbered glosario-letra">
@@ -1638,8 +2012,17 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="letra-r" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-r">R</h2>
+<div id="g-racionalidad-limitada-casi-racionalidad" class="glosario-termino">
+<p><strong>Racionalidad limitada (casi-racionalidad)</strong> Conducta de quien usa reglas aproximadamente racionales porque optimizar con exactitud es demasiado costoso. Técnicamente, en la casi-racionalidad de Akerlof y Yellen, los agentes no reoptimizan cuando la pérdida de no hacerlo es de segundo orden, lo que retrasa los ajustes de precios y explica fluctuaciones en empleo y producción. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-racionamiento-del-credito" class="glosario-termino">
+<p><strong>Racionamiento del crédito</strong> Situación en la que hay empresas que quieren pedir prestado al tipo de interés vigente y no consiguen financiación aunque estén dispuestas a pagar más. Técnicamente, es la situación en la que, al tipo vigente, la demanda de crédito supera a la oferta y los bancos no suben el tipo, porque la información asimétrica les impide distinguir a los buenos prestatarios, y así fluctúan la producción y el empleo. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-ratio-capital-producto" class="glosario-termino">
 <p><strong>Ratio capital-producto</strong> Cantidad de capital que hace falta para obtener una unidad de producción al año. Técnicamente, cociente entre un stock, el capital, y un flujo, la producción del periodo, que en el acelerador traslada las variaciones de la producción a la inversión y puede ser mayor que uno. <a href="04-tema-b4.html" class="glosario-tema" title="Teoría del acelerador simple">Tema 4</a></p>
+</div>
+<div id="g-regionalismo" class="glosario-termino">
+<p><strong>Regionalismo</strong> Liberalizar el comercio solo entre un grupo de países. Técnicamente, es la liberalización comercial preferencial entre un grupo de países, que discrimina frente a terceros. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-regla-de-eleccion-del-instrumento-de-politica-monetaria-poole" class="glosario-termino">
 <p><strong>Regla de elección del instrumento de política monetaria (Poole)</strong> Criterio para decidir si el banco central debe fijar la cantidad de dinero o el tipo de interés. Técnicamente, conviene fijar el tipo de interés si predominan los shocks de demanda de dinero y fijar la cantidad si predominan los de demanda agregada, para minimizar la varianza de la renta. <a href="05-tema-b5.html" class="glosario-tema" title="Implicaciones de política económica: instrumento de política monetaria">Tema 5</a></p>
@@ -1649,6 +2032,15 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-regla-de-inflacion-optima-de-friedman" class="glosario-termino">
 <p><strong>Regla de inflación óptima de Friedman</strong> Regla según la cual conviene que los precios bajen para que mantener dinero no cueste nada. Técnicamente, la inflación óptima es igual al tipo de interés real cambiado de signo, porque así el tipo nominal es cero y el coste de oportunidad del dinero desaparece. <a href="05-tema-b5.html" class="glosario-tema" title="El monetarismo y la nueva teoría cuantitativa">Tema 5</a></p>
+</div>
+<div id="g-regla-de-oro-de-la-acumulacion-de-capital" class="glosario-termino">
+<p><strong>Regla de oro de la acumulación de capital</strong> Nivel de ahorro y de capital con el que cada habitante podría consumir lo máximo posible de forma permanente. Técnicamente, es el capital de estado estacionario en el que la productividad marginal del capital iguala a n+<span class="math inline">\(\delta\)</span>, o a n+<span class="math inline">\(\delta\)</span>+g si hay progreso técnico, lo que en el caso Cobb-Douglas exige una tasa de ahorro igual a <span class="math inline">\(\alpha\)</span>. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: la regla de oro">Tema 13</a></p>
+</div>
+<div id="g-regla-de-oro-modificada" class="glosario-termino">
+<p><strong>Regla de oro modificada</strong> Condición de capital de estado estacionario cuando el ahorro se decide teniendo en cuenta la impaciencia de los hogares. Técnicamente, la productividad marginal del capital iguala a <span class="math inline">\(\rho\)</span>+<span class="math inline">\(\delta\)</span>, lo que implica un capital inferior al de la regla de oro de Solow. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Ramsey-Cass-Koopmans">Tema 13</a></p>
+</div>
+<div id="g-regla-de-taylor" class="glosario-termino">
+<p><strong>Regla de Taylor</strong> Pauta con la que un banco central fija los tipos de interés: los sube si la inflación o la producción superan sus objetivos. Técnicamente, el tipo nominal depende del tipo natural, de la inflación y de las desviaciones de la inflación y del output gap, con pesos relativos que Taylor fijó inicialmente en 0,5. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-regla-k" class="glosario-termino">
 <p><strong>Regla k %</strong> Compromiso del banco central de dejar crecer el dinero a un ritmo fijo y conocido, sin reaccionar al ciclo. Técnicamente, es la regla de Friedman por la que la masa monetaria crece a una tasa constante igual al crecimiento potencial del PIB. <a href="05-tema-b5.html" class="glosario-tema" title="El monetarismo y la nueva teoría cuantitativa">Tema 5</a></p>
@@ -1664,6 +2056,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-relacion-real-de-intercambio" class="glosario-termino">
 <p><strong>Relación real de intercambio</strong> Cantidad del bien que se importa que se obtiene a cambio de cada unidad del bien que se exporta. Técnicamente, es el cociente entre el precio de las exportaciones y el de las importaciones, y se representa como la pendiente de una recta que parte del origen. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-rendimientos-constantes-a-escala" class="glosario-termino">
+<p><strong>Rendimientos constantes a escala</strong> Propiedad según la cual, si se duplican todos los factores, la producción también se duplica. Técnicamente, la función de producción es homogénea de grado 1, lo que permite expresarla en términos per cápita. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: supuestos">Tema 13</a></p>
 </div>
 <div id="g-renta-nacional-bruta-disponible" class="glosario-termino">
 <p><strong>Renta nacional bruta disponible</strong> Renta de que disponen los residentes de un país para consumir o ahorrar. Técnicamente, PIB más las rentas primarias y secundarias netas recibidas del resto del mundo. <a href="19-tema-b19.html" class="glosario-tema" title="Interpretación">Tema 19</a></p>
@@ -1689,17 +2084,29 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-residente" class="glosario-termino">
 <p><strong>Residente</strong> Persona o empresa cuyo centro de actividad e intereses está en un país, con independencia de su nacionalidad. Técnicamente, unidad institucional cuyo centro de interés económico predominante está en un territorio económico, y que lo es de una sola economía a la vez. <a href="19-tema-b19.html" class="glosario-tema" title="Concepto">Tema 19</a></p>
 </div>
+<div id="g-residuo-de-solow" class="glosario-termino">
+<p><strong>Residuo de Solow</strong> Parte del crecimiento de la producción que no se explica por tener más capital o más trabajo y que se atribuye al progreso técnico. Técnicamente, es la diferencia entre el crecimiento observado del producto y la suma de los crecimientos de los factores ponderados por sus participaciones en la renta. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: limitaciones">Tema 13</a></p>
+</div>
 <div id="g-resistencia-multilateral" class="glosario-termino">
 <p><strong>Resistencia multilateral</strong> Coste medio de comerciar de un país con todos los demás, que condiciona su comercio con cada uno. Técnicamente, en la ecuación de gravedad con fundamento teórico el comercio bilateral depende de los costes bilaterales en relación con las resistencias multilaterales de los dos países. <a href="15-tema-b15.html" class="glosario-tema" title="Modelos de gravedad">Tema 15</a></p>
 </div>
+<div id="g-restriccion-de-colateral-kiyotaki-y-moore" class="glosario-termino">
+<p><strong>Restricción de colateral (Kiyotaki y Moore)</strong> Límite al crédito que depende del valor de los bienes que el prestatario puede dar en garantía. Técnicamente, como los activos duraderos son a la vez factor de producción y garantía de los préstamos, un shock pequeño y temporal reduce su precio y el crédito, y genera fluctuaciones grandes y persistentes. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-restriccion-de-liquidez" class="glosario-termino">
 <p><strong>Restricción de liquidez</strong> Imposibilidad de pedir prestado para gastar hoy lo que se ganará mañana. Técnicamente, es la incapacidad de un hogar para endeudarse contra su renta futura, o para hacerlo sin pagar más que el Gobierno, lo que le impide suavizar el consumo y hace que este siga a la renta corriente. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.10">Tema 3</a></p>
+</div>
+<div id="g-restriccion-presupuestaria-intertemporal" class="glosario-termino">
+<p><strong>Restricción presupuestaria intertemporal</strong> Límite que impone al gasto de un país el que tenga que devolver lo que se endeuda. Técnicamente, condición según la cual el valor actual de los gastos no puede superar al de los recursos más la riqueza inicial, equivalente a que el valor actual de las futuras balanzas comerciales cubra la deuda exterior inicial. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-restricciones-financieras" class="glosario-termino">
 <p><strong>Restricciones financieras</strong> Dificultades de una empresa para conseguir fondos externos al mismo coste que los propios. Técnicamente, hacen que la inversión dependa de los fondos internos, como el flujo de caja, y no solo de la q o del coste de uso del capital. <a href="04-tema-b4.html" class="glosario-tema" title="La teoría de las jerarquías financieras">Tema 4</a></p>
 </div>
 <div id="g-reversion-de-intensidades-factoriales" class="glosario-termino">
 <p><strong>Reversión de intensidades factoriales</strong> Situación en la que un mismo bien es intensivo en un factor con unos precios de los factores e intensivo en el otro con otros precios. Técnicamente, las curvas de ratios capital-trabajo de los dos bienes se cruzan y se pierde la relación unívoca entre el precio relativo de los bienes y el de los factores. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-rigideces-nominales" class="glosario-termino">
+<p><strong>Rigideces nominales</strong> Lentitud con la que se ajustan los precios y los salarios fijados en dinero. Técnicamente, son fricciones, como los costes de menú o los precios escalonados, que impiden que las perturbaciones se absorban por la vía de los precios y hacen que el ajuste sea por cantidades. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-riqueza-humana" class="glosario-termino">
 <p><strong>Riqueza humana</strong> Valor de lo que una persona espera ganar con su trabajo durante el resto de su vida. Técnicamente, es el valor actual de las rentas salariales presentes y futuras esperadas, que junto con la riqueza no humana (dinero, bonos, acciones y capital) forma la riqueza de la que deriva la renta permanente. En la demanda de dinero de Friedman importa además su peso en la riqueza total, porque es poco líquida, ya que no puede venderse ni usarse con facilidad como garantía, y porque las rentas del trabajo son más inciertas que las de los activos financieros. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría de la renta permanente > Modelo">Tema 3</a></p>
@@ -1712,6 +2119,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-saldo-target" class="glosario-termino">
 <p><strong>Saldo TARGET</strong> Lo que el banco central de un país de la zona del euro debe al resto del Eurosistema, o le es debido, por los pagos en euros entre países. Técnicamente, posición neta acreedora o deudora de un banco central nacional frente al Eurosistema, que en la zona del euro hace el papel de variable de ajuste de la balanza de pagos y cuya suma para todo el Eurosistema es nula. <a href="19-tema-b19.html" class="glosario-tema" title="El papel de las reservas">Tema 19</a></p>
+</div>
+<div id="g-senda-de-crecimiento-equilibrado-bgp" class="glosario-termino">
+<p><strong>Senda de crecimiento equilibrado (BGP)</strong> Trayectoria en la que la economía crece a un ritmo constante, año tras año. Técnicamente, es la situación en la que las variables crecen a tasas constantes, y cuando esas tasas son nulas coincide con el estado estacionario en sentido estricto. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: supuestos">Tema 13</a></p>
 </div>
 <div id="g-senda-de-gasto-neto" class="glosario-termino">
 <p><strong>Senda de gasto neto</strong> Límite al crecimiento del gasto público que el Consejo fija a cada Estado a partir de su plan a medio plazo. Técnicamente, es el instrumento del Pacto de Estabilidad y Crecimiento reformado en 2024 y mide el gasto sin intereses, sin medidas discrecionales de ingresos, sin el gasto financiado con fondos europeos y su cofinanciación, sin el componente cíclico del gasto en desempleo y sin medidas puntuales. Cubre los cuatro o cinco años del plan, con un período de ajuste de cuatro años ampliable hasta siete. <a href="22-tema-b22.html" class="glosario-tema" title="Apéndice 22.A.7">Tema 22</a></p>
@@ -1734,11 +2144,23 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-shock-asimetrico" class="glosario-termino">
 <p><strong>Shock asimétrico</strong> Perturbación que afecta de forma distinta a cada país, frente a la simétrica, que afecta igual a todos. Técnicamente, es un cambio de la demanda o de la oferta que no es común a los miembros de una unión monetaria y que ya no puede corregirse con el tipo de cambio. <a href="22-tema-b22.html" class="glosario-tema" title="Flexibilidad en el mercado de trabajo">Tema 22</a></p>
 </div>
+<div id="g-shock-tecnologico" class="glosario-termino">
+<p><strong>Shock tecnológico</strong> Cambio inesperado en la eficacia con que la economía convierte capital y trabajo en producción. Técnicamente, es la perturbación aleatoria del proceso autorregresivo de la productividad total de los factores, que en el ciclo real constituye el impulso. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-sistema-casi-ideal-de-demanda-aids" class="glosario-termino">
 <p><strong>Sistema casi ideal de demanda (AIDS)</strong> Modelo que explica cómo reparten los hogares su gasto entre distintos bienes. Técnicamente, el sistema de Deaton y Muellbauer expresa la cuota de gasto de cada bien en función de los logaritmos de los precios y del gasto real, se estima con facilidad y permite contrastar la homogeneidad y la simetría de la demanda. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.8">Tema 3</a></p>
 </div>
+<div id="g-solvencia-exterior" class="glosario-termino">
+<p><strong>Solvencia exterior</strong> Capacidad de un país de pagar al final todo lo que debe al exterior. Técnicamente, cumplimiento de la restricción presupuestaria intertemporal, de modo que el valor actual de los superávits comerciales futuros iguale la deuda exterior neta inicial. <span class="glosario-tema">Tema 20</span></p>
+</div>
+<div id="g-sostenibilidad-del-deficit-exterior" class="glosario-termino">
+<p><strong>Sostenibilidad del déficit exterior</strong> Capacidad de un país de mantener su déficit sin tener que hacer un ajuste futuro inasumible. Técnicamente, solvencia exterior: el país puede atender el servicio de su deuda exterior sin una corrección irrealmente grande de su saldo de ingresos y gastos. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-stock-optimo-de-capital" class="glosario-termino">
 <p><strong>Stock óptimo de capital</strong> Cantidad de capital con la que la empresa obtiene el máximo beneficio. Técnicamente, en el modelo de Jorgenson es aquella con la que el valor del producto marginal del capital iguala su coste de uso, y crece con la producción y disminuye con el coste de uso. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo sin costes de ajuste">Tema 4</a></p>
+</div>
+<div id="g-suavizacion-del-consumo" class="glosario-termino">
+<p><strong>Suavización del consumo</strong> Preferencia por mantener un consumo estable a lo largo del tiempo, endeudándose cuando la renta es baja y ahorrando cuando es alta. Técnicamente, resultado de la concavidad de la utilidad, que hace que un consumo constante dé más utilidad que uno variable de igual valor presente. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-superciclo-de-la-deuda" class="glosario-termino">
 <p><strong>Superciclo de la deuda</strong> Larga fase de endeudamiento creciente seguida de otra, también larga, de reducción de deudas. Técnicamente, es la explicación de la caída del tipo de interés natural como fenómeno transitorio debido al desapalancamiento posterior a la crisis financiera, de modo que los tipos reales volverían a subir cuando este termine. <a href="03-tema-b3.html" class="glosario-tema" title="Apéndice 3.A.4 > El debate sobre su carácter">Tema 3</a></p>
@@ -1746,11 +2168,23 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-superneutralidad-del-dinero" class="glosario-termino">
 <p><strong>Superneutralidad del dinero</strong> Propiedad más exigente que la neutralidad, referida al ritmo al que crece el dinero y no a su nivel. Técnicamente, las variaciones de la tasa de crecimiento de la oferta monetaria no afectan al capital, al consumo ni a la producción de estado estacionario, aunque sí a los saldos reales. <a href="05-tema-b5.html" class="glosario-tema" title="Apéndice 5.A.4. Neutralidad y superneutralidad">Tema 5</a></p>
 </div>
+<div id="g-sustitucion-intertemporal-del-ocio" class="glosario-termino">
+<p><strong>Sustitución intertemporal del ocio</strong> Decisión de trabajar más ahora y descansar después cuando el trabajo se paga mejor hoy que mañana. Técnicamente, la oferta de trabajo depende del salario presente respecto al futuro y del tipo de interés, y es el mecanismo de propagación básico del ciclo real, que actúa sobre todo ante shocks temporales. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-sustituibilidad-imperfecta-de-activos" class="glosario-termino">
+<p><strong>Sustituibilidad imperfecta de activos</strong> Situación en la que los inversores no consideran equivalentes los activos nacionales y extranjeros. Técnicamente, los rendimientos esperados pueden diferir en equilibrio por el riesgo cambiario o político, la información imperfecta o las restricciones a la movilidad. <span class="glosario-tema">Tema 20</span></p>
+</div>
 </section>
 <section id="letra-t" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-t">T</h2>
+<div id="g-tariff-factories" class="glosario-termino">
+<p><strong>Tariff factories</strong> Fábricas que empresas de fuera de la unión montan dentro de ella para esquivar el arancel exterior. Técnicamente, es inversión extranjera directa que busca acceder al mercado ampliado sin pagar el arancel exterior común. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-tasa-de-cobertura" class="glosario-termino">
 <p><strong>Tasa de cobertura</strong> Proporción de las importaciones que un país paga con sus exportaciones. Técnicamente, cociente entre las exportaciones y las importaciones totales, que es mayor que uno en un exportador neto y menor que uno en un importador neto. <a href="19-tema-b19.html" class="glosario-tema" title="Interpretación, balanza de bienes">Tema 19</a></p>
+</div>
+<div id="g-tasa-de-descuento-intertemporal" class="glosario-termino">
+<p><strong>Tasa de descuento intertemporal</strong> Medida de cuánto menos se valora el consumo futuro que el presente, es decir, de la impaciencia de los hogares. Técnicamente, es el parámetro <span class="math inline">\(\rho\)</span> que pondera a la baja la utilidad de cada periodo futuro, y en el modelo de Ramsey sin progreso técnico debe superar a la tasa de crecimiento de la población para que la utilidad total sea finita. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Ramsey-Cass-Koopmans">Tema 13</a></p>
 </div>
 <div id="g-tasa-de-rendimiento-sobre-el-coste" class="glosario-termino">
 <p><strong>Tasa de rendimiento sobre el coste</strong> Concepto de Fisher para comparar dos alternativas de inversión. Técnicamente, es el tipo de interés al que ambas alternativas tienen el mismo valor actual y, a diferencia de la tasa interna de rendimiento, conduce a la misma elección que el valor actual neto. <a href="04-tema-b4.html" class="glosario-tema" title="Apéndice 4.A.7">Tema 4</a></p>
@@ -1761,6 +2195,9 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-tecnologia-lineal" class="glosario-termino">
 <p><strong>Tecnología lineal</strong> Tecnología en la que cada unidad de producto requiere una cantidad fija de trabajo. Técnicamente, es una función de producción con un único factor y rendimientos constantes, en la que la productividad marginal del trabajo es igual a la media y el coste de oportunidad es constante. <span class="glosario-tema">Tema 14</span></p>
 </div>
+<div id="g-teorema-de-euler-agotamiento-del-producto" class="glosario-termino">
+<p><strong>Teorema de Euler (agotamiento del producto)</strong> Resultado que dice que, si cada factor cobra lo que aporta en el margen, con rendimientos constantes se reparte exactamente toda la producción. Técnicamente, con función homogénea de grado 1 y competencia perfecta, la suma de los factores por sus productividades marginales iguala la producción y no queda renta residual. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: supuestos">Tema 13</a></p>
+</div>
 <div id="g-teorema-de-heckscher-ohlin" class="glosario-termino">
 <p><strong>Teorema de Heckscher-Ohlin</strong> Un país exporta el bien que utiliza intensivamente el factor del que dispone en abundancia. Técnicamente, con tecnologías y preferencias idénticas y homotéticas, el país abundante en trabajo exporta el bien intensivo en trabajo e importa el bien intensivo en capital. <span class="glosario-tema">Tema 14</span></p>
 </div>
@@ -1770,8 +2207,14 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-teorema-de-rybczynski" class="glosario-termino">
 <p><strong>Teorema de Rybczynski</strong> Si aumenta la cantidad disponible de un factor, se produce más del bien que lo utiliza intensivamente y menos del otro. Técnicamente, con precios constantes de los bienes y de los factores, el aumento de la dotación de un factor eleva la producción del bien intensivo en él y reduce la del otro bien. <span class="glosario-tema">Tema 14</span></p>
 </div>
+<div id="g-teorema-de-separacion-de-fisher" class="glosario-termino">
+<p><strong>Teorema de separación de Fisher</strong> Resultado de que primero se decide cuánto invertir para maximizar la riqueza y después cuánto consumir. Técnicamente, con acceso a un mercado de capitales perfecto, la inversión óptima depende solo del tipo de interés y de la tecnología, no de las preferencias de consumo. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-teorema-de-stolper-samuelson" class="glosario-termino">
 <p><strong>Teorema de Stolper-Samuelson</strong> Si sube el precio relativo de un bien, mejora el factor que lo produce intensivamente y empeora el otro. Técnicamente, un aumento del precio relativo de un bien eleva, más que proporcionalmente, la retribución real del factor en el que dicho bien es intensivo y reduce la del otro factor. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-teoria-austriaca-del-ciclo-economico" class="glosario-termino">
+<p><strong>Teoría austriaca del ciclo económico</strong> Explicación del ciclo por un crédito demasiado barato que dirige la inversión hacia usos que luego se revelan erróneos. Técnicamente, desarrollada por Mises y Hayek, sostiene que la autoridad monetaria fija un tipo de interés de mercado por debajo del natural, lo que causa sobreinversión y malinversión, y que la recesión es el reajuste necesario. <span class="glosario-tema">Tema 12</span></p>
 </div>
 <div id="g-teoria-cuantitativa-del-dinero" class="glosario-termino">
 <p><strong>Teoría cuantitativa del dinero</strong> Idea de que, a largo plazo, más dinero solo se traduce en precios más altos. Técnicamente, interpreta la ecuación cuantitativa con velocidad y producción dadas, de modo que el nivel de precios es proporcional a la cantidad de dinero y la inflación es un fenómeno monetario. <a href="05-tema-b5.html" class="glosario-tema" title="Teoría cuantitativa del dinero">Tema 5</a></p>
@@ -1779,11 +2222,26 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-teoria-de-las-jerarquias-financieras" class="glosario-termino">
 <p><strong>Teoría de las jerarquías financieras</strong> Idea de que las empresas prefieren financiar sus inversiones con beneficios retenidos, después con deuda y solo en último lugar con nuevas acciones. Técnicamente, el orden se debe a la información asimétrica entre directivos e inversores, que encarece la emisión de acciones porque el mercado la interpreta como señal de que están sobrevaloradas. También se conoce como pecking order. <a href="04-tema-b4.html" class="glosario-tema" title="La teoría de las jerarquías financieras">Tema 4</a></p>
 </div>
+<div id="g-teoria-del-ciclo-economico-real-tcr-o-rbc" class="glosario-termino">
+<p><strong>Teoría del ciclo económico real (TCR o RBC)</strong> Explicación del ciclo como la reacción óptima de hogares y empresas a cambios en la productividad. Técnicamente, parte del modelo de crecimiento de Ramsey con incertidumbre, elección entre consumo y ocio y shocks sobre la productividad total de los factores, de modo que el ciclo es un fenómeno de equilibrio eficiente que no pide estabilización. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-teoria-del-ciclo-vital" class="glosario-termino">
 <p><strong>Teoría del ciclo vital</strong> Idea de que cada persona planifica su consumo pensando en toda su vida y no en la renta de cada año. Técnicamente, Ando, Brumberg y Modigliani suponen que el consumo es una proporción de los recursos de toda la vida, de modo que se ahorra en la etapa activa, de renta alta, y se desahorra en la jubilación. <a href="03-tema-b3.html" class="glosario-tema" title="Teoría del ciclo vital">Tema 3</a></p>
 </div>
+<div id="g-teoria-del-domino-del-regionalismo" class="glosario-termino">
+<p><strong>Teoría del dominó del regionalismo</strong> Idea de que, cuando un bloque se profundiza, los exportadores que quedan fuera presionan para entrar y el bloque se amplía. Técnicamente, es la explicación de Baldwin de por qué los acuerdos regionales se extienden en cadena. <span class="glosario-tema">Tema 18</span></p>
+</div>
+<div id="g-teoria-unificada-del-crecimiento" class="glosario-termino">
+<p><strong>Teoría unificada del crecimiento</strong> Explicación conjunta de por qué la humanidad vivió milenios cerca de la subsistencia y después pasó a crecer de forma sostenida. Técnicamente, encadena un régimen malthusiano, otro posmalthusiano y el de crecimiento moderno, en el que el progreso técnico eleva el rendimiento de la educación y lleva a las familias a tener menos hijos y con más formación. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.13">Tema 13</a></p>
+</div>
 <div id="g-test-de-mill-y-bastable" class="glosario-termino">
 <p><strong>Test de Mill y Bastable</strong> Condiciones que debe cumplir la protección de una industria naciente. Técnicamente, según Mill la industria debe madurar y sostenerse sin protección, y según Bastable el valor actual de las ganancias futuras debe superar el de los costes de la protección. <a href="15-tema-b15.html" class="glosario-tema" title="Economías de escala externas">Tema 15</a></p>
+</div>
+<div id="g-time-to-build" class="glosario-termino">
+<p><strong>Time to build</strong> Tiempo que transcurre desde que se decide una inversión hasta que está lista para producir. Técnicamente, según Kydland y Prescott, las instalaciones tardan varios periodos en construirse y no son reversibles, lo que alarga en el tiempo el efecto de un shock. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-tipo-de-cambio-de-vaciado" class="glosario-termino">
+<p><strong>Tipo de cambio de vaciado</strong> Tipo de cambio al que se igualan la oferta y la demanda de divisas. Técnicamente, tipo de cambio de equilibrio del mercado de divisas, que asegura el equilibrio de la balanza de pagos en conjunto aunque no el de cada una de sus subbalanzas. <span class="glosario-tema">Tema 20</span></p>
 </div>
 <div id="g-tipo-de-interes-critico" class="glosario-termino">
 <p><strong>Tipo de interés crítico</strong> Nivel de tipo de interés que cada persona considera normal. Técnicamente, es el valor subjetivo hacia el que cada agente espera que revierta el tipo de mercado, y según esté el tipo de mercado por encima o por debajo prefiere bonos o dinero. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
@@ -1793,6 +2251,9 @@ ul.task-list li input[type="checkbox"] {
 </div>
 <div id="g-trampa-de-la-liquidez" class="glosario-termino">
 <p><strong>Trampa de la liquidez</strong> Situación en la que, con tipos de interés muy bajos, todo el dinero nuevo se queda en efectivo y no se compran bonos. Técnicamente, la demanda de dinero es perfectamente elástica al tipo de interés, la curva LM es horizontal y la política monetaria pierde eficacia. <a href="05-tema-b5.html" class="glosario-tema" title="La demanda de dinero de Keynes">Tema 5</a></p>
+</div>
+<div id="g-trampa-de-la-pobreza" class="glosario-termino">
+<p><strong>Trampa de la pobreza</strong> Situación en la que un país pobre no logra salir de su pobreza porque su propio bajo nivel de capital se lo impide. Técnicamente, es un estado estacionario estable de renta baja, al que converge toda economía cuyo capital per cápita es inferior a un umbral inestable. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.3">Tema 13</a></p>
 </div>
 <div id="g-transaccion-economica" class="glosario-termino">
 <p><strong>Transacción económica</strong> Operación entre dos partes en la que se crea, cambia, traspasa o extingue un valor económico. Técnicamente, interacción entre dos unidades institucionales, por mutuo acuerdo o por imperativo legal, que implica un intercambio de valor o una transferencia, y que la balanza de pagos registra cuando una es residente y la otra no. <a href="19-tema-b19.html" class="glosario-tema" title="Concepto">Tema 19</a></p>
@@ -1806,17 +2267,35 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-transferencia-de-capital" class="glosario-termino">
 <p><strong>Transferencia de capital</strong> Entrega de recursos para comprar o mejorar un activo fijo, o perdón de una deuda. Técnicamente, transferencia en especie o en efectivo vinculada a la adquisición de un activo fijo, o condonación de una deuda por parte del acreedor. <a href="19-tema-b19.html" class="glosario-tema" title="Cuenta de capital">Tema 19</a></p>
 </div>
+<div id="g-traspaso-a-precios-pass-through" class="glosario-termino">
+<p><strong>Traspaso a precios (pass-through)</strong> Medida en que un cambio del tipo de cambio se traslada a los precios. Técnicamente, es la proporción de la variación del tipo de cambio que se refleja en los precios de importación o de exportación, y es incompleto cuando los exportadores ajustan sus márgenes. <span class="glosario-tema">Tema 20</span></p>
+</div>
 <div id="g-triangulo-de-haberler" class="glosario-termino">
 <p><strong>Triángulo de Haberler</strong> Representación gráfica de lo que un país exporta y de lo que importa. Técnicamente, es el triángulo rectángulo cuyos catetos son las cantidades exportada e importada y cuya hipotenusa tiene como pendiente la relación real de intercambio. También se denomina triángulo de comercio internacional. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-trinidad-imposible" class="glosario-termino">
+<p><strong>Trinidad imposible</strong> Imposibilidad de tener a la vez tipo de cambio fijo, libre movilidad de capitales y política monetaria propia. Técnicamente, con tipo de cambio fijo y perfecta movilidad la oferta monetaria es endógena, porque cualquier expansión del crédito se traduce en pérdida de reservas. <span class="glosario-tema">Tema 20</span></p>
 </div>
 </section>
 <section id="letra-u" class="level2 unnumbered glosario-letra">
 <h2 class="unnumbered glosario-letra anchored" data-anchor-id="letra-u">U</h2>
+<div id="g-unidades-cubiertas-especulativas-y-ponzi" class="glosario-termino">
+<p><strong>Unidades cubiertas, especulativas y Ponzi</strong> Tres grados de fragilidad financiera de un deudor. Técnicamente, según Minsky, la unidad cubierta (hedge) paga todo con sus flujos de caja, la especulativa solo cubre los intereses y refinancia el principal, y la Ponzi, cuyos ingresos no cubren ni los intereses, depende de endeudarse cada vez más para no impagar. <span class="glosario-tema">Tema 12</span></p>
+</div>
+<div id="g-unidades-de-trabajo-efectivo" class="glosario-termino">
+<p><strong>Unidades de trabajo efectivo</strong> Medida del trabajo que tiene en cuenta no solo cuántos trabajadores hay, sino lo eficientes que son. Técnicamente, es el producto A·L de la tecnología por el empleo, y permite escribir el modelo con variables por unidad de trabajo efectivo que sí alcanzan un estado estacionario. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: progreso tecnológico">Tema 13</a></p>
+</div>
+<div id="g-union-aduanera" class="glosario-termino">
+<p><strong>Unión aduanera</strong> Área de libre comercio cuyos miembros cobran el mismo arancel a lo que llega de fuera. Técnicamente, es un área de libre comercio con arancel exterior común frente a terceros países. <span class="glosario-tema">Tema 18</span></p>
+</div>
 <div id="g-union-bancaria" class="glosario-termino">
 <p><strong>Unión bancaria</strong> Sistema común de supervisión y resolución de los bancos. Técnicamente, en Europa tiene tres pilares: el Mecanismo Único de Supervisión, el Mecanismo Único de Resolución y un seguro europeo de depósitos que aún no se ha adoptado. <a href="22-tema-b22.html" class="glosario-tema" title="Integración financiera">Tema 22</a></p>
 </div>
 <div id="g-union-de-los-mercados-de-capitales" class="glosario-termino">
 <p><strong>Unión de los Mercados de Capitales</strong> Proyecto de integrar los mercados de capitales de la Unión Europea. Técnicamente, busca que el ahorro y la inversión crucen fronteras y que los riesgos se compartan entre países. <a href="22-tema-b22.html" class="glosario-tema" title="Integración financiera">Tema 22</a></p>
+</div>
+<div id="g-union-economica" class="glosario-termino">
+<p><strong>Unión económica</strong> Mercado único en el que además los países coordinan sus políticas económicas. Técnicamente, es un mercado único que implica la coordinación de las políticas macroeconómicas, como en la Unión Europea. <span class="glosario-tema">Tema 18</span></p>
 </div>
 <div id="g-union-monetaria" class="glosario-termino">
 <p><strong>Unión monetaria</strong> Grupo de países que comparten la política monetaria. Técnicamente, es un área con tipos de cambio irrevocablemente fijos entre sus miembros, con o sin moneda única, como la zona euro. <a href="22-tema-b22.html" class="glosario-tema" title="Introducción">Tema 22</a></p>
@@ -1845,17 +2324,26 @@ ul.task-list li input[type="checkbox"] {
 <div id="g-variable-predeterminada" class="glosario-termino">
 <p><strong>Variable predeterminada</strong> Variable que no puede reaccionar de golpe a una noticia porque solo cambia poco a poco. Técnicamente, en un sistema dinámico es la que viene fijada por su historia, como el capital, frente a las variables de salto, como la q, que miran al futuro y se ajustan de inmediato. <a href="04-tema-b4.html" class="glosario-tema" title="Modelo con costes de ajuste">Tema 4</a></p>
 </div>
+<div id="g-variable-prociclica" class="glosario-termino">
+<p><strong>Variable procíclica</strong> Variable que sube en las expansiones y baja en las recesiones. Técnicamente, es aquella cuyo componente cíclico tiene correlación contemporánea positiva con el del producto, y es contracíclica si la correlación es negativa y acíclica si no es significativa. <span class="glosario-tema">Tema 12</span></p>
+</div>
 <div id="g-variable-stock" class="glosario-termino">
 <p><strong>Variable stock</strong> Magnitud que se mide en un momento concreto, como el saldo de una cuenta. Técnicamente, valor acumulado de activos y pasivos en una fecha, como la posición de inversión internacional. <a href="19-tema-b19.html" class="glosario-tema" title="Medición">Tema 19</a></p>
 </div>
 <div id="g-velocidad-de-circulacion-del-dinero" class="glosario-termino">
 <p><strong>Velocidad de circulación del dinero</strong> Número de veces que una misma unidad de dinero cambia de manos en un periodo. Técnicamente, es el cociente entre el valor de las transacciones y la cantidad de dinero, y refleja la tecnología de pagos de la economía. <a href="05-tema-b5.html" class="glosario-tema" title="Teoría cuantitativa del dinero: el enfoque de Fisher">Tema 5</a></p>
 </div>
+<div id="g-velocidad-de-convergencia" class="glosario-termino">
+<p><strong>Velocidad de convergencia</strong> Rapidez con la que una economía cierra la distancia que la separa de su estado estacionario. Técnicamente, en el modelo de Solow con Cobb-Douglas es (1-<span class="math inline">\(\alpha\)</span>)(n+<span class="math inline">\(\delta\)</span>+g) y mide el porcentaje de esa distancia que se recorre cada año. <a href="13-tema-b13.html" class="glosario-tema" title="Modelo de Solow: convergencia">Tema 13</a></p>
+</div>
 <div id="g-ventaja-absoluta" class="glosario-termino">
 <p><strong>Ventaja absoluta</strong> Capacidad de un país para producir un bien con menos recursos que otro país. Técnicamente, un país tiene ventaja absoluta en un bien cuando su coste unitario de producción, por ejemplo en horas de trabajo por unidad, es menor que el del otro país. <span class="glosario-tema">Tema 14</span></p>
 </div>
 <div id="g-ventaja-comparativa" class="glosario-termino">
 <p><strong>Ventaja comparativa</strong> Un país tiene ventaja comparativa en el bien que le cuesta menos que al otro país en términos de los demás bienes a los que renuncia. Técnicamente, es producir un bien con un coste de oportunidad menor que el del otro país, con independencia de que el país sea o no más eficiente en términos absolutos. <span class="glosario-tema">Tema 14</span></p>
+</div>
+<div id="g-ventaja-del-atraso-gerschenkron" class="glosario-termino">
+<p><strong>Ventaja del atraso (Gerschenkron)</strong> Oportunidad de los países atrasados de crecer más deprisa adoptando tecnologías que ya existen en otros. Técnicamente, cuanto más lejos está un país de la frontera tecnológica, mayor es la mejora de productividad que obtiene cada vez que innova implantando la tecnología de esa frontera. <a href="13-tema-b13.html" class="glosario-tema" title="Apéndice 13.A.4">Tema 13</a></p>
 </div>
 </section>
 </div>
