@@ -568,9 +568,9 @@
       {
        "codigo": "3.B.18",
        "titulo": "Teorías de la integración económica.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/18-tema-b18.html"
       },
       {
        "codigo": "3.B.19",
