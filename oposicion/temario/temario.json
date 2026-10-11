@@ -505,9 +505,9 @@
       {
        "codigo": "3.B.9",
        "titulo": "Déficit público. Conceptos. Financiación y sus consecuencias macroeconómicas. Dominación monetaria y dominación fiscal. La dinámica de la deuda pública y su sostenibilidad.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/09-tema-b9.html"
       },
       {
        "codigo": "3.B.10",
