@@ -526,9 +526,9 @@
       {
        "codigo": "3.B.12",
        "titulo": "Teorías de los ciclos económicos. Teorías del ciclo real y teorías de los nuevos keynesianos. Referencia al ciclo financiero y sus interrelaciones con el ciclo real.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/12-tema-b12.html"
       },
       {
        "codigo": "3.B.13",
