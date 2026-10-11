@@ -540,9 +540,9 @@
       {
        "codigo": "3.B.14",
        "titulo": "Teoría del comercio internacional (I): las teorías de la ventaja absoluta y de la venta comparativa. Determinación de la relación real de intercambio. El modelo de factores específicos. El modelo Heckser-Ohlin-Samuelson (H-O-S); teoremas derivados del modelo y extensiones.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/14-tema-b14.html"
       },
       {
        "codigo": "3.B.15",
