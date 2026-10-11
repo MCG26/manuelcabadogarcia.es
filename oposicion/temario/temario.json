@@ -589,9 +589,9 @@
       {
        "codigo": "3.B.21",
        "titulo": "El mercado de divisas: operaciones e instrumentos. Teorías de la determinación del tipo de cambio.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/21-tema-b21.html"
       },
       {
        "codigo": "3.B.22",
