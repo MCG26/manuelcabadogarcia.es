@@ -449,9 +449,9 @@
       {
        "codigo": "3.B.1",
        "titulo": "Magnitudes macroeconómicas y contabilidad nacional.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/01-tema-b1.html"
       },
       {
        "codigo": "3.B.2",
