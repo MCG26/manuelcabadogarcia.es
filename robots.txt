@@ -1,2 +1,6 @@
 User-agent: *
-Disallow: /
+Allow: /
+
+Sitemap: https://manuelcabadogarcia.es/sitemap.xml
+Sitemap: https://manuelcabadogarcia.es/microeconomia/sitemap.xml
+Sitemap: https://manuelcabadogarcia.es/macroeconomia/sitemap.xml
