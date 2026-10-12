@@ -55,6 +55,14 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
   padding: .7rem 1.6rem; max-width: 92vw; transition: opacity .35s; }
 #cortina .c-mensaje.c-visible { display: block; animation: c-mensaje 1.2s ease-out; }
 #cortina .c-mensaje.c-fuera { opacity: 0; }
+/* 18:00: taza de cafe con humo encima del mensaje */
+#cortina { --c-humo: #8a8578; }
+#cortina .c-cafe { display: none; width: clamp(90px, 22vw, 140px); transition: opacity .35s; }
+#cortina .c-cafe svg { display: block; width: 100%; height: auto; }
+#cortina .c-cafe.c-visible { display: block; animation: c-mensaje 1.2s ease-out; }
+#cortina .c-humo { animation: c-humo 2.4s ease-in-out infinite; opacity: 0; }
+@keyframes c-humo { 0% { opacity: 0; transform: translateY(8px); } 40% { opacity: .85; }
+  100% { opacity: 0; transform: translateY(-14px); } }
 @keyframes c-mensaje { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-color-scheme: dark) {
   #cortina .c-mensaje { background: #1e1d1b; border-color: #3b3934; color: #a6f7d2;
@@ -89,17 +97,22 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 <script>
 (function () {
   var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
-  // Lanzamiento en dos tiempos: a las 11:00 (ESPERA) la cuenta llega a 0, sale el
-  // mensaje y empieza otra cuenta hasta las 18:00 (LANZAMIENTO), cuando se abre. Para probarlo:
-  //   ?prueba-espera=N       la primera cuenta acaba a los N s y la segunda 30 s despues
-  //   ?prueba-lanzamiento=N  directamente en la segunda cuenta, que acaba a los N s
-  var ESPERA = Date.parse('2026-10-12T09:00:00Z'), LANZAMIENTO = Date.parse('2026-10-12T16:00:00Z'), desfase = 0, prueba = false;
+  // Lanzamiento en tres tiempos: a las 11:00 (ESPERA) sale «Lo bueno se hace esperar»
+  // con otra cuenta; a las 18:00 (CAFE) «Te da tiempo hasta para un cafe» con la taza y
+  // 15 minutos mas; a las 18:15 (LANZAMIENTO) se abre. Para probarlo (solo en local):
+  //   ?prueba-espera=N       la primera cuenta acaba a los N s; luego 20 s y 20 s
+  //   ?prueba-cafe=N         directamente en la segunda cuenta, que acaba a los N s; luego 20 s
+  //   ?prueba-lanzamiento=N  directamente en la del cafe, que acaba a los N s
+  var ESPERA = Date.parse('2026-10-12T09:00:00Z'), CAFE = Date.parse('2026-10-12T16:00:00Z'), LANZAMIENTO = Date.parse('2026-10-12T16:15:00Z'),
+      desfase = 0, prueba = false;
   try {
     var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
     var mp = /[?&]prueba-lanzamiento=(\d+)/.exec(location.search), me = /[?&]prueba-espera=(\d+)/.exec(location.search);
     // solo en local: en la web publicada no puede abrir la cortina antes de hora
-    if (local && mp) { ESPERA = Date.now() - 1000; LANZAMIENTO = Date.now() + 1000 * parseInt(mp[1], 10); prueba = true; }
-    if (local && me) { ESPERA = Date.now() + 1000 * parseInt(me[1], 10); LANZAMIENTO = ESPERA + 30000; prueba = true; }
+    var mc = /[?&]prueba-cafe=(\d+)/.exec(location.search), ya = Date.now();
+    if (local && mp) { ESPERA = ya - 2000; CAFE = ya - 1000; LANZAMIENTO = ya + 1000 * parseInt(mp[1], 10); prueba = true; }
+    if (local && mc) { ESPERA = ya - 1000; CAFE = ya + 1000 * parseInt(mc[1], 10); LANZAMIENTO = CAFE + 20000; prueba = true; }
+    if (local && me) { ESPERA = ya + 1000 * parseInt(me[1], 10); CAFE = ESPERA + 20000; LANZAMIENTO = CAFE + 20000; prueba = true; }
   } catch (e) {}
   // Pasada la hora, la web se ve sin cortina
   if (!prueba && Date.now() >= LANZAMIENTO) { return; }
@@ -200,7 +213,7 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
     // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
     // Cuenta atras hasta el lanzamiento: solo los numeros (decision de Manuel, 2026-10-08)
-    c.innerHTML = '<div class="c-cuerpo"><div class="c-mensaje">Lo bueno se hace esperar, sé paciente</div>' +
+    c.innerHTML = '<div class="c-cuerpo">' + taza() + '<div class="c-mensaje"></div>' +
       '<div class="c-cuenta" role="timer" aria-live="off">' +
       ['dias', 'horas', 'minutos', 'segundos'].map(function (u) {
         return '<div class="c-bloque"><span class="c-num" data-u="' + u + '">--</span><span class="c-etq">' +
@@ -226,10 +239,17 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     // enVivo: el visitante estaba mirando cuando la primera cuenta llego a 0 (los
     // numeros se van, sale el mensaje y vuelven con la segunda cuenta); si llega
     // despues de las 11:00, ve directamente el mensaje con la segunda cuenta
-    var enEspera = false, vioPrimera = false;
-    function esperar(enVivo) {
-      var m = document.querySelector('#cortina .c-mensaje'), cu = document.querySelector('#cortina .c-cuenta');
-      if (m) { m.classList.add('c-visible'); }
+    // Fases: 0 hasta las 11:00, 1 hasta las 18:00 («Lo bueno se hace esperar»),
+    // 2 hasta las 18:15 («Te da tiempo hasta para un cafe», con la taza). Se calcula
+    // en cada segundo con la hora del servidor, asi que si el reloj del visitante iba
+    // adelantado y salto de fase antes de hora, se deshace solo.
+    var MENSAJES = ['', 'Lo bueno se hace esperar, sé paciente', 'Te da tiempo hasta para un café'];
+    var fase = -1;
+    function ponerFase(f, enVivo) {
+      var m = document.querySelector('#cortina .c-mensaje'), cu = document.querySelector('#cortina .c-cuenta'),
+          cafe = document.querySelector('#cortina .c-cafe');
+      if (m) { m.textContent = MENSAJES[f]; m.classList.remove('c-visible'); void m.offsetWidth; if (f) { m.classList.add('c-visible'); } }
+      if (cafe) { cafe.classList.toggle('c-visible', f === 2); }
       if (enVivo && cu) {
         cu.classList.add('c-fuera');
         setTimeout(function () { cu.classList.remove('c-fuera'); }, 3500);
@@ -237,26 +257,30 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     }
     function pintar() {
       var ahora = Date.now() + desfase;
-      if (ahora < ESPERA) {
-        vioPrimera = true;
-        // El primer segundo se pinta con el reloj del visitante y luego llega la hora
-        // del servidor: si su reloj iba adelantado y ya habia pasado a la espera, se deshace
-        if (enEspera) {
-          enEspera = false;
-          var m = document.querySelector('#cortina .c-mensaje'); if (m) { m.classList.remove('c-visible'); }
-        }
-      }
-      else if (!enEspera) { enEspera = true; esperar(vioPrimera); }
-      var falta = Math.max(0, (enEspera ? LANZAMIENTO : ESPERA) - ahora), s = Math.floor(falta / 1000);
+      var f = ahora < ESPERA ? 0 : ahora < CAFE ? 1 : 2;
+      if (f !== fase) { ponerFase(f, fase !== -1 && f > fase); fase = f; }
+      var falta = Math.max(0, [ESPERA, CAFE, LANZAMIENTO][f] - ahora), s = Math.floor(falta / 1000);
       var v = {dias: Math.floor(s / 86400), horas: dos(Math.floor(s % 86400 / 3600)),
                minutos: dos(Math.floor(s % 3600 / 60)), segundos: dos(s % 60)};
       Object.keys(v).forEach(function (u) {
         var e = document.querySelector('#cortina .c-num[data-u="' + u + '"]'); if (e) { e.textContent = v[u]; }
       });
-      if (falta === 0 && enEspera) { if (!lanzado) { lanzado = true; lanzar(); } return; }
+      if (falta === 0 && f === 2) { if (!lanzado) { lanzado = true; lanzar(); } return; }
       if (document.getElementById('cortina')) { setTimeout(pintar, 1000 - (Date.now() + desfase) % 1000); }
     }
     pintar();
+  }
+  // Taza de cafe caliente con tres hilos de humo (18:00-18:15)
+  function taza() {
+    var humo = [44, 60, 76].map(function (x, i) {
+      return '<path class="c-humo" style="animation-delay:' + (i * 0.6) + 's" d="M' + x + ' 58 q-9 -12 0 -24 t0 -24" ' +
+        'fill="none" stroke="var(--c-humo)" stroke-width="4" stroke-linecap="round"/>';
+    }).join('');
+    return '<div class="c-cafe" aria-hidden="true"><svg viewBox="0 0 140 150">' + humo +
+      '<path d="M22 70 h88 v26 a40 40 0 0 1 -40 40 h-8 a40 40 0 0 1 -40 -40 z" fill="#7a1f4b" stroke="#2b2a28" stroke-width="3"/>' +
+      '<path d="M110 80 h6 a14 14 0 0 1 0 28 h-9" fill="none" stroke="#2b2a28" stroke-width="5"/>' +
+      '<ellipse cx="66" cy="70" rx="44" ry="7" fill="#6b3e26" stroke="#2b2a28" stroke-width="3"/>' +
+      '<path d="M8 140 h116" stroke="#2b2a28" stroke-width="5" stroke-linecap="round"/></svg></div>';
   }
   // Diana de kyudo (kasumi-mato), candado y flecha con plumas de halcon
   function escena() {
@@ -287,7 +311,8 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     function paso(ms, f) { setTimeout(f, ms); }
     var VUELO = 420;
     q('.c-cuerpo').classList.add('c-olas-vivas');                  // las olas se mueven
-    paso(250, function () { q('.c-cuenta').classList.add('c-fuera'); q('.c-mensaje').classList.add('c-fuera'); });
+    paso(250, function () { q('.c-cuenta').classList.add('c-fuera'); q('.c-mensaje').classList.add('c-fuera');
+                            q('.c-cafe').style.opacity = 0; });
     paso(650, function () { q('.c-diana').classList.add('c-visible'); });
     paso(1400, function () {                                         // sale la flecha
       var f = q('.c-flecha'); f.style.opacity = 1;
