@@ -237,7 +237,15 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     }
     function pintar() {
       var ahora = Date.now() + desfase;
-      if (ahora < ESPERA) { vioPrimera = true; }
+      if (ahora < ESPERA) {
+        vioPrimera = true;
+        // El primer segundo se pinta con el reloj del visitante y luego llega la hora
+        // del servidor: si su reloj iba adelantado y ya habia pasado a la espera, se deshace
+        if (enEspera) {
+          enEspera = false;
+          var m = document.querySelector('#cortina .c-mensaje'); if (m) { m.classList.remove('c-visible'); }
+        }
+      }
       else if (!enEspera) { enEspera = true; esperar(vioPrimera); }
       var falta = Math.max(0, (enEspera ? LANZAMIENTO : ESPERA) - ahora), s = Math.floor(falta / 1000);
       var v = {dias: Math.floor(s / 86400), horas: dos(Math.floor(s % 86400 / 3600)),
