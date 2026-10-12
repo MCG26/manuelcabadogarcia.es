@@ -49,6 +49,17 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 @keyframes c-olas { from { background-position: 0 0; } to { background-position: -96px 0; } }
 #cortina .c-cuenta { transition: opacity .35s, transform .35s; }
 #cortina .c-cuenta.c-fuera { opacity: 0; transform: scale(.85); }
+/* 11:00: «Lo bueno se hace esperar» encima de la segunda cuenta atras */
+#cortina .c-mensaje { display: none; background: #f7f4ec; border: 1px solid #ddd6c6; color: #7a1f4b;
+  font-style: italic; font-size: clamp(1.3rem, 4.6vw, 2.1rem); text-align: center; line-height: 1.3;
+  padding: .7rem 1.6rem; max-width: 92vw; transition: opacity .35s; }
+#cortina .c-mensaje.c-visible { display: block; animation: c-mensaje 1.2s ease-out; }
+#cortina .c-mensaje.c-fuera { opacity: 0; }
+@keyframes c-mensaje { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-color-scheme: dark) {
+  #cortina .c-mensaje { background: #1e1d1b; border-color: #3b3934; color: #a6f7d2;
+    text-shadow: 0 0 8px rgba(62,230,168,.5); }
+}
 #cortina .c-escena { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   pointer-events: none; }
 #cortina .c-diana { width: min(280px, 60vw); height: min(280px, 60vw); position: relative; opacity: 0; transform: scale(.4);
@@ -78,13 +89,17 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
 <script>
 (function () {
   var CLAVE = 'mcg-acceso-previo', H_TECLADO = 'e06dc9d22791bfd3b9f94c66116c5ea8ca2116403b0edd3fb9ed3f49f17d7d95', H_MOVIL = '9909a1c28b20e86b7c2a3ff5c35d9bb30d9bffdfa0b6089710042709e831da2a';
-  // Lanzamiento: lunes 12 de octubre de 2026, 11:00 en Madrid. Para probarlo:
-  // ?prueba-lanzamiento=N pone el lanzamiento N segundos despues de cargar la pagina
-  var LANZAMIENTO = Date.parse('2026-10-12T09:00:00Z'), desfase = 0, prueba = false;
+  // Lanzamiento en dos tiempos: a las 11:00 (ESPERA) la cuenta llega a 0, sale el
+  // mensaje y empieza otra cuenta hasta las 18:00 (LANZAMIENTO), cuando se abre. Para probarlo:
+  //   ?prueba-espera=N       la primera cuenta acaba a los N s y la segunda 30 s despues
+  //   ?prueba-lanzamiento=N  directamente en la segunda cuenta, que acaba a los N s
+  var ESPERA = Date.parse('2026-10-12T09:00:00Z'), LANZAMIENTO = Date.parse('2026-10-12T16:00:00Z'), desfase = 0, prueba = false;
   try {
-    var mp = /[?&]prueba-lanzamiento=(\d+)/.exec(location.search);
+    var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    var mp = /[?&]prueba-lanzamiento=(\d+)/.exec(location.search), me = /[?&]prueba-espera=(\d+)/.exec(location.search);
     // solo en local: en la web publicada no puede abrir la cortina antes de hora
-    if (mp && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { LANZAMIENTO = Date.now() + 1000 * parseInt(mp[1], 10); prueba = true; }
+    if (local && mp) { ESPERA = Date.now() - 1000; LANZAMIENTO = Date.now() + 1000 * parseInt(mp[1], 10); prueba = true; }
+    if (local && me) { ESPERA = Date.now() + 1000 * parseInt(me[1], 10); LANZAMIENTO = ESPERA + 30000; prueba = true; }
   } catch (e) {}
   // Pasada la hora, la web se ve sin cortina
   if (!prueba && Date.now() >= LANZAMIENTO) { return; }
@@ -185,7 +200,8 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     // Sin nombre ni descripcion: que no se sepa de que va la web hasta el lanzamiento
     // Solo el fondo de olas (los puntitos solo aparecen mientras se teclea el patron)
     // Cuenta atras hasta el lanzamiento: solo los numeros (decision de Manuel, 2026-10-08)
-    c.innerHTML = '<div class="c-cuerpo"><div class="c-cuenta" role="timer" aria-live="off">' +
+    c.innerHTML = '<div class="c-cuerpo"><div class="c-mensaje">Lo bueno se hace esperar, sé paciente</div>' +
+      '<div class="c-cuenta" role="timer" aria-live="off">' +
       ['dias', 'horas', 'minutos', 'segundos'].map(function (u) {
         return '<div class="c-bloque"><span class="c-num" data-u="' + u + '">--</span><span class="c-etq">' +
           {dias: 'días', horas: 'horas', minutos: 'minutos', segundos: 'segundos'}[u] + '</span></div>';
@@ -207,14 +223,29 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
       } catch (e) {}
     }
     function dos(n) { return (n < 10 ? '0' : '') + n; }
+    // enVivo: el visitante estaba mirando cuando la primera cuenta llego a 0 (los
+    // numeros se van, sale el mensaje y vuelven con la segunda cuenta); si llega
+    // despues de las 11:00, ve directamente el mensaje con la segunda cuenta
+    var enEspera = false, vioPrimera = false;
+    function esperar(enVivo) {
+      var m = document.querySelector('#cortina .c-mensaje'), cu = document.querySelector('#cortina .c-cuenta');
+      if (m) { m.classList.add('c-visible'); }
+      if (enVivo && cu) {
+        cu.classList.add('c-fuera');
+        setTimeout(function () { cu.classList.remove('c-fuera'); }, 3500);
+      }
+    }
     function pintar() {
-      var falta = Math.max(0, LANZAMIENTO - (Date.now() + desfase)), s = Math.floor(falta / 1000);
+      var ahora = Date.now() + desfase;
+      if (ahora < ESPERA) { vioPrimera = true; }
+      else if (!enEspera) { enEspera = true; esperar(vioPrimera); }
+      var falta = Math.max(0, (enEspera ? LANZAMIENTO : ESPERA) - ahora), s = Math.floor(falta / 1000);
       var v = {dias: Math.floor(s / 86400), horas: dos(Math.floor(s % 86400 / 3600)),
                minutos: dos(Math.floor(s % 3600 / 60)), segundos: dos(s % 60)};
       Object.keys(v).forEach(function (u) {
         var e = document.querySelector('#cortina .c-num[data-u="' + u + '"]'); if (e) { e.textContent = v[u]; }
       });
-      if (falta === 0) { if (!lanzado) { lanzado = true; lanzar(); } return; }
+      if (falta === 0 && enEspera) { if (!lanzado) { lanzado = true; lanzar(); } return; }
       if (document.getElementById('cortina')) { setTimeout(pintar, 1000 - (Date.now() + desfase) % 1000); }
     }
     pintar();
@@ -248,7 +279,7 @@ html.cortina body > *:not(#cortina) { visibility: hidden !important; }
     function paso(ms, f) { setTimeout(f, ms); }
     var VUELO = 420;
     q('.c-cuerpo').classList.add('c-olas-vivas');                  // las olas se mueven
-    paso(250, function () { q('.c-cuenta').classList.add('c-fuera'); });
+    paso(250, function () { q('.c-cuenta').classList.add('c-fuera'); q('.c-mensaje').classList.add('c-fuera'); });
     paso(650, function () { q('.c-diana').classList.add('c-visible'); });
     paso(1400, function () {                                         // sale la flecha
       var f = q('.c-flecha'); f.style.opacity = 1;
