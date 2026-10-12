@@ -484,23 +484,23 @@
       {
        "codigo": "3.B.6",
        "titulo": "Política monetaria (I): el diseño y la instrumentación de la política monetaria.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/06-tema-b6.html"
       },
       {
        "codigo": "3.B.7",
        "titulo": "Política monetaria (II): los mecanismos de transmisión de la política monetaria convencional y no convencional.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/07-tema-b7.html"
       },
       {
        "codigo": "3.B.8",
        "titulo": "La política fiscal: efectos sobre el crecimiento económico y el ahorro. Políticas de oferta.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/08-tema-b8.html"
       },
       {
        "codigo": "3.B.9",
