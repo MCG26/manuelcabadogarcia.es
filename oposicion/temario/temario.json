@@ -456,9 +456,9 @@
       {
        "codigo": "3.B.2",
        "titulo": "El modelo de oferta y demanda agregada: determinación del equilibrio. Análisis de las políticas monetaria y fiscal. Referencia al caso de una economía abierta.",
-       "disponible": false,
+       "disponible": true,
        "temarioAnterior": false,
-       "url": null
+       "url": "https://manuelcabadogarcia.es/macroeconomia/02-tema-b2.html"
       },
       {
        "codigo": "3.B.3",
