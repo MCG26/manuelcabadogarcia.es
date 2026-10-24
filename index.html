@@ -46,9 +46,9 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-d99233986088bc801b5946cb3bec1aef.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="site_libs/bootstrap/bootstrap-dark-3393d3f91415261c3860cf5d2e5a9d68.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="site_libs/bootstrap/bootstrap-d99233986088bc801b5946cb3bec1aef.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-239517b8712dc07c4fd9e8b171373c70.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-dark-e48cd22809bed8aca7eef1945cbcae69.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="site_libs/bootstrap/bootstrap-239517b8712dc07c4fd9e8b171373c70.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -369,6 +369,14 @@ ul.task-list li input[type="checkbox"] {
 
   <p class="cabecera-lema">Apuntes para la oposición al Cuerpo de Diplomados Comerciales del Estado</p>
 
+  <!-- Enlace a la app de Victor (Manuel, 2026-10-08). Va escrito en el HTML, no
+
+       creado por script, para que Google lo lea; el alt es el texto del enlace
+
+       que pidio Victor (2026-10-24). El script lo pasa a la barra de pestanas. -->
+
+  <a class="enlace-app" href="https://www.victorgutierrezmarcos.es/app/" target="_blank" rel="noopener" title="App para la oposición a Diplomado Comercial del Estado: cantes, temario y test en el móvil"><img src="./app-oposicion.svg" alt="App para la oposición a Diplomado Comercial del Estado" width="34" height="34"><span class="enlace-app-texto">App<br>TCEE · DCE</span></a>
+
 </div>
 
 <script>
@@ -392,6 +400,20 @@ ul.task-list li input[type="checkbox"] {
     var barra = document.getElementById('quarto-header');
 
     if (barra) { barra.parentNode.insertBefore(cabecera, barra); }
+
+    // Icono de la app a la esquina izquierda de la barra de pestanas
+
+    var app = cabecera.querySelector('.enlace-app');
+
+    var pestanas = barra && barra.querySelector('.navbar-container');
+
+    if (app && pestanas) {
+
+      pestanas.style.position = 'relative';
+
+      pestanas.insertBefore(app, pestanas.firstChild);
+
+    }
 
   })();
 
@@ -541,40 +563,6 @@ ul.task-list li input[type="checkbox"] {
 
   });
 
-  // Enlace a la app "Oposicion TCEE · DCE" de Victor: icono en la esquina izquierda
-
-  // de la barra de pestanas (Manuel, 2026-10-08)
-
-  document.addEventListener('DOMContentLoaded', function () {
-
-    var barra = document.querySelector('#quarto-header .navbar-container');
-
-    if (!barra || barra.querySelector('.enlace-app')) { return; }
-
-    var a = document.createElement('a');
-
-    a.className = 'enlace-app';
-
-    a.href = 'https://www.victorgutierrezmarcos.es/app/index.html';
-
-    a.target = '_blank';
-
-    a.rel = 'noopener';
-
-    a.title = 'App Oposición TCEE · DCE: cantes, temario y test en el móvil';
-
-    a.setAttribute('aria-label', 'App Oposición TCEE · DCE (se abre en una pestaña nueva)');
-
-    a.innerHTML = '<img src="/app-oposicion.svg" alt="" width="34" height="34">' +
-
-                  '<span class="enlace-app-texto">App<br>TCEE · DCE</span>';
-
-    barra.style.position = 'relative';
-
-    barra.insertBefore(a, barra.firstChild);
-
-  });
-
 </script>
 
 
@@ -589,6 +577,9 @@ ul.task-list li input[type="checkbox"] {
 <span class="portada-subtitulo">Cuerpo de Diplomados Comerciales del Estado · Tercer Ejercicio</span></h1>
 <p><span class="portada-firma">Manuel Cabado García · Diplomado Comercial del Estado · Promoción OEP 2024</span></p>
 </div>
+<!-- Enlace a la app de Victor con el texto que pidio para Google (2026-10-24);
+     estilo .linea-app en comun.scss -->
+<p><span class="linea-app"><img src="app-oposicion.svg" alt="" width="28" height="28"> <span class="linea-app-texto">Esta web pone el temario. La <a href="https://www.victorgutierrezmarcos.es/app/">app de la oposición a Diplomado Comercial del Estado</a>, que hemos desarrollado Víctor Gutiérrez Marcos y yo, pone el día a día: cuándo cantas, qué temas entran, cuánto falta para el examen, cómo te fue la última vez y qué probabilidad llevas. Y, si tienes preparador, os conecta.</span></span></p>
 <div class="tarjetas">
 <section id="temario" class="level3 tarjeta">
 <h3 class="anchored" data-anchor-id="temario">Temario</h3>
