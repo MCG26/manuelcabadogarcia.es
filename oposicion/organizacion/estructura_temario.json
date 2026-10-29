@@ -1,0 +1,2421 @@
+{
+ "_comentario": "Organización del temario de DCE (1.er y 3.er ejercicio) para la app «Oposición TCEE · DCE», con el formato de la de TCEE. Generado con scripts/crear_estructura_temario.py. Autor: Manuel Cabado García.",
+ "version": 1,
+ "proporcion": 1.7778,
+ "bloques": [
+  {
+   "id": "historia-del-pensamiento-economico",
+   "nombre": "Historia del pensamiento económico",
+   "ejercicio": 3,
+   "categoria": "Mixto",
+   "color": "75C4FF",
+   "temas": [
+    "3.A.1",
+    "3.A.2"
+   ]
+  },
+  {
+   "id": "modelo-neoclasico-basico",
+   "nombre": "Modelo neoclásico básico",
+   "ejercicio": 3,
+   "categoria": "Microeconomía",
+   "color": "92D050",
+   "temas": [
+    "3.A.3",
+    "3.A.4",
+    "3.A.5",
+    "3.A.6",
+    "3.A.7"
+   ]
+  },
+  {
+   "id": "mercado-de-trabajo",
+   "nombre": "Mercado de trabajo",
+   "ejercicio": 3,
+   "categoria": "Microeconomía",
+   "color": "C6E0B4",
+   "temas": [
+    "3.A.11",
+    "3.A.12"
+   ]
+  },
+  {
+   "id": "informacion-y-poder-de-mercado",
+   "nombre": "Información y poder de mercado",
+   "ejercicio": 3,
+   "categoria": "Microeconomía",
+   "color": "00CC00",
+   "temas": [
+    "3.A.8",
+    "3.A.9",
+    "3.A.10",
+    "3.A.13",
+    "3.A.18"
+   ]
+  },
+  {
+   "id": "economia-del-bienestar-y-sector-publico",
+   "nombre": "Economía del Bienestar y Sector Público",
+   "ejercicio": 3,
+   "categoria": "Microeconomía",
+   "color": "009900",
+   "temas": [
+    "3.A.14",
+    "3.A.15",
+    "3.A.16",
+    "3.A.17",
+    "3.A.19",
+    "3.A.20",
+    "3.A.21",
+    "3.A.22"
+   ]
+  },
+  {
+   "id": "contabilidad-nacional",
+   "nombre": "Contabilidad Nacional",
+   "ejercicio": 3,
+   "categoria": "Macroeconomía",
+   "color": "FFCCCC",
+   "temas": [
+    "3.B.1",
+    "3.B.19"
+   ]
+  },
+  {
+   "id": "demanda-agregada-y-oferta-agregada",
+   "nombre": "Demanda Agregada y Oferta Agregada",
+   "ejercicio": 3,
+   "categoria": "Macroeconomía",
+   "color": "FF9999",
+   "temas": [
+    "3.B.2",
+    "3.B.3",
+    "3.B.4",
+    "3.B.5"
+   ]
+  },
+  {
+   "id": "ciclo-economico-y-politicas-de-demanda",
+   "nombre": "Ciclo económico y políticas de demanda",
+   "ejercicio": 3,
+   "categoria": "Macroeconomía",
+   "color": "FFC000",
+   "temas": [
+    "3.B.6",
+    "3.B.7",
+    "3.B.8",
+    "3.B.9",
+    "3.B.10",
+    "3.B.11",
+    "3.B.12"
+   ]
+  },
+  {
+   "id": "crecimiento-economico",
+   "nombre": "Crecimiento económico",
+   "ejercicio": 3,
+   "categoria": "Macroeconomía",
+   "color": "FF9966",
+   "temas": [
+    "3.B.13"
+   ]
+  },
+  {
+   "id": "comercio-internacional",
+   "nombre": "Comercio Internacional",
+   "ejercicio": 3,
+   "categoria": "Economía internacional",
+   "color": "99FF33",
+   "temas": [
+    "3.B.14",
+    "3.B.15",
+    "3.B.16",
+    "3.B.17",
+    "3.B.18"
+   ]
+  },
+  {
+   "id": "economia-abierta",
+   "nombre": "Economía abierta",
+   "ejercicio": 3,
+   "categoria": "Economía internacional",
+   "color": "FF0000",
+   "temas": [
+    "3.B.20",
+    "3.B.21",
+    "3.B.22"
+   ]
+  },
+  {
+   "id": "1a-sectores-productivos",
+   "nombre": "Sectores productivos",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.1",
+    "1.A.2",
+    "1.A.5",
+    "1.A.6",
+    "1.A.7",
+    "1.A.8"
+   ]
+  },
+  {
+   "id": "1a-energia-clima-y-tecnologia",
+   "nombre": "Energía, clima y tecnología",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.3",
+    "1.A.4"
+   ]
+  },
+  {
+   "id": "1a-competencia-y-regulacion",
+   "nombre": "Competencia y regulación",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.9"
+   ]
+  },
+  {
+   "id": "1a-sistema-financiero",
+   "nombre": "Sistema financiero",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.10",
+    "1.A.11"
+   ]
+  },
+  {
+   "id": "1a-mercado-de-trabajo",
+   "nombre": "Mercado de trabajo",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.12"
+   ]
+  },
+  {
+   "id": "1a-politica-regional",
+   "nombre": "Política regional",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.13"
+   ]
+  },
+  {
+   "id": "1a-sector-exterior",
+   "nombre": "Sector exterior y cooperación",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.14",
+    "1.A.15",
+    "1.A.18"
+   ]
+  },
+  {
+   "id": "1a-historia-economica",
+   "nombre": "Historia económica",
+   "ejercicio": 1,
+   "categoria": "Economía española",
+   "color": "FF6699",
+   "temas": [
+    "1.A.16",
+    "1.A.17"
+   ]
+  },
+  {
+   "id": "1b-sector-publico-espanol",
+   "nombre": "Sector público español",
+   "ejercicio": 1,
+   "categoria": "Economía pública",
+   "color": "5F2987",
+   "temas": [
+    "1.B.1",
+    "1.B.2",
+    "1.B.3",
+    "1.B.4",
+    "1.B.5"
+   ]
+  },
+  {
+   "id": "1b-union-europea",
+   "nombre": "Unión Europea",
+   "ejercicio": 1,
+   "categoria": "Políticas comunitarias",
+   "color": "325EEA",
+   "temas": [
+    "1.B.6",
+    "1.B.7",
+    "1.B.8",
+    "1.B.9",
+    "1.B.10",
+    "1.B.11",
+    "1.B.12",
+    "1.B.13"
+   ]
+  },
+  {
+   "id": "1b-organismos-internacionales",
+   "nombre": "Sistema económico e instituciones internacionales",
+   "ejercicio": 1,
+   "categoria": "Instituciones multilaterales",
+   "color": "5B9BD5",
+   "temas": [
+    "1.B.14",
+    "1.B.15",
+    "1.B.16",
+    "1.B.17",
+    "1.B.18"
+   ]
+  }
+ ],
+ "ideas": {
+  "3.A.1": "Pensamiento económico: clásicos y neoclásicos",
+  "3.A.2": "Del pensamiento económico de Keynes a la actualidad",
+  "3.A.3": "Teoría de la demanda del consumidor",
+  "3.A.4": "Dualidad y elección en situaciones de riesgo",
+  "3.A.5": "Teoría de la producción",
+  "3.A.6": "Teoría de los costes",
+  "3.A.7": "El modelo de competencia perfecta",
+  "3.A.8": "Teoría del monopolio y su regulación",
+  "3.A.9": "Teoría del oligopolio. Análisis mediante la teoría de juegos",
+  "3.A.10": "Teoría de la competencia monopolística",
+  "3.A.11": "Teorías microeconómicas del mercado de trabajo (I)",
+  "3.A.12": "Teorías microeconómicas del mercado de trabajo (II)",
+  "3.A.13": "Economía de la información y teoría de la agencia",
+  "3.A.14": "Óptimo, equilibrio competitivo y “second best”",
+  "3.A.15": "Fallos del mercado y del sector público",
+  "3.A.16": "Teoría de la elección colectiva",
+  "3.A.17": "Sector Público. Crecimiento del gasto público",
+  "3.A.18": "Poder de mercado y regulación óptima",
+  "3.A.19": "Estado del Bienestar, redistribución y protección social.",
+  "3.A.20": "Teoría de la imposición",
+  "3.A.21": "Imposición y oferta.",
+  "3.A.22": "Federalismo fiscal",
+  "3.B.1": "Magnitudes macroeconómicas y contabilidad nacional.",
+  "3.B.2": "El modelo de oferta y demanda agregada.",
+  "3.B.3": "Teorías de la demanda de consumo.",
+  "3.B.4": "Teorías de la demanda de inversión.",
+  "3.B.5": "Teorías de la demanda de dinero",
+  "3.B.6": "Política monetaria: diseño e instrumentación.",
+  "3.B.7": "Política monetaria: los mecanismos de transmisión.",
+  "3.B.8": "La política fiscal.",
+  "3.B.9": "Déficit público: financiación, dinámica y sostenibilidad.",
+  "3.B.10": "Inflación: eficiencia y bienestar.",
+  "3.B.11": "Análisis macroeconómico del mercado de trabajo.",
+  "3.B.12": "Teorías de los ciclos económicos.",
+  "3.B.13": "Teorías del crecimiento económico.",
+  "3.B.14": "Teoría tradicional del Comercio Internacional.",
+  "3.B.15": "Nuevos desarrollos de la teoría del Comercio Internacional.",
+  "3.B.16": "Política comercial: barreras arancelarias y no arancelarias.",
+  "3.B.17": "La política comercial estratégica.",
+  "3.B.18": "Teorías de la integración económica.",
+  "3.B.19": "Balanza de Pagos: concepto, medición e interpretación.",
+  "3.B.20": "Mecanismos de ajuste de la Balanza de Pagos.",
+  "3.B.21": "El mercado de divisas.",
+  "3.B.22": "Teorías de la integración monetaria."
+ },
+ "esquemas": [
+  {
+   "id": "tercero",
+   "titulo": "Tercer ejercicio",
+   "nodos": [
+    {
+     "tema": "3.A.1",
+     "r": [
+      0.029,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.2",
+     "r": [
+      0.088,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.3",
+     "r": [
+      0.269,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.4",
+     "r": [
+      0.328,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.7",
+     "r": [
+      0.387,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.6",
+     "r": [
+      0.269,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.5",
+     "r": [
+      0.328,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.12",
+     "r": [
+      0.299,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.11",
+     "r": [
+      0.358,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.8",
+     "r": [
+      0.479,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.18",
+     "r": [
+      0.538,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.10",
+     "r": [
+      0.597,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.13",
+     "r": [
+      0.479,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.9",
+     "r": [
+      0.538,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.19",
+     "r": [
+      0.719,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.15",
+     "r": [
+      0.778,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.16",
+     "r": [
+      0.837,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.17",
+     "r": [
+      0.896,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.21",
+     "r": [
+      0.719,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.20",
+     "r": [
+      0.778,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.14",
+     "r": [
+      0.837,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.A.22",
+     "r": [
+      0.896,
+      0.1547,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.19",
+     "r": [
+      0.029,
+      0.459,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.1",
+     "r": [
+      0.088,
+      0.459,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.4",
+     "r": [
+      0.329,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.3",
+     "r": [
+      0.388,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.2",
+     "r": [
+      0.329,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.5",
+     "r": [
+      0.388,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.11",
+     "r": [
+      0.509,
+      0.579,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.6",
+     "r": [
+      0.568,
+      0.579,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.8",
+     "r": [
+      0.627,
+      0.579,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.12",
+     "r": [
+      0.686,
+      0.579,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.10",
+     "r": [
+      0.509,
+      0.6247,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.9",
+     "r": [
+      0.568,
+      0.6247,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.7",
+     "r": [
+      0.627,
+      0.6247,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.13",
+     "r": [
+      0.839,
+      0.459,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.20",
+     "r": [
+      0.029,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.21",
+     "r": [
+      0.088,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.22",
+     "r": [
+      0.147,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.14",
+     "r": [
+      0.269,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.15",
+     "r": [
+      0.328,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.17",
+     "r": [
+      0.387,
+      0.769,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.18",
+     "r": [
+      0.269,
+      0.8147,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "3.B.16",
+     "r": [
+      0.328,
+      0.8147,
+      0.05,
+      0.0367
+     ]
+    }
+   ],
+   "marcos": [
+    {
+     "bloque": "historia-del-pensamiento-economico",
+     "r": [
+      0.02,
+      0.1,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "modelo-neoclasico-basico",
+     "r": [
+      0.26,
+      0.1,
+      0.186,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "mercado-de-trabajo",
+     "r": [
+      0.29,
+      0.25,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "informacion-y-poder-de-mercado",
+     "r": [
+      0.47,
+      0.1,
+      0.186,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "economia-del-bienestar-y-sector-publico",
+     "r": [
+      0.71,
+      0.1,
+      0.245,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "contabilidad-nacional",
+     "r": [
+      0.02,
+      0.45,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "demanda-agregada-y-oferta-agregada",
+     "r": [
+      0.32,
+      0.42,
+      0.127,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "ciclo-economico-y-politicas-de-demanda",
+     "r": [
+      0.5,
+      0.57,
+      0.245,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "crecimiento-economico",
+     "r": [
+      0.83,
+      0.45,
+      0.068,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "economia-abierta",
+     "r": [
+      0.02,
+      0.76,
+      0.186,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "comercio-internacional",
+     "r": [
+      0.26,
+      0.76,
+      0.186,
+      0.1004
+     ]
+    }
+   ],
+   "etiquetas": [
+    {
+     "bloque": "historia-del-pensamiento-economico",
+     "r": [
+      0.02,
+      0.063,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "modelo-neoclasico-basico",
+     "r": [
+      0.26,
+      0.063,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "mercado-de-trabajo",
+     "r": [
+      0.29,
+      0.213,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "informacion-y-poder-de-mercado",
+     "r": [
+      0.47,
+      0.063,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "economia-del-bienestar-y-sector-publico",
+     "r": [
+      0.71,
+      0.063,
+      0.245,
+      0.033
+     ]
+    },
+    {
+     "bloque": "contabilidad-nacional",
+     "r": [
+      0.02,
+      0.413,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "demanda-agregada-y-oferta-agregada",
+     "r": [
+      0.32,
+      0.383,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "ciclo-economico-y-politicas-de-demanda",
+     "r": [
+      0.5,
+      0.533,
+      0.245,
+      0.033
+     ]
+    },
+    {
+     "bloque": "crecimiento-economico",
+     "r": [
+      0.83,
+      0.413,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "economia-abierta",
+     "r": [
+      0.02,
+      0.723,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "comercio-internacional",
+     "r": [
+      0.26,
+      0.723,
+      0.186,
+      0.033
+     ]
+    }
+   ],
+   "conexiones": [
+    {
+     "de": {
+      "bloque": "historia-del-pensamiento-economico"
+     },
+     "a": {
+      "bloque": "modelo-neoclasico-basico"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "75C4FF",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.2"
+     },
+     "a": {
+      "bloque": "demanda-agregada-y-oferta-agregada"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "75C4FF",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "bloque": "modelo-neoclasico-basico"
+     },
+     "a": {
+      "bloque": "informacion-y-poder-de-mercado"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "92D050",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "bloque": "informacion-y-poder-de-mercado"
+     },
+     "a": {
+      "bloque": "economia-del-bienestar-y-sector-publico"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.3"
+     },
+     "a": {
+      "tema": "3.A.4"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "92D050",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.5"
+     },
+     "a": {
+      "tema": "3.A.6"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "92D050",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.7"
+     },
+     "a": {
+      "tema": "3.A.8"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "92D050",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.8"
+     },
+     "a": {
+      "tema": "3.A.9"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.9"
+     },
+     "a": {
+      "tema": "3.A.10"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.8"
+     },
+     "a": {
+      "tema": "3.A.18"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.13"
+     },
+     "a": {
+      "tema": "3.A.18"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.11"
+     },
+     "a": {
+      "tema": "3.A.12"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "C6E0B4",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.5"
+     },
+     "a": {
+      "bloque": "mercado-de-trabajo"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "92D050",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.13"
+     },
+     "a": {
+      "tema": "3.A.12"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "bloque": "mercado-de-trabajo"
+     },
+     "a": {
+      "tema": "3.B.11"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "C6E0B4",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.14"
+     },
+     "a": {
+      "tema": "3.A.15"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.15"
+     },
+     "a": {
+      "tema": "3.A.16"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.16"
+     },
+     "a": {
+      "tema": "3.A.17"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.20"
+     },
+     "a": {
+      "tema": "3.A.21"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.A.19"
+     },
+     "a": {
+      "tema": "3.A.21"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.17"
+     },
+     "a": {
+      "tema": "3.A.22"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.20"
+     },
+     "a": {
+      "tema": "3.B.8"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.1"
+     },
+     "a": {
+      "tema": "3.B.19"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFCCCC",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.1"
+     },
+     "a": {
+      "tema": "3.B.2"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FFCCCC",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.2"
+     },
+     "a": {
+      "bloque": "ciclo-economico-y-politicas-de-demanda"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FF9999",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.5"
+     },
+     "a": {
+      "tema": "3.B.6"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FF9999",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.6"
+     },
+     "a": {
+      "tema": "3.B.7"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.8"
+     },
+     "a": {
+      "tema": "3.B.9"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.10"
+     },
+     "a": {
+      "tema": "3.B.11"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.12"
+     },
+     "a": {
+      "tema": "3.B.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.8"
+     },
+     "a": {
+      "tema": "3.B.13"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.14"
+     },
+     "a": {
+      "tema": "3.B.14"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.10"
+     },
+     "a": {
+      "tema": "3.B.15"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.9"
+     },
+     "a": {
+      "tema": "3.B.17"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.14"
+     },
+     "a": {
+      "tema": "3.B.15"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "99FF33",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.16"
+     },
+     "a": {
+      "tema": "3.B.17"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "99FF33",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.16"
+     },
+     "a": {
+      "tema": "3.B.18"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "99FF33",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.18"
+     },
+     "a": {
+      "tema": "3.B.22"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "99FF33",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.19"
+     },
+     "a": {
+      "tema": "3.B.20"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FFCCCC",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.20"
+     },
+     "a": {
+      "tema": "3.B.21"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF0000",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "3.B.21"
+     },
+     "a": {
+      "tema": "3.B.22"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FF0000",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "bloque": "comercio-internacional"
+     },
+     "a": {
+      "bloque": "economia-abierta"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "99FF33",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.9"
+     },
+     "a": {
+      "tema": "3.B.10"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.21"
+     },
+     "a": {
+      "tema": "3.B.8"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "009900",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.8"
+     },
+     "a": {
+      "tema": "3.A.11"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "00CC00",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.A.11"
+     },
+     "a": {
+      "tema": "3.A.21"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "C6E0B4",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.5"
+     },
+     "a": {
+      "tema": "3.B.10"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF9999",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.6"
+     },
+     "a": {
+      "tema": "3.B.9"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "3.B.7"
+     },
+     "a": {
+      "tema": "3.B.12"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FFC000",
+     "discontinua": true
+    }
+   ]
+  },
+  {
+   "id": "primero",
+   "titulo": "Primer ejercicio",
+   "nodos": [
+    {
+     "tema": "1.A.3",
+     "r": [
+      0.299,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.4",
+     "r": [
+      0.358,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.10",
+     "r": [
+      0.539,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.11",
+     "r": [
+      0.598,
+      0.109,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.8",
+     "r": [
+      0.299,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.2",
+     "r": [
+      0.358,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.5",
+     "r": [
+      0.417,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.6",
+     "r": [
+      0.299,
+      0.3047,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.7",
+     "r": [
+      0.358,
+      0.3047,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.1",
+     "r": [
+      0.417,
+      0.3047,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.16",
+     "r": [
+      0.779,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.17",
+     "r": [
+      0.838,
+      0.259,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.9",
+     "r": [
+      0.149,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.6",
+     "r": [
+      0.509,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.9",
+     "r": [
+      0.568,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.12",
+     "r": [
+      0.627,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.13",
+     "r": [
+      0.686,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.7",
+     "r": [
+      0.509,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.11",
+     "r": [
+      0.568,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.10",
+     "r": [
+      0.627,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.8",
+     "r": [
+      0.686,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.1",
+     "r": [
+      0.779,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.2",
+     "r": [
+      0.838,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.3",
+     "r": [
+      0.897,
+      0.429,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.4",
+     "r": [
+      0.779,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.5",
+     "r": [
+      0.838,
+      0.4747,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.14",
+     "r": [
+      0.029,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.15",
+     "r": [
+      0.088,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.18",
+     "r": [
+      0.147,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.14",
+     "r": [
+      0.239,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.15",
+     "r": [
+      0.298,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.18",
+     "r": [
+      0.357,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.17",
+     "r": [
+      0.239,
+      0.7847,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.B.16",
+     "r": [
+      0.298,
+      0.7847,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.13",
+     "r": [
+      0.719,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    },
+    {
+     "tema": "1.A.12",
+     "r": [
+      0.869,
+      0.739,
+      0.05,
+      0.0367
+     ]
+    }
+   ],
+   "marcos": [
+    {
+     "bloque": "1a-energia-clima-y-tecnologia",
+     "r": [
+      0.29,
+      0.1,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1a-sistema-financiero",
+     "r": [
+      0.53,
+      0.1,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1a-sectores-productivos",
+     "r": [
+      0.29,
+      0.25,
+      0.186,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "1a-historia-economica",
+     "r": [
+      0.77,
+      0.25,
+      0.127,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1a-competencia-y-regulacion",
+     "r": [
+      0.14,
+      0.42,
+      0.068,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1b-union-europea",
+     "r": [
+      0.5,
+      0.42,
+      0.245,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "1b-sector-publico-espanol",
+     "r": [
+      0.77,
+      0.42,
+      0.186,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "1a-sector-exterior",
+     "r": [
+      0.02,
+      0.73,
+      0.186,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1b-organismos-internacionales",
+     "r": [
+      0.23,
+      0.73,
+      0.186,
+      0.1004
+     ]
+    },
+    {
+     "bloque": "1a-politica-regional",
+     "r": [
+      0.71,
+      0.73,
+      0.068,
+      0.0547
+     ]
+    },
+    {
+     "bloque": "1a-mercado-de-trabajo",
+     "r": [
+      0.86,
+      0.73,
+      0.068,
+      0.0547
+     ]
+    }
+   ],
+   "etiquetas": [
+    {
+     "bloque": "1a-energia-clima-y-tecnologia",
+     "r": [
+      0.29,
+      0.063,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-sistema-financiero",
+     "r": [
+      0.53,
+      0.063,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-sectores-productivos",
+     "r": [
+      0.29,
+      0.213,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-historia-economica",
+     "r": [
+      0.77,
+      0.213,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-competencia-y-regulacion",
+     "r": [
+      0.14,
+      0.383,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1b-union-europea",
+     "r": [
+      0.5,
+      0.383,
+      0.245,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1b-sector-publico-espanol",
+     "r": [
+      0.77,
+      0.383,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-sector-exterior",
+     "r": [
+      0.02,
+      0.693,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1b-organismos-internacionales",
+     "r": [
+      0.23,
+      0.693,
+      0.186,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-politica-regional",
+     "r": [
+      0.71,
+      0.693,
+      0.15,
+      0.033
+     ]
+    },
+    {
+     "bloque": "1a-mercado-de-trabajo",
+     "r": [
+      0.86,
+      0.693,
+      0.15,
+      0.033
+     ]
+    }
+   ],
+   "conexiones": [
+    {
+     "de": {
+      "tema": "1.A.3"
+     },
+     "a": {
+      "tema": "1.A.4"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.A.10"
+     },
+     "a": {
+      "tema": "1.A.11"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.A.14"
+     },
+     "a": {
+      "tema": "1.A.15"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.A.16"
+     },
+     "a": {
+      "tema": "1.A.17"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.A.13"
+     },
+     "a": {
+      "tema": "1.B.10"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.18"
+     },
+     "a": {
+      "tema": "1.B.11"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.9"
+     },
+     "a": {
+      "tema": "1.B.7"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.1"
+     },
+     "a": {
+      "tema": "1.B.9"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.2"
+     },
+     "a": {
+      "tema": "1.B.4"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5F2987",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.4"
+     },
+     "a": {
+      "tema": "1.B.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5F2987",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.12"
+     },
+     "a": {
+      "tema": "1.B.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "325EEA",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.A.10"
+     },
+     "a": {
+      "tema": "1.B.15"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.14"
+     },
+     "a": {
+      "tema": "1.B.16"
+     },
+     "flechaDe": false,
+     "flechaA": true,
+     "color": "5B9BD5",
+     "discontinua": false
+    },
+    {
+     "de": {
+      "tema": "1.B.11"
+     },
+     "a": {
+      "tema": "1.B.18"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "325EEA",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.2"
+     },
+     "a": {
+      "tema": "1.A.3"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.5"
+     },
+     "a": {
+      "tema": "1.A.10"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.6"
+     },
+     "a": {
+      "tema": "1.A.9"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.7"
+     },
+     "a": {
+      "tema": "1.A.14"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.8"
+     },
+     "a": {
+      "tema": "1.A.9"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.12"
+     },
+     "a": {
+      "tema": "1.B.10"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.1"
+     },
+     "a": {
+      "tema": "1.B.4"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5F2987",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.3"
+     },
+     "a": {
+      "tema": "1.A.12"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5F2987",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.5"
+     },
+     "a": {
+      "tema": "1.A.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5F2987",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.6"
+     },
+     "a": {
+      "tema": "1.A.16"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "325EEA",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.8"
+     },
+     "a": {
+      "tema": "1.B.1"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "325EEA",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.B.17"
+     },
+     "a": {
+      "tema": "1.A.18"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "5B9BD5",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.11"
+     },
+     "a": {
+      "tema": "1.B.12"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.16"
+     },
+     "a": {
+      "tema": "1.B.12"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.10"
+     },
+     "a": {
+      "tema": "1.B.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    },
+    {
+     "de": {
+      "tema": "1.A.17"
+     },
+     "a": {
+      "tema": "1.B.13"
+     },
+     "flechaDe": true,
+     "flechaA": true,
+     "color": "FF6699",
+     "discontinua": true
+    }
+   ]
+  }
+ ]
+}
